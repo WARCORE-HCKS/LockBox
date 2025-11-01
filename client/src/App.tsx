@@ -1,38 +1,30 @@
-import { useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import LoginPage from "./pages/LoginPage";
+import { useAuth } from "@/hooks/useAuth";
+import LandingPage from "./pages/LandingPage";
 import ChatPage from "./pages/ChatPage";
 
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  return !isAuthenticated ? <LandingPage /> : <ChatPage />;
+}
+
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; avatar?: string } | null>(null);
-
-  const handleLogin = (username: string, password: string) => {
-    console.log("Login:", username, password);
-    setCurrentUser({
-      id: "current-user",
-      name: username,
-    });
-    setIsAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    console.log("Logout");
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        {!isAuthenticated || !currentUser ? (
-          <LoginPage onLogin={handleLogin} />
-        ) : (
-          <ChatPage currentUser={currentUser} onLogout={handleLogout} />
-        )}
+        <AppContent />
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

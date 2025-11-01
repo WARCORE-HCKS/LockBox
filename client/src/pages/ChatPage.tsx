@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Search, LogOut, Menu } from "lucide-react";
@@ -10,142 +11,145 @@ import ChatHeader from "@/components/ChatHeader";
 import UserAvatar from "@/components/UserAvatar";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
+import { useSocket } from "@/hooks/useSocket";
+import { encryptMessage, decryptMessage } from "@/lib/encryption";
+import type { User, Message } from "@shared/schema";
 
-import avatar1 from "@assets/generated_images/Female_user_avatar_portrait_abd7f3c7.png";
-import avatar2 from "@assets/generated_images/Male_user_avatar_portrait_9b21d128.png";
-import avatar3 from "@assets/generated_images/User_avatar_portrait_three_815e8396.png";
-import avatar4 from "@assets/generated_images/User_avatar_portrait_four_4d673272.png";
-
-interface Message {
-  id: string;
+interface DecryptedMessage extends Omit<Message, 'encryptedContent'> {
   content: string;
-  senderId: string;
-  timestamp: Date;
 }
 
-interface Friend {
-  id: string;
-  name: string;
-  avatar?: string;
-  status: "online" | "away" | "offline";
-  lastMessage?: string;
-  unreadCount?: number;
-}
-
-interface ChatPageProps {
-  currentUser: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  onLogout: () => void;
-}
-
-export default function ChatPage({ currentUser, onLogout }: ChatPageProps) {
+export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  const [friends] = useState<Friend[]>([
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      avatar: avatar1,
-      status: "online",
-      lastMessage: "Hey! Are we still on for tonight?",
-      unreadCount: 3,
-    },
-    {
-      id: "2",
-      name: "Mike Chen",
-      avatar: avatar2,
-      status: "away",
-      lastMessage: "I'll send you the files tomorrow",
-    },
-    {
-      id: "3",
-      name: "Emma Wilson",
-      avatar: avatar3,
-      status: "offline",
-      lastMessage: "Thanks for your help!",
-    },
-    {
-      id: "4",
-      name: "Alex Taylor",
-      avatar: avatar4,
-      status: "online",
-      lastMessage: "See you soon!",
-    },
-  ]);
+  const [activeFriendId, setActiveFriendId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<DecryptedMessage[]>([]);
+  const [userStatuses, setUserStatuses] = useState<Map<string, "online" | "offline">>(new Map());
 
-  const [activeFriendId, setActiveFriendId] = useState("1");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content: "Hey! How's everything going?",
-      senderId: "1",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    },
-    {
-      id: "2",
-      content: "Great! Just finished that project I was telling you about.",
-      senderId: currentUser.id,
-      timestamp: new Date(Date.now() - 1000 * 60 * 25),
-    },
-    {
-      id: "3",
-      content: "That's awesome! How did it turn out?",
-      senderId: "1",
-      timestamp: new Date(Date.now() - 1000 * 60 * 20),
-    },
-    {
-      id: "4",
-      content: "Better than expected. The client loved it!",
-      senderId: currentUser.id,
-      timestamp: new Date(Date.now() - 1000 * 60 * 15),
-    },
-    {
-      id: "5",
-      content: "So proud of you! We should celebrate sometime.",
-      senderId: "1",
-      timestamp: new Date(Date.now() - 1000 * 60 * 10),
-    },
-    {
-      id: "6",
-      content: "Definitely! Are we still on for tonight?",
-      senderId: "1",
-      timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    },
-  ]);
+  // Fetch current user from auth
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+  });
 
-  const activeFriend = friends.find((f) => f.id === activeFriendId);
-  const filteredFriends = friends.filter((f) =>
-    f.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Fetch all users (friends)
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+  });
+
+  // Fetch encrypted messages for active friend
+  const { data: chatMessages = [] } = useQuery<Message[]>({
+    queryKey: ["/api/messages", activeFriendId],
+    enabled: !!activeFriendId,
+  });
+
+  // Decrypt and load messages when chat changes
+  useEffect(() => {
+    if (chatMessages) {
+      const decryptedMessages = chatMessages.map(msg => ({
+        ...msg,
+        content: decryptMessage(msg.encryptedContent),
+        createdAt: new Date(msg.createdAt!),
+      }));
+      setMessages(decryptedMessages);
+    }
+  }, [chatMessages]);
+
+  // Socket.io for real-time messaging
+  const handleMessageReceived = useCallback((message: Message) => {
+    // Only add message if it's for the active chat
+    if (
+      activeFriendId &&
+      ((message.senderId === activeFriendId && message.recipientId === currentUser?.id) ||
+        (message.senderId === currentUser?.id && message.recipientId === activeFriendId))
+    ) {
+      const decryptedMessage: DecryptedMessage = {
+        ...message,
+        content: decryptMessage(message.encryptedContent),
+        createdAt: new Date(message.createdAt!),
+      };
+      setMessages((prev) => [...prev, decryptedMessage]);
+    }
+  }, [activeFriendId, currentUser?.id]);
+
+  const handleUserStatus = useCallback((data: { userId: string; status: string }) => {
+    setUserStatuses((prev) => new Map(prev).set(data.userId, data.status as "online" | "offline"));
+  }, []);
+
+  const { sendMessage } = useSocket({
+    userId: currentUser?.id,
+    onMessageReceived: handleMessageReceived,
+    onUserStatus: handleUserStatus,
+  });
 
   const handleSendMessage = (content: string) => {
-    const newMessage: Message = {
-      id: String(Date.now()),
-      content,
-      senderId: currentUser.id,
-      timestamp: new Date(),
-    };
-    setMessages([...messages, newMessage]);
+    if (activeFriendId && currentUser) {
+      // Encrypt message before sending
+      const encryptedContent = encryptMessage(content);
+      sendMessage(activeFriendId, encryptedContent);
+      
+      // Optimistically add the decrypted message to UI
+      const newMessage: DecryptedMessage = {
+        id: String(Date.now()),
+        content,
+        senderId: currentUser.id,
+        recipientId: activeFriendId,
+        createdAt: new Date(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+    }
   };
 
-  const getMessageDisplay = (msg: Message, idx: number) => {
-    const isOwn = msg.senderId === currentUser.id;
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
+
+  const activeFriend = users.find((u) => u.id === activeFriendId);
+  const filteredUsers = users.filter((u) =>
+    u.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getMessageDisplay = (msg: DecryptedMessage, idx: number) => {
+    const isOwn = msg.senderId === currentUser?.id;
     const prevMsg = idx > 0 ? messages[idx - 1] : null;
     const showAvatar = !prevMsg || prevMsg.senderId !== msg.senderId;
-    const sender = isOwn
-      ? currentUser
-      : friends.find((f) => f.id === msg.senderId) || { name: "Unknown", avatar: undefined };
+    
+    const senderUser = isOwn 
+      ? currentUser 
+      : users.find((u) => u.id === msg.senderId);
+    
+    const senderName = isOwn 
+      ? "You" 
+      : senderUser 
+        ? `${senderUser.firstName || ""} ${senderUser.lastName || ""}`.trim() || senderUser.email || "Unknown"
+        : "Unknown";
 
     return {
       isOwn,
       showAvatar,
-      sender,
+      sender: {
+        name: senderName,
+        avatar: senderUser?.profileImageUrl || undefined,
+      },
     };
   };
+
+  const getUserDisplayName = (user: User) => {
+    return `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "User";
+  };
+
+  const getUserStatus = (userId: string): "online" | "away" | "offline" => {
+    return userStatuses.get(userId) || "offline";
+  };
+
+  if (!currentUser) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background">
@@ -158,10 +162,15 @@ export default function ChatPage({ currentUser, onLogout }: ChatPageProps) {
         <div className="p-4 border-b space-y-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
-              <UserAvatar name={currentUser.name} src={currentUser.avatar} size="md" status="online" />
+              <UserAvatar 
+                name={getUserDisplayName(currentUser)} 
+                src={currentUser.profileImageUrl || undefined} 
+                size="md" 
+                status="online" 
+              />
               <div className="min-w-0">
                 <h3 className="font-semibold text-sm truncate" data-testid="text-current-user">
-                  {currentUser.name}
+                  {getUserDisplayName(currentUser)}
                 </h3>
                 <p className="text-xs text-muted-foreground">Online</p>
               </div>
@@ -171,7 +180,7 @@ export default function ChatPage({ currentUser, onLogout }: ChatPageProps) {
               <Button
                 size="icon"
                 variant="ghost"
-                onClick={onLogout}
+                onClick={handleLogout}
                 data-testid="button-logout"
               >
                 <LogOut className="h-5 w-5" />
@@ -193,14 +202,23 @@ export default function ChatPage({ currentUser, onLogout }: ChatPageProps) {
 
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-1">
-            {filteredFriends.map((friend) => (
-              <FriendListItem
-                key={friend.id}
-                {...friend}
-                isActive={friend.id === activeFriendId}
-                onClick={() => setActiveFriendId(friend.id)}
-              />
-            ))}
+            {filteredUsers.length === 0 ? (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                No other users yet. Invite friends to join!
+              </div>
+            ) : (
+              filteredUsers.map((user) => (
+                <FriendListItem
+                  key={user.id}
+                  id={user.id}
+                  name={getUserDisplayName(user)}
+                  avatar={user.profileImageUrl || undefined}
+                  status={getUserStatus(user.id)}
+                  isActive={user.id === activeFriendId}
+                  onClick={() => setActiveFriendId(user.id)}
+                />
+              ))
+            )}
           </div>
         </ScrollArea>
       </aside>
@@ -219,34 +237,49 @@ export default function ChatPage({ currentUser, onLogout }: ChatPageProps) {
               </Button>
             </div>
             <ChatHeader
-              friend={activeFriend}
+              friend={{
+                name: getUserDisplayName(activeFriend),
+                avatar: activeFriend.profileImageUrl || undefined,
+                status: getUserStatus(activeFriend.id),
+              }}
               onVoiceCall={() => console.log("Voice call")}
               onVideoCall={() => console.log("Video call")}
               onSettings={() => console.log("Settings")}
             />
             <ScrollArea className="flex-1 p-6">
               <div className="max-w-4xl mx-auto space-y-1">
-                {messages.map((msg, idx) => {
-                  const { isOwn, showAvatar, sender } = getMessageDisplay(msg, idx);
-                  return (
-                    <MessageBubble
-                      key={msg.id}
-                      id={msg.id}
-                      content={msg.content}
-                      sender={sender}
-                      timestamp={msg.timestamp}
-                      isOwn={isOwn}
-                      showAvatar={showAvatar}
-                    />
-                  );
-                })}
+                {messages.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No messages yet. Start the conversation!</p>
+                  </div>
+                ) : (
+                  messages.map((msg, idx) => {
+                    const { isOwn, showAvatar, sender } = getMessageDisplay(msg, idx);
+                    return (
+                      <MessageBubble
+                        key={msg.id}
+                        id={msg.id}
+                        content={msg.content}
+                        sender={sender}
+                        timestamp={msg.createdAt!}
+                        isOwn={isOwn}
+                        showAvatar={showAvatar}
+                      />
+                    );
+                  })
+                )}
               </div>
             </ScrollArea>
             <MessageInput onSend={handleSendMessage} />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            <p>Select a friend to start chatting</p>
+            <div className="text-center space-y-2">
+              <p className="text-lg">Select a friend to start chatting</p>
+              {users.length === 0 && (
+                <p className="text-sm">Invite friends to join SecureChat!</p>
+              )}
+            </div>
           </div>
         )}
       </main>
