@@ -1,7 +1,12 @@
 import { useState, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Paperclip, Smile } from "lucide-react";
+import { Send, Smile } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
@@ -10,12 +15,20 @@ interface MessageInputProps {
   placeholder?: string;
 }
 
+const EMOJI_CATEGORIES = {
+  "Smileys": ["😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🥸", "🤩", "🥳"],
+  "Gestures": ["👍", "👎", "👌", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️", "👋", "🤚", "🖐️", "✋", "🖖", "👏", "🙌", "🤲", "🤝", "🙏"],
+  "Hearts": ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❤️‍🔥", "❤️‍🩹", "💕", "💞", "💓", "💗", "💖", "💘", "💝"],
+  "Reactions": ["🔥", "⭐", "✨", "💫", "💥", "💯", "✅", "❌", "⚠️", "❗", "❓", "💬", "💭", "🎉", "🎊", "🎈"],
+};
+
 export default function MessageInput({
   onSend,
   disabled = false,
   placeholder = "Type a message...",
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
+  const [emojiOpen, setEmojiOpen] = useState(false);
 
   const handleSend = () => {
     if (message.trim() && !disabled) {
@@ -31,27 +44,49 @@ export default function MessageInput({
     }
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setMessage(prev => prev + emoji);
+    setEmojiOpen(false);
+  };
+
   return (
     <div className="border-t bg-background p-4">
       <div className="flex items-end gap-2">
-        <Button
-          size="icon"
-          variant="ghost"
-          className="shrink-0"
-          onClick={() => console.log("Emoji picker clicked")}
-          data-testid="button-emoji"
-        >
-          <Smile className="h-5 w-5" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="shrink-0"
-          onClick={() => console.log("Attachment clicked")}
-          data-testid="button-attachment"
-        >
-          <Paperclip className="h-5 w-5" />
-        </Button>
+        <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="shrink-0"
+              data-testid="button-emoji"
+            >
+              <Smile className="h-5 w-5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80" align="start" data-testid="emoji-picker">
+            <div className="space-y-3">
+              {Object.entries(EMOJI_CATEGORIES).map(([category, emojis]) => (
+                <div key={category}>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2">
+                    {category}
+                  </h4>
+                  <div className="grid grid-cols-8 gap-1">
+                    {emojis.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleEmojiSelect(emoji)}
+                        className="text-2xl hover-elevate active-elevate-2 rounded p-1 transition-colors"
+                        data-testid={`emoji-${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}

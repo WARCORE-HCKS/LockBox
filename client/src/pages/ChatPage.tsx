@@ -355,9 +355,6 @@ export default function ChatPage() {
                 avatar: undefined,
                 status: "online",
               }}
-              onVoiceCall={() => console.log("Voice call")}
-              onVideoCall={() => console.log("Video call")}
-              onSettings={() => console.log("Settings")}
             />
             <ScrollArea className="flex-1 p-6">
               <div className="max-w-4xl mx-auto space-y-1">
@@ -403,9 +400,6 @@ export default function ChatPage() {
                 avatar: activeFriend.profileImageUrl || undefined,
                 status: getUserStatus(activeFriend.id),
               }}
-              onVoiceCall={() => console.log("Voice call")}
-              onVideoCall={() => console.log("Video call")}
-              onSettings={() => console.log("Settings")}
             />
             <ScrollArea className="flex-1 p-6">
               <div className="max-w-4xl mx-auto space-y-1">

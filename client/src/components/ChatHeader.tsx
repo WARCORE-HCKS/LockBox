@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { MoreVertical, Phone, Video } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import UserAvatar from "./UserAvatar";
 import {
   DropdownMenu,
@@ -14,9 +14,8 @@ interface ChatHeaderProps {
     avatar?: string;
     status: "online" | "away" | "offline";
   };
-  onVoiceCall?: () => void;
-  onVideoCall?: () => void;
   onSettings?: () => void;
+  onClearMessages?: () => void;
 }
 
 const statusLabels = {
@@ -25,7 +24,7 @@ const statusLabels = {
   offline: "Offline",
 };
 
-export default function ChatHeader({ friend, onVoiceCall, onVideoCall, onSettings }: ChatHeaderProps) {
+export default function ChatHeader({ friend, onSettings, onClearMessages }: ChatHeaderProps) {
   return (
     <header className="h-16 border-b bg-background px-6 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
@@ -40,22 +39,6 @@ export default function ChatHeader({ friend, onVoiceCall, onVideoCall, onSetting
         </div>
       </div>
       <div className="flex items-center gap-1">
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={onVoiceCall}
-          data-testid="button-voice-call"
-        >
-          <Phone className="h-5 w-5" />
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={onVideoCall}
-          data-testid="button-video-call"
-        >
-          <Video className="h-5 w-5" />
-        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon" variant="ghost" data-testid="button-menu">
@@ -63,13 +46,16 @@ export default function ChatHeader({ friend, onVoiceCall, onVideoCall, onSetting
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onSettings} data-testid="menu-item-settings">
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem data-testid="menu-item-clear">Clear messages</DropdownMenuItem>
-            <DropdownMenuItem data-testid="menu-item-block" className="text-destructive">
-              Block user
-            </DropdownMenuItem>
+            {onClearMessages && (
+              <DropdownMenuItem onClick={onClearMessages} data-testid="menu-item-clear">
+                Clear messages
+              </DropdownMenuItem>
+            )}
+            {onSettings && (
+              <DropdownMenuItem onClick={onSettings} data-testid="menu-item-settings">
+                Settings
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
