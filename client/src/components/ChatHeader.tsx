@@ -25,6 +25,8 @@ const statusLabels = {
 };
 
 export default function ChatHeader({ friend, onSettings, onClearMessages }: ChatHeaderProps) {
+  const hasMenuItems = !!(onSettings || onClearMessages);
+  
   return (
     <header className="h-16 border-b bg-background px-6 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
@@ -38,27 +40,29 @@ export default function ChatHeader({ friend, onSettings, onClearMessages }: Chat
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost" data-testid="button-menu">
-              <MoreVertical className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {onClearMessages && (
-              <DropdownMenuItem onClick={onClearMessages} data-testid="menu-item-clear">
-                Clear messages
-              </DropdownMenuItem>
-            )}
-            {onSettings && (
-              <DropdownMenuItem onClick={onSettings} data-testid="menu-item-settings">
-                Settings
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {hasMenuItems && (
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" data-testid="button-menu">
+                <MoreVertical className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onClearMessages && (
+                <DropdownMenuItem onClick={onClearMessages} data-testid="menu-item-clear">
+                  Clear messages
+                </DropdownMenuItem>
+              )}
+              {onSettings && (
+                <DropdownMenuItem onClick={onSettings} data-testid="menu-item-settings">
+                  Settings
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
     </header>
   );
 }
