@@ -5,7 +5,18 @@ SecureChat is a real-time messaging application built for private communication 
 
 **Important**: This is a demonstration/MVP with simplified encryption. It provides encrypted storage and transit but does NOT implement true end-to-end encryption. See "Encryption Model" section below for details.
 
-## Recent Changes
+## Recent Changes (November 2025)
+- **Message Deletion**: Implemented soft deletion for both private and chatroom messages
+  - Delete button appears on hover for user's own messages only
+  - Deleted messages filtered from all queries and chat previews
+  - Real-time deletion broadcasts via Socket.IO
+- **Security Hardening**: Fixed critical Socket.IO security vulnerabilities
+  - Session-based authentication middleware for all socket connections
+  - All socket events use authenticated userId from server session (never trust client)
+  - withCredentials enabled for proper cookie sharing between HTTP and WebSocket
+- **Friend List Improvements**: Fixed test-id uniqueness to use user IDs instead of names
+
+## Previous Changes
 - **Database Schema**: Added users, messages, chatroom_messages, and sessions tables with proper relationships
 - **Authentication**: Integrated Replit Auth for secure user authentication with Google, GitHub, and email
 - **Real-Time Messaging**: Implemented Socket.io for instant message delivery
@@ -100,13 +111,21 @@ A production-ready secure messenger should implement:
 
 ### Database Schema
 - **users**: User profiles (id, email, firstName, lastName, profileImageUrl)
-- **messages**: Encrypted message storage (id, senderId, recipientId, encryptedContent, createdAt)
+- **messages**: Encrypted private message storage (id, senderId, recipientId, encryptedContent, deletedAt, createdAt)
+- **chatroom_messages**: Encrypted chatroom messages (id, senderId, encryptedContent, deletedAt, createdAt)
 - **sessions**: Session storage for authentication
+
+### Socket.IO Security Model
+- **Authentication**: Session middleware validates all Socket.IO connections
+- **User Identity**: Server derives userId from authenticated session (socket.data.userId)
+- **No Client Trust**: All socket events ignore client-supplied user IDs
+- **Event Validation**: register, send-message, send-chatroom-message, typing, delete-message all use authenticated userId
 
 ## Features
 - ✅ Real-time messaging with Socket.io
 - ✅ User authentication via Replit Auth
 - ✅ Message encryption (client-side AES)
+- ✅ Message deletion (soft deletion with real-time broadcasts)
 - ✅ Public chatroom for group conversations
 - ✅ Private 1-on-1 messaging
 - ✅ Online/offline status indicators
@@ -114,6 +133,7 @@ A production-ready secure messenger should implement:
 - ✅ Dark mode support
 - ✅ Responsive design
 - ✅ Friend discovery (all registered users)
+- ✅ Session-based Socket.IO authentication
 
 ## Known Limitations
 1. **Encryption**: Simplified model - NOT suitable for production security requirements
@@ -122,9 +142,10 @@ A production-ready secure messenger should implement:
    - Encryption provides obfuscation, not true end-to-end security
 2. **File Sharing**: No support for images or file attachments
 3. **Read Receipts**: Not implemented
-4. **Message Editing**: Cannot edit or delete sent messages
+4. **Message Editing**: Cannot edit sent messages (deletion only)
 5. **Voice/Video Calls**: UI buttons present but not functional
 6. **Multiple Chatrooms**: Currently only one global chatroom
+7. **Hard Deletion**: Deleted messages remain in database with deletedAt timestamp (soft deletion only)
 
 ## User Preferences
 - Dark mode support with localStorage persistence
