@@ -6,6 +6,13 @@ LockBox is a real-time messaging application built for private communication bet
 **Important**: This is a demonstration/MVP with simplified encryption. It provides encrypted storage and transit but does NOT implement true end-to-end encryption. See "Encryption Model" section below for details.
 
 ## Recent Changes (November 2025)
+- **Admin Control Panel**: Comprehensive admin interface for platform management
+  - User management: view all users, promote to admin, soft-delete accounts
+  - Chatroom management: create, update, delete chatrooms (multi-room support)
+  - Real-time online/offline user status monitoring
+  - Protected routes and API endpoints (requires isAdmin flag)
+  - Bootstrap function ensures default chatroom exists on server startup
+  - Soft deletion for users prevents FK constraint violations
 - **Message Deletion**: Implemented soft deletion for both private and chatroom messages
   - Delete button appears on hover for user's own messages only
   - Deleted messages filtered from all queries and chat previews
@@ -89,14 +96,17 @@ A production-ready secure messenger should implement:
 ### Backend (Express + Socket.io)
 - **Authentication**: Replit Auth with OpenID Connect (server/replitAuth.ts)
 - **Database**: PostgreSQL with Drizzle ORM (server/db.ts)
-- **Storage**: Database storage layer for users and messages (server/storage.ts)
+- **Bootstrap**: Database initialization ensuring default chatroom exists (server/bootstrap.ts)
+- **Storage**: Database storage layer for users, chatrooms, and messages (server/storage.ts)
 - **WebSocket**: Socket.io server for real-time messaging (server/routes.ts)
-- **API Routes**: User management and message history endpoints
+- **API Routes**: User management, chatroom management, and message history endpoints
+- **Admin Middleware**: Role-based access control for admin-only routes (isAdmin middleware)
 
 ### Frontend (React + TypeScript)
 - **Pages**:
   - LandingPage: Login page for unauthenticated users
   - ChatPage: Main chat interface with friend list and messaging
+  - AdminPage: Admin control panel for user/chatroom management (admin-only)
 - **Hooks**:
   - useAuth: Authentication state management
   - useSocket: WebSocket connection and real-time messaging
@@ -107,12 +117,14 @@ A production-ready secure messenger should implement:
   - MessageInput: Message composition area
   - ChatHeader: Chat header with call buttons and menu
   - ThemeToggle: Dark/light mode switcher
+  - LockIcon: Custom SVG lock icon that adapts to theme
 - **Encryption**: Client-side AES encryption (client/src/lib/encryption.ts)
 
 ### Database Schema
-- **users**: User profiles (id, email, firstName, lastName, profileImageUrl)
+- **users**: User profiles (id, email, firstName, lastName, profileImageUrl, isAdmin, deletedAt)
+- **chatrooms**: Chatroom definitions (id, name, description, createdAt, updatedAt)
 - **messages**: Encrypted private message storage (id, senderId, recipientId, encryptedContent, deletedAt, createdAt)
-- **chatroom_messages**: Encrypted chatroom messages (id, senderId, encryptedContent, deletedAt, createdAt)
+- **chatroom_messages**: Encrypted chatroom messages (id, chatroomId, senderId, encryptedContent, deletedAt, createdAt)
 - **sessions**: Session storage for authentication
 
 ### Socket.IO Security Model
@@ -126,7 +138,7 @@ A production-ready secure messenger should implement:
 - ✅ User authentication via Replit Auth
 - ✅ Message encryption (client-side AES)
 - ✅ Message deletion (soft deletion with real-time broadcasts)
-- ✅ Public chatroom for group conversations
+- ✅ Multiple chatrooms with persistent history
 - ✅ Private 1-on-1 messaging
 - ✅ Online/offline status indicators
 - ✅ Message history persistence
@@ -134,6 +146,8 @@ A production-ready secure messenger should implement:
 - ✅ Responsive design
 - ✅ Friend discovery (all registered users)
 - ✅ Session-based Socket.IO authentication
+- ✅ Admin control panel (user/chatroom management)
+- ✅ Role-based access control (admin vs regular users)
 
 ## Known Limitations
 1. **Encryption**: Simplified model - NOT suitable for production security requirements
@@ -144,8 +158,7 @@ A production-ready secure messenger should implement:
 3. **Read Receipts**: Not implemented
 4. **Message Editing**: Cannot edit sent messages (deletion only)
 5. **Voice/Video Calls**: UI buttons present but not functional
-6. **Multiple Chatrooms**: Currently only one global chatroom
-7. **Hard Deletion**: Deleted messages remain in database with deletedAt timestamp (soft deletion only)
+6. **Hard Deletion**: Deleted messages and users remain in database with deletedAt timestamp (soft deletion only)
 
 ## User Preferences
 - Dark mode support with localStorage persistence
