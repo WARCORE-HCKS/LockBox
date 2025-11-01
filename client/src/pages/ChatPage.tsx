@@ -125,11 +125,21 @@ export default function ChatPage() {
     setUserStatuses((prev) => new Map(prev).set(data.userId, data.status as "online" | "offline"));
   }, []);
 
-  const { sendMessage, sendChatroomMessage } = useSocket({
+  const handleMessageDeleted = useCallback((data: { messageId: string }) => {
+    setMessages((prev) => prev.filter(m => m.id !== data.messageId));
+  }, []);
+
+  const handleChatroomMessageDeleted = useCallback((data: { messageId: string }) => {
+    setChatroomMessages((prev) => prev.filter(m => m.id !== data.messageId));
+  }, []);
+
+  const { sendMessage, sendChatroomMessage, deleteMessage, deleteChatroomMessage } = useSocket({
     userId: currentUser?.id,
     onMessageReceived: handleMessageReceived,
     onChatroomMessageReceived: handleChatroomMessageReceived,
     onUserStatus: handleUserStatus,
+    onMessageDeleted: handleMessageDeleted,
+    onChatroomMessageDeleted: handleChatroomMessageDeleted,
   });
 
   const handleSendMessage = (content: string) => {
@@ -151,9 +161,26 @@ export default function ChatPage() {
         content,
         senderId: currentUser.id,
         recipientId: activeFriendId,
+        deletedAt: null,
         createdAt: new Date(),
       };
       setMessages((prev) => [...prev, newMessage]);
+    }
+  };
+
+  const handleDeletePrivateMessage = (messageId: string) => {
+    if (activeFriendId && currentUser) {
+      deleteMessage(messageId, activeFriendId);
+      // Optimistically remove from UI
+      setMessages((prev) => prev.filter(m => m.id !== messageId));
+    }
+  };
+
+  const handleDeleteChatroomMessage = (messageId: string) => {
+    if (currentUser) {
+      deleteChatroomMessage(messageId);
+      // Optimistically remove from UI
+      setChatroomMessages((prev) => prev.filter(m => m.id !== messageId));
     }
   };
 
@@ -374,6 +401,7 @@ export default function ChatPage() {
                         timestamp={msg.createdAt!}
                         isOwn={isOwn}
                         showAvatar={showAvatar}
+                        onDelete={handleDeleteChatroomMessage}
                       />
                     );
                   })
@@ -419,6 +447,7 @@ export default function ChatPage() {
                         timestamp={msg.createdAt!}
                         isOwn={isOwn}
                         showAvatar={showAvatar}
+                        onDelete={handleDeletePrivateMessage}
                       />
                     );
                   })

@@ -71,6 +71,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete a private message
+  app.delete("/api/messages/:messageId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const messageId = req.params.messageId;
+      const success = await storage.deleteMessage(messageId, userId);
+      
+      if (success) {
+        res.json({ success: true, messageId });
+      } else {
+        res.status(403).json({ message: "Not authorized to delete this message" });
+      }
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      res.status(500).json({ message: "Failed to delete message" });
+    }
+  });
+
+  // Delete a chatroom message
+  app.delete("/api/chatroom/messages/:messageId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const messageId = req.params.messageId;
+      const success = await storage.deleteChatroomMessage(messageId, userId);
+      
+      if (success) {
+        res.json({ success: true, messageId });
+      } else {
+        res.status(403).json({ message: "Not authorized to delete this message" });
+      }
+    } catch (error) {
+      console.error("Error deleting chatroom message:", error);
+      res.status(500).json({ message: "Failed to delete chatroom message" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Socket.io setup for real-time messaging
@@ -150,6 +186,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error("Error sending chatroom message:", error);
         socket.emit("chatroom-message-error", { error: "Failed to send chatroom message" });
+      }
+    });
+
+    // Handle private message deletion
+    socket.on("delete-message", async (data: { messageId: string; userId: string; recipientId: string }) => {
+      try {
+        const { messageId, userId, recipientId } = data;
+        const success = await storage.deleteMessage(messageId, userId);
+        
+        if (success) {
+          // Notify both sender and recipient
+          socket.emit("message-deleted", { messageId });
+          const recipientSocketId = userSockets.get(recipientId);
+          if (recipientSocketId) {
+            io.to(recipientSocketId).emit("message-deleted", { messageId });
+          }
+        }
+      } catch (error) {
+        console.error("Error deleting message:", error);
+      }
+    });
+
+    // Handle chatroom message deletion
+    socket.on("delete-chatroom-message", async (data: { messageId: string; userId: string }) => {
+      try {
+        const { messageId, userId } = data;
+        const success = await storage.deleteChatroomMessage(messageId, userId);
+        
+        if (success) {
+          // Broadcast deletion to all users
+          io.emit("chatroom-message-deleted", { messageId });
+        }
+      } catch (error) {
+        console.error("Error deleting chatroom message:", error);
       }
     });
 

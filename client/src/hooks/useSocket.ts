@@ -8,9 +8,19 @@ interface UseSocketOptions {
   onChatroomMessageReceived?: (message: ChatroomMessage) => void;
   onUserStatus?: (data: { userId: string; status: string }) => void;
   onUserTyping?: (data: { senderId: string; isTyping: boolean }) => void;
+  onMessageDeleted?: (data: { messageId: string }) => void;
+  onChatroomMessageDeleted?: (data: { messageId: string }) => void;
 }
 
-export function useSocket({ userId, onMessageReceived, onChatroomMessageReceived, onUserStatus, onUserTyping }: UseSocketOptions) {
+export function useSocket({ 
+  userId, 
+  onMessageReceived, 
+  onChatroomMessageReceived, 
+  onUserStatus, 
+  onUserTyping,
+  onMessageDeleted,
+  onChatroomMessageDeleted
+}: UseSocketOptions) {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -54,10 +64,20 @@ export function useSocket({ userId, onMessageReceived, onChatroomMessageReceived
       onUserTyping?.(data);
     });
 
+    socket.on("message-deleted", (data: { messageId: string }) => {
+      console.log("Message deleted:", data);
+      onMessageDeleted?.(data);
+    });
+
+    socket.on("chatroom-message-deleted", (data: { messageId: string }) => {
+      console.log("Chatroom message deleted:", data);
+      onChatroomMessageDeleted?.(data);
+    });
+
     return () => {
       socket.disconnect();
     };
-  }, [userId, onMessageReceived, onChatroomMessageReceived, onUserStatus, onUserTyping]);
+  }, [userId, onMessageReceived, onChatroomMessageReceived, onUserStatus, onUserTyping, onMessageDeleted, onChatroomMessageDeleted]);
 
   const sendMessage = (recipientId: string, encryptedContent: string) => {
     if (socketRef.current && userId) {
@@ -88,10 +108,31 @@ export function useSocket({ userId, onMessageReceived, onChatroomMessageReceived
     }
   };
 
+  const deleteMessage = (messageId: string, recipientId: string) => {
+    if (socketRef.current && userId) {
+      socketRef.current.emit("delete-message", {
+        messageId,
+        userId,
+        recipientId,
+      });
+    }
+  };
+
+  const deleteChatroomMessage = (messageId: string) => {
+    if (socketRef.current && userId) {
+      socketRef.current.emit("delete-chatroom-message", {
+        messageId,
+        userId,
+      });
+    }
+  };
+
   return {
     isConnected,
     sendMessage,
     sendChatroomMessage,
     sendTypingIndicator,
+    deleteMessage,
+    deleteChatroomMessage,
   };
 }

@@ -10,7 +10,7 @@ import {
   type InsertChatroomMessage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, or, and, desc, ne } from "drizzle-orm";
+import { eq, or, and, desc, ne, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -22,10 +22,12 @@ export interface IStorage {
   createMessage(message: InsertMessage & { senderId: string }): Promise<Message>;
   getMessagesBetweenUsers(userId1: string, userId2: string): Promise<Message[]>;
   getAllUserChats(userId: string): Promise<Array<{ otherUser: User; lastMessage: Message }>>;
+  deleteMessage(messageId: string, userId: string): Promise<boolean>;
   
   // Chatroom operations
   createChatroomMessage(message: InsertChatroomMessage & { senderId: string }): Promise<ChatroomMessage>;
   getChatroomMessages(limit?: number): Promise<ChatroomMessage[]>;
+  deleteChatroomMessage(messageId: string, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -68,13 +70,30 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(messages)
       .where(
-        or(
-          and(eq(messages.senderId, userId1), eq(messages.recipientId, userId2)),
-          and(eq(messages.senderId, userId2), eq(messages.recipientId, userId1))
+        and(
+          or(
+            and(eq(messages.senderId, userId1), eq(messages.recipientId, userId2)),
+            and(eq(messages.senderId, userId2), eq(messages.recipientId, userId1))
+          ),
+          isNull(messages.deletedAt)
         )
       )
       .orderBy(messages.createdAt);
     return msgs;
+  }
+
+  async deleteMessage(messageId: string, userId: string): Promise<boolean> {
+    const result = await db
+      .update(messages)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(messages.id, messageId),
+          eq(messages.senderId, userId)
+        )
+      )
+      .returning();
+    return result.length > 0;
   }
 
   async getAllUserChats(userId: string): Promise<Array<{ otherUser: User; lastMessage: Message }>> {
@@ -124,11 +143,26 @@ export class DatabaseStorage implements IStorage {
     const msgs = await db
       .select()
       .from(chatroomMessages)
+      .where(isNull(chatroomMessages.deletedAt))
       .orderBy(desc(chatroomMessages.createdAt))
       .limit(limit);
     
     // Return in chronological order
     return msgs.reverse();
+  }
+
+  async deleteChatroomMessage(messageId: string, userId: string): Promise<boolean> {
+    const result = await db
+      .update(chatroomMessages)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(chatroomMessages.id, messageId),
+          eq(chatroomMessages.senderId, userId)
+        )
+      )
+      .returning();
+    return result.length > 0;
   }
 }
 

@@ -32,6 +32,7 @@ export const messages = pgTable("messages", {
   senderId: varchar("sender_id").notNull().references(() => users.id),
   recipientId: varchar("recipient_id").notNull().references(() => users.id),
   encryptedContent: text("encrypted_content").notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -40,6 +41,7 @@ export const chatroomMessages = pgTable("chatroom_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   senderId: varchar("sender_id").notNull().references(() => users.id),
   encryptedContent: text("encrypted_content").notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
