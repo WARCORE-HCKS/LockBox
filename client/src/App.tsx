@@ -8,6 +8,7 @@ import { Switch, Route, Redirect } from "wouter";
 import LandingPage from "./pages/LandingPage";
 import ChatPage from "./pages/ChatPage";
 import AdminPage from "./pages/AdminPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function AppContent() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -30,6 +31,9 @@ function AppContent() {
     <Switch>
       <Route path="/">
         <ChatPage />
+      </Route>
+      <Route path="/profile">
+        <ProfilePage />
       </Route>
       <Route path="/admin">
         {user?.isAdmin ? <AdminPage /> : <Redirect to="/" />}

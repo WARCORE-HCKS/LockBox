@@ -6,6 +6,18 @@ LockBox is a real-time messaging application built for private communication bet
 **Important**: This is a demonstration/MVP with simplified encryption. It provides encrypted storage and transit but does NOT implement true end-to-end encryption. See "Encryption Model" section below for details.
 
 ## Recent Changes (November 2025)
+- **User Profile Management**: New profile page for users to manage their account
+  - View and edit first name and last name
+  - Display email address (read-only, managed by Replit Auth)
+  - Show account creation date and admin status
+  - Profile route at /profile with navigation link in ChatPage sidebar
+  - Server-side validation with updateUserProfileSchema
+  - Form pre-population with useEffect for better UX
+  - Changes reflect immediately throughout the app (sidebar, chat headers, etc.)
+  - PATCH /api/profile endpoint with authentication and validation
+- **Code Cleanup**: Removed unused LoginPage.tsx component (dead code)
+- **Dark Mode Verification**: Confirmed theme persistence works across all pages
+- **Comprehensive Testing**: All features tested and verified working correctly
 - **Admin Control Panel**: Comprehensive admin interface for platform management
   - User management: view all users, promote to admin, soft-delete accounts
   - Chatroom management: create, update, delete chatrooms (multi-room support)
@@ -24,8 +36,9 @@ LockBox is a real-time messaging application built for private communication bet
 - **Friend List Improvements**: Fixed test-id uniqueness to use user IDs instead of names
 
 ## Previous Changes
-- **Database Schema**: Added users, messages, chatroom_messages, and sessions tables with proper relationships
+- **Database Schema**: Added users (with profile fields), messages, chatroom_messages, chatrooms, and sessions tables with proper relationships
 - **Authentication**: Integrated Replit Auth for secure user authentication with Google, GitHub, and email
+- **User Profile Management**: Added profile editing functionality with validation
 - **Real-Time Messaging**: Implemented Socket.io for instant message delivery
 - **Chatroom Feature**: Added public chatroom with persistent message history
 - **Message Encryption**: Added client-side AES encryption for message storage and transit
@@ -106,6 +119,7 @@ A production-ready secure messenger should implement:
 - **Pages**:
   - LandingPage: Login page for unauthenticated users
   - ChatPage: Main chat interface with friend list and messaging
+  - ProfilePage: User profile management (view/edit name, view email and join date)
   - AdminPage: Admin control panel for user/chatroom management (admin-only)
 - **Hooks**:
   - useAuth: Authentication state management
@@ -135,14 +149,15 @@ A production-ready secure messenger should implement:
 
 ## Features
 - ✅ Real-time messaging with Socket.io
-- ✅ User authentication via Replit Auth
+- ✅ User authentication via Replit Auth (with logout functionality)
+- ✅ User profile management (edit name, view account details)
 - ✅ Message encryption (client-side AES)
 - ✅ Message deletion (soft deletion with real-time broadcasts)
 - ✅ Multiple chatrooms with persistent history
 - ✅ Private 1-on-1 messaging
 - ✅ Online/offline status indicators
 - ✅ Message history persistence
-- ✅ Dark mode support
+- ✅ Dark mode support (persists across all pages)
 - ✅ Responsive design
 - ✅ Friend discovery (all registered users)
 - ✅ Session-based Socket.IO authentication

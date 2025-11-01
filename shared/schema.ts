@@ -119,3 +119,10 @@ export const insertChatroomMessageSchema = createInsertSchema(chatroomMessages).
 
 export type InsertChatroomMessage = z.infer<typeof insertChatroomMessageSchema>;
 export type ChatroomMessage = typeof chatroomMessages.$inferSelect;
+
+export const updateUserProfileSchema = z.object({
+  firstName: z.string().min(1, "First name is required").max(50),
+  lastName: z.string().min(1, "Last name is required").max(50),
+});
+
+export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;

@@ -11,6 +11,7 @@ import {
   type InsertChatroomMessage,
   type Chatroom,
   type InsertChatroom,
+  type UpdateUserProfile,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, and, desc, ne, isNull } from "drizzle-orm";
@@ -20,6 +21,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  updateUserProfile(userId: string, profile: UpdateUserProfile): Promise<User | undefined>;
   
   // Message operations
   createMessage(message: InsertMessage & { senderId: string }): Promise<Message>;
@@ -65,6 +67,18 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).where(isNull(users.deletedAt));
+  }
+
+  async updateUserProfile(userId: string, profile: UpdateUserProfile): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...profile,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
   }
 
   // Message operations
