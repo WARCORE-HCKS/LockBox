@@ -86,11 +86,15 @@ git push -u origin main
 ## 🎨 Customization Tips
 
 ### Logo
-The generated logo is at: `attached_assets/generated_images/LockBox_messenger_logo_design_02d3585f.png`
+The logo files use your app's LockIcon design:
+- `attached_assets/logo-dark.svg` - Dark mode version (gradient lock icon)
+- `attached_assets/logo-light.svg` - Light mode version
+
+The README automatically switches between them based on GitHub theme preference!
 
 If you want to customize it:
-- You can edit it in image editing software
-- Or generate a new one and update the path in README.md
+- Edit the SVG files directly (they're text-based)
+- Or create new versions and update the paths in README.md
 
 ### Badges
 The README includes badges for:

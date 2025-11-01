@@ -1,6 +1,10 @@
 <div align="center">
 
-![LockBox Logo](attached_assets/generated_images/LockBox_messenger_logo_design_02d3585f.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="attached_assets/logo-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="attached_assets/logo-light.svg">
+  <img alt="LockBox Logo" src="attached_assets/logo-dark.svg" width="200">
+</picture>
 
 # 🔐 LockBox
 
