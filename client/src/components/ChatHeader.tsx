@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Lock, MoreVertical, Phone, Video } from "lucide-react";
+import { MoreVertical, Phone, Video } from "lucide-react";
 import UserAvatar from "./UserAvatar";
 import {
   DropdownMenu,
@@ -19,6 +19,12 @@ interface ChatHeaderProps {
   onSettings?: () => void;
 }
 
+const statusLabels = {
+  online: "Online",
+  away: "Away",
+  offline: "Offline",
+};
+
 export default function ChatHeader({ friend, onVoiceCall, onVideoCall, onSettings }: ChatHeaderProps) {
   return (
     <header className="h-16 border-b bg-background px-6 flex items-center justify-between gap-4">
@@ -28,9 +34,8 @@ export default function ChatHeader({ friend, onVoiceCall, onVideoCall, onSetting
           <h2 className="font-semibold text-base" data-testid="text-friend-name">
             {friend.name}
           </h2>
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Lock className="h-3 w-3" />
-            <span>End-to-end encrypted</span>
+          <p className="text-xs text-muted-foreground">
+            {statusLabels[friend.status]}
           </p>
         </div>
       </div>

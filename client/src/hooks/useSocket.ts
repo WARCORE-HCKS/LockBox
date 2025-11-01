@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
-import type { Message } from "@shared/schema";
+import type { Message, ChatroomMessage } from "@shared/schema";
 
 interface UseSocketOptions {
   userId?: string;
   onMessageReceived?: (message: Message) => void;
+  onChatroomMessageReceived?: (message: ChatroomMessage) => void;
   onUserStatus?: (data: { userId: string; status: string }) => void;
   onUserTyping?: (data: { senderId: string; isTyping: boolean }) => void;
 }
 
-export function useSocket({ userId, onMessageReceived, onUserStatus, onUserTyping }: UseSocketOptions) {
+export function useSocket({ userId, onMessageReceived, onChatroomMessageReceived, onUserStatus, onUserTyping }: UseSocketOptions) {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -40,6 +41,11 @@ export function useSocket({ userId, onMessageReceived, onUserStatus, onUserTypin
       onMessageReceived?.(message);
     });
 
+    socket.on("receive-chatroom-message", (message: ChatroomMessage) => {
+      console.log("Chatroom message received:", message);
+      onChatroomMessageReceived?.(message);
+    });
+
     socket.on("user-status", (data: { userId: string; status: string }) => {
       onUserStatus?.(data);
     });
@@ -51,12 +57,21 @@ export function useSocket({ userId, onMessageReceived, onUserStatus, onUserTypin
     return () => {
       socket.disconnect();
     };
-  }, [userId, onMessageReceived, onUserStatus, onUserTyping]);
+  }, [userId, onMessageReceived, onChatroomMessageReceived, onUserStatus, onUserTyping]);
 
   const sendMessage = (recipientId: string, encryptedContent: string) => {
     if (socketRef.current && userId) {
       socketRef.current.emit("send-message", {
         recipientId,
+        encryptedContent,
+        senderId: userId,
+      });
+    }
+  };
+
+  const sendChatroomMessage = (encryptedContent: string) => {
+    if (socketRef.current && userId) {
+      socketRef.current.emit("send-chatroom-message", {
         encryptedContent,
         senderId: userId,
       });
@@ -76,6 +91,7 @@ export function useSocket({ userId, onMessageReceived, onUserStatus, onUserTypin
   return {
     isConnected,
     sendMessage,
+    sendChatroomMessage,
     sendTypingIndicator,
   };
 }

@@ -35,10 +35,19 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Chatroom messages table - public group chat with encrypted content
+export const chatroomMessages = pgTable("chatroom_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  encryptedContent: text("encrypted_content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   sentMessages: many(messages, { relationName: "sender" }),
   receivedMessages: many(messages, { relationName: "recipient" }),
+  chatroomMessages: many(chatroomMessages),
 }));
 
 export const messagesRelations = relations(messages, ({ one }) => ({
@@ -54,6 +63,13 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
 }));
 
+export const chatroomMessagesRelations = relations(chatroomMessages, ({ one }) => ({
+  sender: one(users, {
+    fields: [chatroomMessages.senderId],
+    references: [users.id],
+  }),
+}));
+
 // Types and schemas
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -65,3 +81,10 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
 
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
+
+export const insertChatroomMessageSchema = createInsertSchema(chatroomMessages).pick({
+  encryptedContent: true,
+});
+
+export type InsertChatroomMessage = z.infer<typeof insertChatroomMessageSchema>;
+export type ChatroomMessage = typeof chatroomMessages.$inferSelect;

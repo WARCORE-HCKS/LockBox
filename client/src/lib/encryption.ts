@@ -1,51 +1,40 @@
 import CryptoJS from "crypto-js";
 
-// Per-user encryption key stored in localStorage
-// NOTE: This is a simplified encryption model for demonstration purposes
-// In a production app, you would use:
-// - Asymmetric encryption (public/private key pairs)
-// - Key exchange protocols (Diffie-Hellman, Signal Protocol, etc.)
-// - Hardware security modules or secure enclaves for key storage
+// Simplified encryption for demonstration purposes
+// NOTE: This is NOT a secure end-to-end encryption implementation
+// 
+// Current approach uses shared keys for both private and chatroom messages:
+// - CHATROOM_KEY: Shared key for all chatroom messages
+// - PRIVATE_MESSAGE_KEY: Shared key for all private messages
 //
-// Current limitations:
-// - Keys are stored in browser localStorage (vulnerable to XSS)
-// - No key rotation or recovery mechanism
-// - Server operator could theoretically inject code to capture keys
+// This means:
+// - All users can decrypt all messages (not true E2E encryption)
+// - Keys are visible in client source code
+// - Server operator or anyone inspecting the code can decrypt messages
 //
-// This implementation ensures:
-// - Each user has their own unique encryption key
-// - Messages are encrypted before leaving the client
-// - Messages are stored and transmitted only in encrypted form
-// - Users without the key cannot decrypt messages
+// For production, you would need:
+// - Asymmetric encryption (RSA, Curve25519)
+// - Key exchange protocol (Diffie-Hellman, Signal Protocol)
+// - Per-conversation keys encrypted for each participant
+// - Hardware-backed key storage
+// - Key rotation and perfect forward secrecy
 
-const KEY_STORAGE_KEY = "securechat_encryption_key";
+const CHATROOM_KEY = "securechat_shared_chatroom_key_v1";
+const PRIVATE_MESSAGE_KEY = "securechat_shared_private_key_v1";
 
-function getUserEncryptionKey(): string {
-  let key = localStorage.getItem(KEY_STORAGE_KEY);
-  
-  if (!key) {
-    // Generate a new random encryption key for this user
-    key = CryptoJS.lib.WordArray.random(256/8).toString();
-    localStorage.setItem(KEY_STORAGE_KEY, key);
-  }
-  
-  return key;
-}
-
-export function encryptMessage(message: string): string {
-  const key = getUserEncryptionKey();
+export function encryptMessage(message: string, useChatroomKey: boolean = false): string {
+  const key = useChatroomKey ? CHATROOM_KEY : PRIVATE_MESSAGE_KEY;
   return CryptoJS.AES.encrypt(message, key).toString();
 }
 
-export function decryptMessage(encryptedMessage: string): string {
+export function decryptMessage(encryptedMessage: string, useChatroomKey: boolean = false): string {
   try {
-    const key = getUserEncryptionKey();
+    const key = useChatroomKey ? CHATROOM_KEY : PRIVATE_MESSAGE_KEY;
     const bytes = CryptoJS.AES.decrypt(encryptedMessage, key);
     const decrypted = bytes.toString(CryptoJS.enc.Utf8);
     
     if (!decrypted) {
-      // If decryption fails (wrong key), return indicator
-      return "[Unable to decrypt - different encryption key]";
+      return "[Unable to decrypt - invalid encrypted content]";
     }
     
     return decrypted;
@@ -56,9 +45,5 @@ export function decryptMessage(encryptedMessage: string): string {
 }
 
 export function exportEncryptionKey(): string {
-  return getUserEncryptionKey();
-}
-
-export function importEncryptionKey(key: string): void {
-  localStorage.setItem(KEY_STORAGE_KEY, key);
+  return PRIVATE_MESSAGE_KEY;
 }

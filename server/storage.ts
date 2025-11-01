@@ -1,10 +1,13 @@
 import {
   users,
   messages,
+  chatroomMessages,
   type User,
   type UpsertUser,
   type Message,
   type InsertMessage,
+  type ChatroomMessage,
+  type InsertChatroomMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, and, desc, ne } from "drizzle-orm";
@@ -19,6 +22,10 @@ export interface IStorage {
   createMessage(message: InsertMessage & { senderId: string }): Promise<Message>;
   getMessagesBetweenUsers(userId1: string, userId2: string): Promise<Message[]>;
   getAllUserChats(userId: string): Promise<Array<{ otherUser: User; lastMessage: Message }>>;
+  
+  // Chatroom operations
+  createChatroomMessage(message: InsertChatroomMessage & { senderId: string }): Promise<ChatroomMessage>;
+  getChatroomMessages(limit?: number): Promise<ChatroomMessage[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -102,6 +109,26 @@ export class DatabaseStorage implements IStorage {
     }
 
     return result;
+  }
+
+  // Chatroom operations
+  async createChatroomMessage(messageData: InsertChatroomMessage & { senderId: string }): Promise<ChatroomMessage> {
+    const [message] = await db
+      .insert(chatroomMessages)
+      .values(messageData)
+      .returning();
+    return message;
+  }
+
+  async getChatroomMessages(limit: number = 100): Promise<ChatroomMessage[]> {
+    const msgs = await db
+      .select()
+      .from(chatroomMessages)
+      .orderBy(desc(chatroomMessages.createdAt))
+      .limit(limit);
+    
+    // Return in chronological order
+    return msgs.reverse();
   }
 }
 

@@ -1,46 +1,77 @@
-# SecureChat - Encrypted Messenger
+# SecureChat - Encrypted Messenger (Demo/MVP)
 
 ## Overview
-SecureChat is a real-time messaging application built for private communication between friends. The app features secure authentication via Replit Auth, WebSocket-based real-time messaging, and message encryption.
+SecureChat is a real-time messaging application built for private communication between friends. The app features secure authentication via Replit Auth, WebSocket-based real-time messaging, and encrypted message storage. 
+
+**Important**: This is a demonstration/MVP with simplified encryption. It provides encrypted storage and transit but does NOT implement true end-to-end encryption. See "Encryption Model" section below for details.
 
 ## Recent Changes
-- **Database Schema**: Added users, messages, and sessions tables with proper relationships
+- **Database Schema**: Added users, messages, chatroom_messages, and sessions tables with proper relationships
 - **Authentication**: Integrated Replit Auth for secure user authentication with Google, GitHub, and email
 - **Real-Time Messaging**: Implemented Socket.io for instant message delivery
-- **Message Encryption**: Added client-side AES encryption for all messages
-- **Frontend**: Built complete chat interface with friend list, message history, and real-time updates
-- **Security Improvements**: 
-  - Removed plaintext message storage - only encrypted content is stored
-  - Per-user encryption keys stored in browser localStorage
-  - Messages encrypted before transmission and decrypted on client
+- **Chatroom Feature**: Added public chatroom with persistent message history
+- **Message Encryption**: Added client-side AES encryption for message storage and transit
+- **Frontend**: Built complete chat interface with chatroom, friend list, message history, and real-time updates
+- **Storage Model**: 
+  - Messages stored in database in encrypted form only (no plaintext storage)
+  - Messages transmitted over network in encrypted form
+  - Shared encryption keys used for demo purposes (NOT production-ready security)
 
 ## Encryption Model
 
 ### Current Implementation
-The app uses **client-side AES encryption** with per-user keys:
-- Each user gets a unique encryption key generated on first use
-- Keys are stored in browser localStorage
-- Messages are encrypted before leaving the client
-- Server only stores and transmits encrypted content
-- Messages can only be decrypted by users with the correct key
+The app uses **client-side AES encryption** with shared keys for demonstration purposes:
+
+**Private Messages:**
+- Uses a shared static key (`PRIVATE_MESSAGE_KEY`) hardcoded in client source
+- All users can decrypt all private messages
+- Provides basic obfuscation in storage/transit but not true end-to-end security
+- Messages stored and transmitted only in encrypted form
+
+**Chatroom Messages:**
+- Uses a shared static key (`CHATROOM_KEY`) hardcoded in client source  
+- All users can decrypt all chatroom messages
+- Provides basic obfuscation but not true end-to-end security
+- Messages stored and transmitted only in encrypted form
 
 ### Limitations
 This is a **simplified encryption model** suitable for a demo/MVP but NOT production-ready:
 
-1. **Key Storage**: Keys in localStorage are vulnerable to XSS attacks
-2. **No Key Exchange**: Users cannot securely share keys to decrypt each other's messages (currently each user can only decrypt their own sent messages)
-3. **No Key Rotation**: Keys never expire or rotate
-4. **No Recovery**: Lost keys mean lost message access
-5. **Server Trust**: Server operator could inject code to capture keys
+1. **Shared Keys**: Both private and chatroom messages use shared static keys hardcoded in client source
+2. **No True E2E**: Any user or server operator can decrypt all messages by inspecting client code
+3. **Key Visibility**: Encryption keys are visible to anyone with access to the source code
+4. **No Key Rotation**: Keys never expire or rotate
+5. **No Per-User Security**: No distinction between users' ability to decrypt messages
+6. **Server Trust**: Server operator could inject code to capture plaintext before encryption
 
 ### For Production Use
 A production-ready secure messenger should implement:
+
+**For Private Messages:**
 - **Asymmetric Encryption**: Public/private key pairs (RSA, Curve25519)
 - **Key Exchange Protocol**: Diffie-Hellman or Signal Protocol for secure key sharing
 - **Perfect Forward Secrecy**: Ephemeral keys that are destroyed after use
+- **Identity Verification**: Public key fingerprints and safety numbers
+
+**For Group Chat/Chatroom:**
+- **Group Key Management**: Sender keys or tree-based key distribution (Signal's Sender Keys, MLS protocol)
+- **Member Changes**: Re-key when members join/leave for forward/backward secrecy
+- **Per-Room Keys**: Unique keys for each chatroom, encrypted separately for each member
+
+**General:**
 - **Secure Key Storage**: Hardware security modules or secure enclaves
 - **Key Backup**: Encrypted cloud backup with recovery mechanisms
-- **Identity Verification**: Public key fingerprints and safety numbers
+- **Audit Logs**: Track key rotations and member changes
+
+## What This App Provides
+
+✅ **Encrypted Storage**: Messages stored in database in encrypted form  
+✅ **Encrypted Transit**: Messages sent over network in encrypted form  
+✅ **Authentication**: Only authenticated users can access messages  
+✅ **Real-Time Delivery**: Instant message delivery via WebSocket  
+✅ **Persistent History**: Messages saved and retrievable  
+
+❌ **NOT True End-to-End Encryption**: All users share the same encryption keys, so any user or server operator with access to the source code can decrypt all messages. See "Encryption Model" for details.
 
 ## Project Architecture
 
@@ -76,6 +107,8 @@ A production-ready secure messenger should implement:
 - ✅ Real-time messaging with Socket.io
 - ✅ User authentication via Replit Auth
 - ✅ Message encryption (client-side AES)
+- ✅ Public chatroom for group conversations
+- ✅ Private 1-on-1 messaging
 - ✅ Online/offline status indicators
 - ✅ Message history persistence
 - ✅ Dark mode support
@@ -83,12 +116,15 @@ A production-ready secure messenger should implement:
 - ✅ Friend discovery (all registered users)
 
 ## Known Limitations
-1. **Encryption**: Simplified model - not suitable for production security requirements
-2. **Group Chats**: Currently only 1-on-1 messaging supported
-3. **File Sharing**: No support for images or file attachments
-4. **Read Receipts**: Not implemented
-5. **Message Editing**: Cannot edit or delete sent messages
-6. **Voice/Video Calls**: UI buttons present but not functional
+1. **Encryption**: Simplified model - NOT suitable for production security requirements
+   - All messages (private + chatroom) use shared hardcoded keys
+   - Any user can technically decrypt any message
+   - Encryption provides obfuscation, not true end-to-end security
+2. **File Sharing**: No support for images or file attachments
+3. **Read Receipts**: Not implemented
+4. **Message Editing**: Cannot edit or delete sent messages
+5. **Voice/Video Calls**: UI buttons present but not functional
+6. **Multiple Chatrooms**: Currently only one global chatroom
 
 ## User Preferences
 - Dark mode support with localStorage persistence

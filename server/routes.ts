@@ -59,6 +59,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get chatroom messages (returns encrypted messages)
+  app.get("/api/chatroom/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+      const messages = await storage.getChatroomMessages(limit);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching chatroom messages:", error);
+      res.status(500).json({ message: "Failed to fetch chatroom messages" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Socket.io setup for real-time messaging
@@ -119,6 +131,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           senderId: data.senderId,
           isTyping: data.isTyping,
         });
+      }
+    });
+
+    // Handle chatroom message
+    socket.on("send-chatroom-message", async (data: { encryptedContent: string; senderId: string }) => {
+      try {
+        const { encryptedContent, senderId } = data;
+
+        // Save encrypted message to database
+        const message = await storage.createChatroomMessage({
+          senderId,
+          encryptedContent,
+        });
+
+        // Broadcast to all connected users
+        io.emit("receive-chatroom-message", message);
+      } catch (error) {
+        console.error("Error sending chatroom message:", error);
+        socket.emit("chatroom-message-error", { error: "Failed to send chatroom message" });
       }
     });
 
