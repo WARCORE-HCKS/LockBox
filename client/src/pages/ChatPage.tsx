@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Search, LogOut, Menu, Users } from "lucide-react";
+import { Search, LogOut, Menu, Users, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FriendListItem from "@/components/FriendListItem";
 import MessageBubble from "@/components/MessageBubble";
@@ -311,6 +312,20 @@ export default function ChatPage() {
               </Button>
             </div>
           </div>
+          
+          {currentUser.isAdmin && (
+            <Link href="/admin">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-2"
+                data-testid="button-admin-panel"
+              >
+                <Shield className="h-4 w-4" />
+                Admin Panel
+              </Button>
+            </Link>
+          )}
+          
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input

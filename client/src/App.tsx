@@ -4,11 +4,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
+import { Switch, Route, Redirect } from "wouter";
 import LandingPage from "./pages/LandingPage";
 import ChatPage from "./pages/ChatPage";
+import AdminPage from "./pages/AdminPage";
 
 function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -18,7 +20,25 @@ function AppContent() {
     );
   }
 
-  return !isAuthenticated ? <LandingPage /> : <ChatPage />;
+  // If not authenticated, show landing page
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
+
+  // Protected routes for authenticated users
+  return (
+    <Switch>
+      <Route path="/">
+        <ChatPage />
+      </Route>
+      <Route path="/admin">
+        {user?.isAdmin ? <AdminPage /> : <Redirect to="/" />}
+      </Route>
+      <Route>
+        <Redirect to="/" />
+      </Route>
+    </Switch>
+  );
 }
 
 function App() {

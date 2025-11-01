@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, index, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, index, jsonb, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -22,6 +22,8 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  isAdmin: boolean("is_admin").default(false).notNull(),
+  deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -36,9 +38,19 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Chatrooms table - manage multiple chatrooms
+export const chatrooms = pgTable("chatrooms", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Chatroom messages table - public group chat with encrypted content
 export const chatroomMessages = pgTable("chatroom_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  chatroomId: varchar("chatroom_id").notNull().references(() => chatrooms.id, { onDelete: "cascade" }),
   senderId: varchar("sender_id").notNull().references(() => users.id),
   encryptedContent: text("encrypted_content").notNull(),
   deletedAt: timestamp("deleted_at"),
@@ -65,10 +77,18 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
 }));
 
+export const chatroomsRelations = relations(chatrooms, ({ many }) => ({
+  messages: many(chatroomMessages),
+}));
+
 export const chatroomMessagesRelations = relations(chatroomMessages, ({ one }) => ({
   sender: one(users, {
     fields: [chatroomMessages.senderId],
     references: [users.id],
+  }),
+  chatroom: one(chatrooms, {
+    fields: [chatroomMessages.chatroomId],
+    references: [chatrooms.id],
   }),
 }));
 
@@ -84,7 +104,16 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
 
+export const insertChatroomSchema = createInsertSchema(chatrooms).pick({
+  name: true,
+  description: true,
+});
+
+export type InsertChatroom = z.infer<typeof insertChatroomSchema>;
+export type Chatroom = typeof chatrooms.$inferSelect;
+
 export const insertChatroomMessageSchema = createInsertSchema(chatroomMessages).pick({
+  chatroomId: true,
   encryptedContent: true,
 });
 

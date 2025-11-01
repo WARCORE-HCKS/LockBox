@@ -2,12 +2,15 @@ import {
   users,
   messages,
   chatroomMessages,
+  chatrooms,
   type User,
   type UpsertUser,
   type Message,
   type InsertMessage,
   type ChatroomMessage,
   type InsertChatroomMessage,
+  type Chatroom,
+  type InsertChatroom,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, and, desc, ne, isNull } from "drizzle-orm";
@@ -26,8 +29,16 @@ export interface IStorage {
   
   // Chatroom operations
   createChatroomMessage(message: InsertChatroomMessage & { senderId: string }): Promise<ChatroomMessage>;
-  getChatroomMessages(limit?: number): Promise<ChatroomMessage[]>;
+  getChatroomMessages(chatroomId: string, limit?: number): Promise<ChatroomMessage[]>;
   deleteChatroomMessage(messageId: string, userId: string): Promise<boolean>;
+  
+  // Admin operations
+  updateUserAdminStatus(userId: string, isAdmin: boolean): Promise<User | undefined>;
+  deleteUser(userId: string): Promise<boolean>;
+  getAllChatrooms(): Promise<Chatroom[]>;
+  createChatroom(chatroom: InsertChatroom): Promise<Chatroom>;
+  updateChatroom(id: string, chatroom: Partial<InsertChatroom>): Promise<Chatroom | undefined>;
+  deleteChatroom(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -53,7 +64,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    return await db.select().from(users).where(isNull(users.deletedAt));
   }
 
   // Message operations
@@ -142,11 +153,16 @@ export class DatabaseStorage implements IStorage {
     return message;
   }
 
-  async getChatroomMessages(limit: number = 100): Promise<ChatroomMessage[]> {
+  async getChatroomMessages(chatroomId: string, limit: number = 100): Promise<ChatroomMessage[]> {
     const msgs = await db
       .select()
       .from(chatroomMessages)
-      .where(isNull(chatroomMessages.deletedAt))
+      .where(
+        and(
+          eq(chatroomMessages.chatroomId, chatroomId),
+          isNull(chatroomMessages.deletedAt)
+        )
+      )
       .orderBy(desc(chatroomMessages.createdAt))
       .limit(limit);
     
@@ -164,6 +180,55 @@ export class DatabaseStorage implements IStorage {
           eq(chatroomMessages.senderId, userId)
         )
       )
+      .returning();
+    return result.length > 0;
+  }
+
+  // Admin operations
+  async updateUserAdminStatus(userId: string, isAdmin: boolean): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ isAdmin, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    // Soft delete user to preserve message history and FK integrity
+    const result = await db
+      .update(users)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getAllChatrooms(): Promise<Chatroom[]> {
+    return await db.select().from(chatrooms).orderBy(chatrooms.createdAt);
+  }
+
+  async createChatroom(chatroomData: InsertChatroom): Promise<Chatroom> {
+    const [chatroom] = await db
+      .insert(chatrooms)
+      .values(chatroomData)
+      .returning();
+    return chatroom;
+  }
+
+  async updateChatroom(id: string, chatroomData: Partial<InsertChatroom>): Promise<Chatroom | undefined> {
+    const [chatroom] = await db
+      .update(chatrooms)
+      .set({ ...chatroomData, updatedAt: new Date() })
+      .where(eq(chatrooms.id, id))
+      .returning();
+    return chatroom;
+  }
+
+  async deleteChatroom(id: string): Promise<boolean> {
+    const result = await db
+      .delete(chatrooms)
+      .where(eq(chatrooms.id, id))
       .returning();
     return result.length > 0;
   }

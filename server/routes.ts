@@ -1,8 +1,28 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, getSession } from "./replitAuth";
+
+// Admin middleware
+const isAdmin = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    const user = await storage.getUser(userId);
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({ message: "Forbidden: Admin access required" });
+    }
+    
+    next();
+  } catch (error) {
+    console.error("Admin middleware error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -62,8 +82,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get chatroom messages (returns encrypted messages)
   app.get("/api/chatroom/messages", isAuthenticated, async (req: any, res) => {
     try {
+      const chatroomId = (req.query.chatroomId as string) || 'default-general';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
-      const messages = await storage.getChatroomMessages(limit);
+      const messages = await storage.getChatroomMessages(chatroomId, limit);
       res.json(messages);
     } catch (error) {
       console.error("Error fetching chatroom messages:", error);
@@ -104,6 +125,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting chatroom message:", error);
       res.status(500).json({ message: "Failed to delete chatroom message" });
+    }
+  });
+
+  // ========== ADMIN ROUTES ==========
+  
+  // Get all users (with admin status and online status)
+  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users for admin:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Update user admin status
+  app.patch("/api/admin/users/:userId/admin", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { isAdmin: adminStatus } = req.body;
+      
+      if (typeof adminStatus !== 'boolean') {
+        return res.status(400).json({ message: "Invalid admin status" });
+      }
+
+      const user = await storage.updateUserAdminStatus(userId, adminStatus);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user admin status:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Delete user
+  app.delete("/api/admin/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const currentUserId = req.user.claims.sub;
+      
+      // Prevent self-deletion
+      if (userId === currentUserId) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+
+      const success = await storage.deleteUser(userId);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Get all chatrooms
+  app.get("/api/admin/chatrooms", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const chatrooms = await storage.getAllChatrooms();
+      res.json(chatrooms);
+    } catch (error) {
+      console.error("Error fetching chatrooms:", error);
+      res.status(500).json({ message: "Failed to fetch chatrooms" });
+    }
+  });
+
+  // Create chatroom
+  app.post("/api/admin/chatrooms", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { name, description } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ message: "Chatroom name is required" });
+      }
+
+      const chatroom = await storage.createChatroom({ name, description });
+      res.json(chatroom);
+    } catch (error) {
+      console.error("Error creating chatroom:", error);
+      res.status(500).json({ message: "Failed to create chatroom" });
+    }
+  });
+
+  // Update chatroom
+  app.patch("/api/admin/chatrooms/:chatroomId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { chatroomId } = req.params;
+      const { name, description } = req.body;
+
+      const chatroom = await storage.updateChatroom(chatroomId, { name, description });
+      if (!chatroom) {
+        return res.status(404).json({ message: "Chatroom not found" });
+      }
+      
+      res.json(chatroom);
+    } catch (error) {
+      console.error("Error updating chatroom:", error);
+      res.status(500).json({ message: "Failed to update chatroom" });
+    }
+  });
+
+  // Delete chatroom
+  app.delete("/api/admin/chatrooms/:chatroomId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { chatroomId } = req.params;
+      
+      // Prevent deletion of default chatroom
+      if (chatroomId === 'default-general') {
+        return res.status(400).json({ message: "Cannot delete the default chatroom" });
+      }
+
+      const success = await storage.deleteChatroom(chatroomId);
+      if (!success) {
+        return res.status(404).json({ message: "Chatroom not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting chatroom:", error);
+      res.status(500).json({ message: "Failed to delete chatroom" });
     }
   });
 
@@ -195,15 +342,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Handle chatroom message
-    socket.on("send-chatroom-message", async (data: { encryptedContent: string }) => {
+    socket.on("send-chatroom-message", async (data: { encryptedContent: string; chatroomId?: string }) => {
       try {
         // Use authenticated user ID from socket data (ignore any client-provided senderId)
         const senderId = authenticatedUserId;
-        const { encryptedContent } = data;
+        const { encryptedContent, chatroomId = 'default-general' } = data;
 
         // Save encrypted message to database
         const message = await storage.createChatroomMessage({
           senderId,
+          chatroomId,
           encryptedContent,
         });
 
