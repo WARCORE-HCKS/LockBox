@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import ThemeToggle from "@/components/ThemeToggle";
-import logoUrl from "@assets/logo_1761963758892.png";
+import logoUrl from "@assets/lock_1761965384804.png";
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => void;
@@ -37,7 +37,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-3 text-center">
           <div className="mx-auto w-fit">
-            <img src={logoUrl} alt="LockBox Logo" className="h-16 w-auto mx-auto" />
+            <img 
+              src={logoUrl} 
+              alt="LockBox Logo" 
+              className="h-20 w-auto mx-auto" 
+              style={{ imageRendering: 'crisp-edges' }}
+            />
           </div>
           <CardTitle className="text-2xl">LockBox</CardTitle>
           <CardDescription>

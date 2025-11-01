@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
 import { encryptMessage, decryptMessage } from "@/lib/encryption";
 import type { User, Message, ChatroomMessage } from "@shared/schema";
-import logoUrl from "@assets/logo_1761963758892.png";
+import logoUrl from "@assets/lock_1761965384804.png";
 
 interface DecryptedMessage extends Omit<Message, 'encryptedContent'> {
   content: string;
@@ -281,7 +281,12 @@ export default function ChatPage() {
       >
         <div className="p-4 border-b space-y-4">
           <div className="flex items-center justify-center gap-2 pb-2">
-            <img src={logoUrl} alt="LockBox" className="h-7 w-auto" />
+            <img 
+              src={logoUrl} 
+              alt="LockBox" 
+              className="h-8 w-auto" 
+              style={{ imageRendering: 'crisp-edges' }}
+            />
             <h1 className="text-lg font-bold">LockBox</h1>
           </div>
           <div className="flex items-center justify-between gap-2">

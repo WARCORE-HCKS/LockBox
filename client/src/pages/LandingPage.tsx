@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Shield, Users } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-import logoUrl from "@assets/logo_1761963758892.png";
+import logoUrl from "@assets/lock_1761965384804.png";
 
 export default function LandingPage() {
   const handleLogin = () => {
@@ -19,7 +19,12 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="space-y-4">
             <div className="mx-auto w-fit">
-              <img src={logoUrl} alt="LockBox Logo" className="h-32 w-auto mx-auto" />
+              <img 
+                src={logoUrl} 
+                alt="LockBox Logo" 
+                className="h-40 w-auto mx-auto" 
+                style={{ imageRendering: 'crisp-edges' }}
+              />
             </div>
             <h1 className="text-4xl md:text-6xl font-bold">LockBox</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto italic">
