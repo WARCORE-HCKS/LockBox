@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Lock } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import logoUrl from "@assets/logo_1761963758892.png";
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => void;
@@ -36,10 +36,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       </div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto bg-primary text-primary-foreground rounded-full p-3 w-fit">
-            <Lock className="h-8 w-8" />
+          <div className="mx-auto w-fit">
+            <img src={logoUrl} alt="LockBox Logo" className="h-16 w-auto mx-auto" />
           </div>
-          <CardTitle className="text-2xl">SecureChat</CardTitle>
+          <CardTitle className="text-2xl">LockBox</CardTitle>
           <CardDescription>
             {isLogin
               ? "Sign in to your secure messenger"

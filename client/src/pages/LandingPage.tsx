@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock, MessageSquare, Shield, Users } from "lucide-react";
+import { MessageSquare, Shield, Users } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import logoUrl from "@assets/logo_1761963758892.png";
 
 export default function LandingPage() {
   const handleLogin = () => {
@@ -17,11 +18,14 @@ export default function LandingPage() {
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <div className="space-y-4">
-            <div className="mx-auto bg-primary text-primary-foreground rounded-full p-4 w-fit">
-              <Lock className="h-12 w-12" />
+            <div className="mx-auto w-fit">
+              <img src={logoUrl} alt="LockBox Logo" className="h-32 w-auto mx-auto" />
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold">SecureChat</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <h1 className="text-4xl md:text-6xl font-bold">LockBox</h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto italic">
+              Lock the gate, avoid the fate
+            </p>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Private, encrypted messaging for you and your friends. Your conversations stay between you.
             </p>
           </div>

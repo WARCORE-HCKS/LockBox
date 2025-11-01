@@ -1,7 +1,7 @@
-# SecureChat - Encrypted Messenger (Demo/MVP)
+# LockBox - Encrypted Messenger (Demo/MVP)
 
 ## Overview
-SecureChat is a real-time messaging application built for private communication between friends. The app features secure authentication via Replit Auth, WebSocket-based real-time messaging, and encrypted message storage. 
+LockBox is a real-time messaging application built for private communication between friends. Lock the gate, avoid the fate. The app features secure authentication via Replit Auth, WebSocket-based real-time messaging, and encrypted message storage. 
 
 **Important**: This is a demonstration/MVP with simplified encryption. It provides encrypted storage and transit but does NOT implement true end-to-end encryption. See "Encryption Model" section below for details.
 

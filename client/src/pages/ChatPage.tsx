@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
 import { encryptMessage, decryptMessage } from "@/lib/encryption";
 import type { User, Message, ChatroomMessage } from "@shared/schema";
+import logoUrl from "@assets/logo_1761963758892.png";
 
 interface DecryptedMessage extends Omit<Message, 'encryptedContent'> {
   content: string;
@@ -279,6 +280,10 @@ export default function ChatPage() {
         )}
       >
         <div className="p-4 border-b space-y-4">
+          <div className="flex items-center justify-center gap-2 pb-2">
+            <img src={logoUrl} alt="LockBox" className="h-7 w-auto" />
+            <h1 className="text-lg font-bold">LockBox</h1>
+          </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
               <UserAvatar 
