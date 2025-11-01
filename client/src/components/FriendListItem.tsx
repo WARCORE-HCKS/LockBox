@@ -14,6 +14,7 @@ interface FriendListItemProps {
 }
 
 export default function FriendListItem({
+  id,
   name,
   avatar,
   status,
@@ -30,7 +31,7 @@ export default function FriendListItem({
         isActive && "bg-sidebar-accent"
       )}
       onClick={onClick}
-      data-testid={`friend-item-${name.toLowerCase().replace(/\s+/g, "-")}`}
+      data-testid={`friend-item-${id}`}
     >
       <UserAvatar name={name} src={avatar} size="md" status={status} />
       <div className="flex-1 min-w-0 text-left">

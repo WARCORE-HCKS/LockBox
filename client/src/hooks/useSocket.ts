@@ -30,6 +30,7 @@ export function useSocket({
     // Initialize socket connection
     const socket = io({
       path: "/socket.io",
+      withCredentials: true, // Enable credentials to send session cookies
     });
 
     socketRef.current = socket;
@@ -37,8 +38,8 @@ export function useSocket({
     socket.on("connect", () => {
       console.log("Socket connected");
       setIsConnected(true);
-      // Register user with their ID
-      socket.emit("register", userId);
+      // Register user (userId is authenticated server-side from session)
+      socket.emit("register");
     });
 
     socket.on("disconnect", () => {
@@ -81,28 +82,28 @@ export function useSocket({
 
   const sendMessage = (recipientId: string, encryptedContent: string) => {
     if (socketRef.current && userId) {
+      // senderId is authenticated server-side from session, not sent from client
       socketRef.current.emit("send-message", {
         recipientId,
         encryptedContent,
-        senderId: userId,
       });
     }
   };
 
   const sendChatroomMessage = (encryptedContent: string) => {
     if (socketRef.current && userId) {
+      // senderId is authenticated server-side from session, not sent from client
       socketRef.current.emit("send-chatroom-message", {
         encryptedContent,
-        senderId: userId,
       });
     }
   };
 
   const sendTypingIndicator = (recipientId: string, isTyping: boolean) => {
     if (socketRef.current && userId) {
+      // senderId is authenticated server-side from session, not sent from client
       socketRef.current.emit("typing", {
         recipientId,
-        senderId: userId,
         isTyping,
       });
     }
@@ -110,9 +111,9 @@ export function useSocket({
 
   const deleteMessage = (messageId: string, recipientId: string) => {
     if (socketRef.current && userId) {
+      // userId is authenticated via socket session, not sent from client
       socketRef.current.emit("delete-message", {
         messageId,
-        userId,
         recipientId,
       });
     }
@@ -120,9 +121,9 @@ export function useSocket({
 
   const deleteChatroomMessage = (messageId: string) => {
     if (socketRef.current && userId) {
+      // userId is authenticated via socket session, not sent from client
       socketRef.current.emit("delete-chatroom-message", {
         messageId,
-        userId,
       });
     }
   };

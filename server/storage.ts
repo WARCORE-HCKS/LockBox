@@ -97,14 +97,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUserChats(userId: string): Promise<Array<{ otherUser: User; lastMessage: Message }>> {
-    // Get all messages where user is sender or recipient
+    // Get all non-deleted messages where user is sender or recipient
     const userMessages = await db
       .select()
       .from(messages)
       .where(
-        or(
-          eq(messages.senderId, userId),
-          eq(messages.recipientId, userId)
+        and(
+          or(
+            eq(messages.senderId, userId),
+            eq(messages.recipientId, userId)
+          ),
+          isNull(messages.deletedAt)
         )
       )
       .orderBy(desc(messages.createdAt));

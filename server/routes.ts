@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, getSession } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -112,19 +112,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Socket.io setup for real-time messaging
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: "*",
+      origin: true, // Allow credentials from any origin in development
+      credentials: true, // Enable credentials (cookies, auth headers)
       methods: ["GET", "POST"],
     },
   });
 
-  // Store user socket mappings
+  // Wrap session middleware for Socket.IO
+  const sessionMiddleware = getSession();
+  io.engine.use(sessionMiddleware);
+
+  // Socket.IO authentication middleware
+  io.use((socket, next) => {
+    const req = socket.request as any;
+    if (req.session?.passport?.user?.claims?.sub) {
+      // Store authenticated user ID in socket data
+      socket.data.userId = req.session.passport.user.claims.sub;
+      next();
+    } else {
+      next(new Error("Unauthorized socket connection"));
+    }
+  });
+
+  // Store user socket mappings (userId -> socketId)
   const userSockets = new Map<string, string>();
 
   io.on("connection", (socket) => {
-    console.log("New socket connection:", socket.id);
+    const authenticatedUserId = socket.data.userId;
+    console.log("New socket connection:", socket.id, "User:", authenticatedUserId);
 
-    // User authentication and registration
-    socket.on("register", (userId: string) => {
+    // User registration (now using authenticated userId from session)
+    socket.on("register", () => {
+      // Use authenticated user ID from socket session, ignore any client-provided ID
+      const userId = authenticatedUserId;
       userSockets.set(userId, socket.id);
       socket.join(userId);
       console.log(`User ${userId} registered with socket ${socket.id}`);
@@ -134,9 +154,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Handle sending encrypted messages
-    socket.on("send-message", async (data: { recipientId: string; encryptedContent: string; senderId: string }) => {
+    socket.on("send-message", async (data: { recipientId: string; encryptedContent: string }) => {
       try {
-        const { recipientId, encryptedContent, senderId } = data;
+        // Use authenticated user ID from socket data (ignore any client-provided senderId)
+        const senderId = authenticatedUserId;
+        const { recipientId, encryptedContent } = data;
 
         // Save encrypted message to database
         const message = await storage.createMessage({
@@ -160,20 +182,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Handle typing indicator
-    socket.on("typing", (data: { recipientId: string; senderId: string; isTyping: boolean }) => {
+    socket.on("typing", (data: { recipientId: string; isTyping: boolean }) => {
+      // Use authenticated user ID from socket data (ignore any client-provided senderId)
+      const senderId = authenticatedUserId;
       const recipientSocketId = userSockets.get(data.recipientId);
       if (recipientSocketId) {
         io.to(recipientSocketId).emit("user-typing", {
-          senderId: data.senderId,
+          senderId,
           isTyping: data.isTyping,
         });
       }
     });
 
     // Handle chatroom message
-    socket.on("send-chatroom-message", async (data: { encryptedContent: string; senderId: string }) => {
+    socket.on("send-chatroom-message", async (data: { encryptedContent: string }) => {
       try {
-        const { encryptedContent, senderId } = data;
+        // Use authenticated user ID from socket data (ignore any client-provided senderId)
+        const senderId = authenticatedUserId;
+        const { encryptedContent } = data;
 
         // Save encrypted message to database
         const message = await storage.createChatroomMessage({
@@ -190,9 +216,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Handle private message deletion
-    socket.on("delete-message", async (data: { messageId: string; userId: string; recipientId: string }) => {
+    socket.on("delete-message", async (data: { messageId: string; recipientId: string }) => {
       try {
-        const { messageId, userId, recipientId } = data;
+        // Use authenticated user ID from socket data (validated during connection)
+        const userId = authenticatedUserId;
+        const { messageId, recipientId } = data;
         const success = await storage.deleteMessage(messageId, userId);
         
         if (success) {
@@ -209,9 +237,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Handle chatroom message deletion
-    socket.on("delete-chatroom-message", async (data: { messageId: string; userId: string }) => {
+    socket.on("delete-chatroom-message", async (data: { messageId: string }) => {
       try {
-        const { messageId, userId } = data;
+        // Use authenticated user ID from socket data (validated during connection)
+        const userId = authenticatedUserId;
+        const { messageId } = data;
         const success = await storage.deleteChatroomMessage(messageId, userId);
         
         if (success) {
@@ -227,13 +257,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     socket.on("disconnect", () => {
       console.log("Socket disconnected:", socket.id);
       
-      // Find and remove user from mapping
-      for (const [userId, socketId] of Array.from(userSockets.entries())) {
-        if (socketId === socket.id) {
-          userSockets.delete(userId);
-          io.emit("user-status", { userId, status: "offline" });
-          break;
-        }
+      // Get user ID from socket data
+      const userId = authenticatedUserId;
+      if (userId) {
+        // Remove from user socket mapping
+        userSockets.delete(userId);
+        io.emit("user-status", { userId, status: "offline" });
       }
     });
   });
