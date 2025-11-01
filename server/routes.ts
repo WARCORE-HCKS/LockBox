@@ -141,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user admin status
+  // Update user admin status (used by admin UI)
   app.patch("/api/admin/users/:userId/admin", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
@@ -159,6 +159,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(user);
     } catch (error) {
       console.error("Error updating user admin status:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Update user (general endpoint for admin status - for testing/API use)
+  app.patch("/api/admin/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { isAdmin: adminStatus } = req.body;
+      
+      if (adminStatus !== undefined) {
+        if (typeof adminStatus !== 'boolean') {
+          return res.status(400).json({ message: "Invalid admin status" });
+        }
+
+        const user = await storage.updateUserAdminStatus(userId, adminStatus);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        
+        res.json(user);
+      } else {
+        return res.status(400).json({ message: "No valid fields to update" });
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
       res.status(500).json({ message: "Failed to update user" });
     }
   });
