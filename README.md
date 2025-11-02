@@ -48,7 +48,15 @@ LockBox is a modern, real-time messaging application built for private communica
 - 🌙 **Dark Mode** - Theme persistence across all pages
 - 📱 **Responsive Design** - Works on desktop and mobile
 - ⚡ **Session-based Security** - Secure WebSocket authentication
-- 👑 **Admin Panel** - User and chatroom management (admin-only)
+- 👑 **Admin Panel** - Comprehensive platform management (admin-only)
+
+### Admin Controls
+- 🚫 **User Bans** - Global ban system to restrict access
+- 👢 **Chatroom Kicks** - Remove users from specific chatrooms
+- 🧹 **Clear History** - Delete all messages in a chatroom
+- 📊 **Statistics** - View chatroom metrics (messages, active users, participants)
+- 👥 **User Management** - Promote to admin, soft-delete accounts
+- 🏛️ **Chatroom Management** - Create, update, and delete chatrooms
 
 ## 🛠️ Tech Stack
 
@@ -135,11 +143,13 @@ Clean, modern interface with friend list and real-time messaging:
 - Changes reflect immediately across the entire app
 
 ### Admin Panel
-For admin users only:
-- Manage all platform users
-- Create and configure chatrooms
-- Promote users to admin
-- Monitor online/offline status in real-time
+Comprehensive platform management for admin users:
+- **User Management**: Ban/unban users globally, promote to admin, soft-delete accounts
+- **Chatroom Management**: Create, update, and delete chatrooms with full control
+- **Moderation Tools**: Kick users from specific chatrooms, clear chat history
+- **Analytics**: View detailed statistics (total messages, active users, unique participants)
+- **Real-time Monitoring**: Track online/offline status of all users
+- **Access Control**: Global bans block all endpoints, room-specific kicks restrict chatroom access
 
 ## 🔐 Security Model
 
@@ -217,6 +227,7 @@ Contributions are welcome! Here's how you can help:
 - **Read Receipts**: Not implemented
 - **Message Editing**: Messages can only be deleted, not edited
 - **Voice/Video**: UI buttons present but not functional
+- **Hard Deletion**: Deleted messages and users remain in database with soft deletion timestamps
 
 ## 📝 License
 
