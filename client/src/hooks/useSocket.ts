@@ -90,11 +90,12 @@ export function useSocket({
     }
   };
 
-  const sendChatroomMessage = (encryptedContent: string) => {
+  const sendChatroomMessage = (encryptedContent: string, chatroomId?: string) => {
     if (socketRef.current && userId) {
       // senderId is authenticated server-side from session, not sent from client
       socketRef.current.emit("send-chatroom-message", {
         encryptedContent,
+        chatroomId, // Pass the chatroomId to the server
       });
     }
   };
@@ -119,11 +120,12 @@ export function useSocket({
     }
   };
 
-  const deleteChatroomMessage = (messageId: string) => {
+  const deleteChatroomMessage = (messageId: string, chatroomId?: string) => {
     if (socketRef.current && userId) {
       // userId is authenticated via socket session, not sent from client
       socketRef.current.emit("delete-chatroom-message", {
         messageId,
+        chatroomId, // Pass the chatroomId for context
       });
     }
   };

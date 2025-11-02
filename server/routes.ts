@@ -156,6 +156,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all chatrooms (for regular users to see available rooms)
+  app.get("/api/chatrooms", isAuthenticated, async (req: any, res) => {
+    try {
+      const chatrooms = await storage.getAllChatrooms();
+      res.json(chatrooms);
+    } catch (error) {
+      console.error("Error fetching chatrooms:", error);
+      res.status(500).json({ message: "Failed to fetch chatrooms" });
+    }
+  });
+
   // ========== ADMIN ROUTES ==========
   
   // Get all users (with admin status and online status)

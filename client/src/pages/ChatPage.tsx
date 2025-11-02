@@ -14,7 +14,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
 import { encryptMessage, decryptMessage } from "@/lib/encryption";
-import type { User, Message, ChatroomMessage } from "@shared/schema";
+import type { User, Message, ChatroomMessage, Chatroom } from "@shared/schema";
 import LockIcon from "@/components/LockIcon";
 
 interface DecryptedMessage extends Omit<Message, 'encryptedContent'> {
@@ -29,6 +29,7 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFriendId, setActiveFriendId] = useState<string | null>(null);
+  const [activeChatroomId, setActiveChatroomId] = useState<string | null>(null);
   const [isChatroomActive, setIsChatroomActive] = useState(false);
   const [messages, setMessages] = useState<DecryptedMessage[]>([]);
   const [chatroomMessages, setChatroomMessages] = useState<DecryptedChatroomMessage[]>([]);
@@ -44,6 +45,11 @@ export default function ChatPage() {
     queryKey: ["/api/users"],
   });
 
+  // Fetch all chatrooms
+  const { data: chatrooms = [] } = useQuery<Chatroom[]>({
+    queryKey: ["/api/chatrooms"],
+  });
+
   // Fetch encrypted messages for active friend
   const { data: chatMessages = [] } = useQuery<Message[]>({
     queryKey: ["/api/messages", activeFriendId],
@@ -52,8 +58,19 @@ export default function ChatPage() {
 
   // Fetch encrypted chatroom messages
   const { data: chatroomMessagesData = [] } = useQuery<ChatroomMessage[]>({
-    queryKey: ["/api/chatroom/messages"],
-    enabled: isChatroomActive,
+    queryKey: ["/api/chatroom/messages", activeChatroomId],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (activeChatroomId) {
+        params.append("chatroomId", activeChatroomId);
+      }
+      const response = await fetch(`/api/chatroom/messages?${params.toString()}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch chatroom messages");
+      return response.json();
+    },
+    enabled: isChatroomActive && !!activeChatroomId,
   });
 
   // Decrypt and load messages when chat changes
@@ -107,6 +124,11 @@ export default function ChatPage() {
   }, [activeFriendId, currentUser?.id, isChatroomActive]);
 
   const handleChatroomMessageReceived = useCallback((message: ChatroomMessage) => {
+    // Only add message if it's for the currently active chatroom
+    if (message.chatroomId !== activeChatroomId) {
+      return; // Ignore messages from other chatrooms
+    }
+
     const decryptedMessage: DecryptedChatroomMessage = {
       ...message,
       content: decryptMessage(message.encryptedContent, true), // Use chatroom key
@@ -121,7 +143,7 @@ export default function ChatPage() {
       }
       return [...prev, decryptedMessage];
     });
-  }, []);
+  }, [activeChatroomId]);
 
   const handleUserStatus = useCallback((data: { userId: string; status: string }) => {
     setUserStatuses((prev) => new Map(prev).set(data.userId, data.status as "online" | "offline"));
@@ -145,10 +167,10 @@ export default function ChatPage() {
   });
 
   const handleSendMessage = (content: string) => {
-    if (isChatroomActive && currentUser) {
+    if (isChatroomActive && currentUser && activeChatroomId) {
       // Send to chatroom with shared chatroom key
       const encryptedContent = encryptMessage(content, true);
-      sendChatroomMessage(encryptedContent);
+      sendChatroomMessage(encryptedContent, activeChatroomId);
       
       // Don't add optimistically - wait for server broadcast to avoid duplicates
       // The server will broadcast it back to all users including sender
@@ -179,8 +201,8 @@ export default function ChatPage() {
   };
 
   const handleDeleteChatroomMessage = (messageId: string) => {
-    if (currentUser) {
-      deleteChatroomMessage(messageId);
+    if (currentUser && activeChatroomId) {
+      deleteChatroomMessage(messageId, activeChatroomId);
       // Optimistically remove from UI
       setChatroomMessages((prev) => prev.filter(m => m.id !== messageId));
     }
@@ -190,7 +212,8 @@ export default function ChatPage() {
     window.location.href = "/api/logout";
   };
 
-  const handleSelectChatroom = () => {
+  const handleSelectChatroom = (chatroomId: string) => {
+    setActiveChatroomId(chatroomId);
     setIsChatroomActive(true);
     setActiveFriendId(null); // Clear active friend when entering chatroom
     setMessages([]); // Clear private messages
@@ -354,24 +377,33 @@ export default function ChatPage() {
 
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-1">
-            <div
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors hover-elevate",
-                isChatroomActive && "bg-accent"
-              )}
-              onClick={handleSelectChatroom}
-              data-testid="button-chatroom"
-            >
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="h-5 w-5 text-primary" />
+            {chatrooms.length > 0 ? (
+              chatrooms.map((chatroom) => (
+                <div
+                  key={chatroom.id}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors hover-elevate",
+                    isChatroomActive && activeChatroomId === chatroom.id && "bg-accent"
+                  )}
+                  onClick={() => handleSelectChatroom(chatroom.id)}
+                  data-testid={`button-chatroom-${chatroom.id}`}
+                >
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-sm">{chatroom.name}</h4>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {chatroom.description || "Group conversation"}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-sm text-muted-foreground">
+                No chatrooms available
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm">Chatroom</h4>
-                <p className="text-xs text-muted-foreground truncate">
-                  Group conversation
-                </p>
-              </div>
-            </div>
+            )}
 
             <div className="h-px bg-border my-2" />
 
@@ -411,7 +443,7 @@ export default function ChatPage() {
             </div>
             <ChatHeader
               friend={{
-                name: "Chatroom",
+                name: chatrooms.find(c => c.id === activeChatroomId)?.name || "Chatroom",
                 avatar: undefined,
                 status: "online",
               }}
