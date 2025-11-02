@@ -3,6 +3,7 @@ import {
   messages,
   chatroomMessages,
   chatrooms,
+  chatroomBans,
   type User,
   type UpsertUser,
   type Message,
@@ -12,9 +13,10 @@ import {
   type Chatroom,
   type InsertChatroom,
   type UpdateUserProfile,
+  type ChatroomBan,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, or, and, desc, ne, isNull } from "drizzle-orm";
+import { eq, or, and, desc, ne, isNull, count, countDistinct, sql as dsql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -41,6 +43,17 @@ export interface IStorage {
   createChatroom(chatroom: InsertChatroom): Promise<Chatroom>;
   updateChatroom(id: string, chatroom: Partial<InsertChatroom>): Promise<Chatroom | undefined>;
   deleteChatroom(id: string): Promise<boolean>;
+  banUser(userId: string): Promise<User | undefined>;
+  unbanUser(userId: string): Promise<User | undefined>;
+  kickUserFromChatroom(userId: string, chatroomId: string): Promise<ChatroomBan>;
+  unkickUserFromChatroom(userId: string, chatroomId: string): Promise<boolean>;
+  isUserBannedFromChatroom(userId: string, chatroomId: string): Promise<boolean>;
+  clearChatroomHistory(chatroomId: string): Promise<boolean>;
+  getChatroomStatistics(chatroomId: string): Promise<{
+    totalMessages: number;
+    activeUsers: number;
+    uniquePosters: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -245,6 +258,98 @@ export class DatabaseStorage implements IStorage {
       .where(eq(chatrooms.id, id))
       .returning();
     return result.length > 0;
+  }
+
+  async banUser(userId: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ isBanned: true, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async unbanUser(userId: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ isBanned: false, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async kickUserFromChatroom(userId: string, chatroomId: string): Promise<ChatroomBan> {
+    const [ban] = await db
+      .insert(chatroomBans)
+      .values({ userId, chatroomId })
+      .onConflictDoNothing()
+      .returning();
+    return ban;
+  }
+
+  async unkickUserFromChatroom(userId: string, chatroomId: string): Promise<boolean> {
+    const result = await db
+      .delete(chatroomBans)
+      .where(
+        and(
+          eq(chatroomBans.userId, userId),
+          eq(chatroomBans.chatroomId, chatroomId)
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  async isUserBannedFromChatroom(userId: string, chatroomId: string): Promise<boolean> {
+    const [ban] = await db
+      .select()
+      .from(chatroomBans)
+      .where(
+        and(
+          eq(chatroomBans.userId, userId),
+          eq(chatroomBans.chatroomId, chatroomId)
+        )
+      );
+    return !!ban;
+  }
+
+  async clearChatroomHistory(chatroomId: string): Promise<boolean> {
+    const result = await db
+      .update(chatroomMessages)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(chatroomMessages.chatroomId, chatroomId),
+          isNull(chatroomMessages.deletedAt)
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  async getChatroomStatistics(chatroomId: string): Promise<{
+    totalMessages: number;
+    activeUsers: number;
+    uniquePosters: number;
+  }> {
+    const [stats] = await db
+      .select({
+        totalMessages: count(chatroomMessages.id),
+        uniquePosters: countDistinct(chatroomMessages.senderId),
+      })
+      .from(chatroomMessages)
+      .where(
+        and(
+          eq(chatroomMessages.chatroomId, chatroomId),
+          isNull(chatroomMessages.deletedAt)
+        )
+      );
+
+    return {
+      totalMessages: Number(stats?.totalMessages || 0),
+      activeUsers: 0, // This will be calculated from socket connections in real-time
+      uniquePosters: Number(stats?.uniquePosters || 0),
+    };
   }
 }
 

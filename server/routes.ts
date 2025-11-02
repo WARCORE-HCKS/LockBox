@@ -4,6 +4,30 @@ import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, getSession } from "./replitAuth";
 
+// Middleware to check if user is banned (must be used after isAuthenticated)
+const checkNotBanned = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    if (user.isBanned) {
+      return res.status(403).json({ message: "Your account has been banned" });
+    }
+    
+    next();
+  } catch (error) {
+    console.error("Ban check middleware error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Admin middleware
 const isAdmin = async (req: any, res: Response, next: NextFunction) => {
   try {
@@ -33,6 +57,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user is banned
+      if (user.isBanned) {
+        return res.status(403).json({ message: "Your account has been banned" });
+      }
+
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -41,7 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user profile
-  app.patch('/api/profile', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/profile', isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       
@@ -69,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all users (for finding friends to chat with)
-  app.get("/api/users", isAuthenticated, async (req: any, res) => {
+  app.get("/api/users", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
       const currentUserId = req.user.claims.sub;
       const allUsers = await storage.getAllUsers();
@@ -83,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get messages between two users (returns encrypted messages)
-  app.get("/api/messages/:userId", isAuthenticated, async (req: any, res) => {
+  app.get("/api/messages/:userId", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
       const currentUserId = req.user.claims.sub;
       const otherUserId = req.params.userId;
@@ -96,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get chat list with last messages
-  app.get("/api/chats", isAuthenticated, async (req: any, res) => {
+  app.get("/api/chats", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const chats = await storage.getAllUserChats(userId);
@@ -108,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get chatroom messages (returns encrypted messages)
-  app.get("/api/chatroom/messages", isAuthenticated, async (req: any, res) => {
+  app.get("/api/chatroom/messages", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
       const chatroomId = (req.query.chatroomId as string) || 'default-general';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
@@ -121,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete a private message
-  app.delete("/api/messages/:messageId", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/messages/:messageId", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const messageId = req.params.messageId;
@@ -139,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete a chatroom message
-  app.delete("/api/chatroom/messages/:messageId", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/chatroom/messages/:messageId", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const messageId = req.params.messageId;
@@ -157,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all chatrooms (for regular users to see available rooms)
-  app.get("/api/chatrooms", isAuthenticated, async (req: any, res) => {
+  app.get("/api/chatrooms", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
       const chatrooms = await storage.getAllChatrooms();
       res.json(chatrooms);
@@ -170,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========== ADMIN ROUTES ==========
   
   // Get all users (with admin status and online status)
-  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.get("/api/admin/users", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -181,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user admin status (used by admin UI)
-  app.patch("/api/admin/users/:userId/admin", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.patch("/api/admin/users/:userId/admin", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { isAdmin: adminStatus } = req.body;
@@ -203,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user (general endpoint for admin status - for testing/API use)
-  app.patch("/api/admin/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.patch("/api/admin/users/:userId", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { isAdmin: adminStatus } = req.body;
@@ -229,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user
-  app.delete("/api/admin/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.delete("/api/admin/users/:userId", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const currentUserId = req.user.claims.sub;
@@ -252,7 +286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all chatrooms
-  app.get("/api/admin/chatrooms", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.get("/api/admin/chatrooms", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
     try {
       const chatrooms = await storage.getAllChatrooms();
       res.json(chatrooms);
@@ -263,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create chatroom
-  app.post("/api/admin/chatrooms", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/admin/chatrooms", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
     try {
       const { name, description } = req.body;
       
@@ -280,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update chatroom
-  app.patch("/api/admin/chatrooms/:chatroomId", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.patch("/api/admin/chatrooms/:chatroomId", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
     try {
       const { chatroomId } = req.params;
       const { name, description } = req.body;
@@ -298,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete chatroom
-  app.delete("/api/admin/chatrooms/:chatroomId", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.delete("/api/admin/chatrooms/:chatroomId", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
     try {
       const { chatroomId } = req.params;
       
@@ -316,6 +350,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting chatroom:", error);
       res.status(500).json({ message: "Failed to delete chatroom" });
+    }
+  });
+
+  // Clear chatroom history
+  app.delete("/api/admin/chatrooms/:chatroomId/messages", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
+    try {
+      const { chatroomId } = req.params;
+      const success = await storage.clearChatroomHistory(chatroomId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "No messages to clear or chatroom not found" });
+      }
+      
+      res.json({ success: true, message: "Chatroom history cleared" });
+    } catch (error) {
+      console.error("Error clearing chatroom history:", error);
+      res.status(500).json({ message: "Failed to clear chatroom history" });
+    }
+  });
+
+  // Get chatroom statistics
+  app.get("/api/admin/chatrooms/:chatroomId/stats", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
+    try {
+      const { chatroomId } = req.params;
+      const stats = await storage.getChatroomStatistics(chatroomId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting chatroom statistics:", error);
+      res.status(500).json({ message: "Failed to get chatroom statistics" });
+    }
+  });
+
+  // Ban user globally
+  app.post("/api/admin/users/:userId/ban", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.banUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error banning user:", error);
+      res.status(500).json({ message: "Failed to ban user" });
+    }
+  });
+
+  // Unban user
+  app.delete("/api/admin/users/:userId/ban", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.unbanUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Error unbanning user:", error);
+      res.status(500).json({ message: "Failed to unban user" });
+    }
+  });
+
+  // Kick user from chatroom
+  app.post("/api/admin/chatrooms/:chatroomId/kick/:userId", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
+    try {
+      const { chatroomId, userId } = req.params;
+      const ban = await storage.kickUserFromChatroom(userId, chatroomId);
+      res.json(ban);
+    } catch (error) {
+      console.error("Error kicking user from chatroom:", error);
+      res.status(500).json({ message: "Failed to kick user from chatroom" });
+    }
+  });
+
+  // Unkick user from chatroom
+  app.delete("/api/admin/chatrooms/:chatroomId/kick/:userId", isAuthenticated, checkNotBanned, isAdmin, async (req: any, res) => {
+    try {
+      const { chatroomId, userId } = req.params;
+      const success = await storage.unkickUserFromChatroom(userId, chatroomId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "User not kicked from this chatroom" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error unkicking user from chatroom:", error);
+      res.status(500).json({ message: "Failed to unkick user from chatroom" });
     }
   });
 

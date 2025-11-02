@@ -21,22 +21,26 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Trash2, UserCog, Plus, Edit2, Users, MessageSquare, Shield } from "lucide-react";
+import { Trash2, UserCog, Plus, Edit2, Users, MessageSquare, Shield, ArrowLeft, Ban, UserX, Eraser, BarChart3 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import UserAvatar from "@/components/UserAvatar";
 import { useSocket } from "@/hooks/useSocket";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import type { User, Chatroom } from "@shared/schema";
 
 export default function AdminPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [newChatroomName, setNewChatroomName] = useState("");
   const [newChatroomDescription, setNewChatroomDescription] = useState("");
   const [editingChatroom, setEditingChatroom] = useState<Chatroom | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [statsDialogOpen, setStatsDialogOpen] = useState(false);
+  const [selectedChatroomForStats, setSelectedChatroomForStats] = useState<string | null>(null);
 
   // Track online users
   useSocket({
@@ -62,6 +66,25 @@ export default function AdminPage() {
   // Fetch all chatrooms
   const { data: chatrooms = [], isLoading: loadingChatrooms } = useQuery<Chatroom[]>({
     queryKey: ["/api/admin/chatrooms"],
+  });
+
+  // Fetch chatroom statistics
+  const { data: chatroomStats, isLoading: loadingStats } = useQuery<{
+    totalMessages: number;
+    activeUsers: number;
+    uniquePosters: number;
+  }>({
+    queryKey: ["/api/admin/chatrooms", selectedChatroomForStats, "stats"],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/chatrooms/${selectedChatroomForStats}/stats`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch statistics');
+      }
+      return response.json();
+    },
+    enabled: !!selectedChatroomForStats && statsDialogOpen,
   });
 
   // Update user admin status mutation
@@ -153,6 +176,68 @@ export default function AdminPage() {
     },
   });
 
+  // Ban user mutation
+  const banUser = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/ban`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User banned successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to ban user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Unban user mutation
+  const unbanUser = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("DELETE", `/api/admin/users/${userId}/ban`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User unbanned successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to unban user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Clear chatroom history mutation
+  const clearChatroomHistory = useMutation({
+    mutationFn: async (chatroomId: string) => {
+      return await apiRequest("DELETE", `/api/admin/chatrooms/${chatroomId}/messages`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Chatroom history cleared",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to clear chatroom history",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete chatroom mutation
   const deleteChatroom = useMutation({
     mutationFn: async (chatroomId: string) => {
@@ -190,6 +275,14 @@ export default function AdminPage() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocation("/")}
+              data-testid="button-back-to-chat"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
             <Shield className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">Admin Panel</h1>
           </div>
@@ -243,6 +336,11 @@ export default function AdminPage() {
                                     Admin
                                   </Badge>
                                 )}
+                                {user.isBanned && (
+                                  <Badge variant="destructive" data-testid={`badge-banned-${user.id}`}>
+                                    Banned
+                                  </Badge>
+                                )}
                                 <Badge 
                                   variant={isUserOnline(user.id) ? "default" : "secondary"}
                                   data-testid={`badge-status-${user.id}`}
@@ -266,6 +364,17 @@ export default function AdminPage() {
                             >
                               <UserCog className="h-4 w-4 mr-2" />
                               {user.isAdmin ? "Remove Admin" : "Make Admin"}
+                            </Button>
+
+                            <Button
+                              variant={user.isBanned ? "outline" : "destructive"}
+                              size="sm"
+                              onClick={() => user.isBanned ? unbanUser.mutate(user.id) : banUser.mutate(user.id)}
+                              disabled={banUser.isPending || unbanUser.isPending}
+                              data-testid={`button-toggle-ban-${user.id}`}
+                            >
+                              {user.isBanned ? <UserX className="h-4 w-4 mr-2" /> : <Ban className="h-4 w-4 mr-2" />}
+                              {user.isBanned ? "Unban" : "Ban"}
                             </Button>
 
                             <AlertDialog>
@@ -387,6 +496,47 @@ export default function AdminPage() {
                           </div>
 
                           <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedChatroomForStats(chatroom.id);
+                                setStatsDialogOpen(true);
+                              }}
+                              data-testid={`button-stats-${chatroom.id}`}
+                            >
+                              <BarChart3 className="h-4 w-4" />
+                            </Button>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  data-testid={`button-clear-history-${chatroom.id}`}
+                                >
+                                  <Eraser className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Clear Chatroom History</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to clear all messages in this chatroom? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => clearChatroomHistory.mutate(chatroom.id)}
+                                    data-testid="button-confirm-clear-history"
+                                  >
+                                    Clear History
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+
                             <Dialog open={isEditDialogOpen && editingChatroom?.id === chatroom.id} onOpenChange={(open) => {
                               setIsEditDialogOpen(open);
                               if (!open) setEditingChatroom(null);
@@ -488,6 +638,34 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Statistics Dialog */}
+      <Dialog open={statsDialogOpen} onOpenChange={setStatsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chatroom Statistics</DialogTitle>
+            <DialogDescription>
+              View statistics for this chatroom
+            </DialogDescription>
+          </DialogHeader>
+          {loadingStats ? (
+            <div className="text-center py-8">Loading statistics...</div>
+          ) : chatroomStats ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground">Total Messages</p>
+                  <p className="text-2xl font-bold" data-testid="stat-total-messages">{chatroomStats.totalMessages}</p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-sm text-muted-foreground">Unique Posters</p>
+                  <p className="text-2xl font-bold" data-testid="stat-unique-posters">{chatroomStats.uniquePosters}</p>
+                </Card>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
