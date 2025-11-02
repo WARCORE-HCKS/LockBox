@@ -6,6 +6,17 @@ LockBox is a real-time messaging application built for private communication bet
 **Important**: This is a demonstration/MVP with simplified encryption. It provides encrypted storage and transit but does NOT implement true end-to-end encryption. See "Encryption Model" section below for details.
 
 ## Recent Changes (November 2025)
+- **Multi-Chatroom Functionality** (Latest):
+  - All users can now see and access all available chatrooms
+  - GET /api/chatrooms endpoint provides chatroom list for authenticated users
+  - ChatPage dynamically displays all chatrooms in sidebar (not hardcoded)
+  - Users can freely switch between different chatrooms
+  - Real-time message isolation: messages only appear in their designated chatroom
+  - Critical fix: handleChatroomMessageReceived filters by chatroomId to prevent cross-room message leakage
+  - Socket events updated to use selected chatroomId instead of hardcoded 'default-general'
+  - Admin-created chatrooms immediately visible to all users
+  - Message history persists correctly per chatroom
+  - Comprehensive testing verified real-time isolation and room switching
 - **User Profile Management**: New profile page for users to manage their account
   - View and edit first name and last name
   - Display email address (read-only, managed by Replit Auth)
@@ -25,6 +36,7 @@ LockBox is a real-time messaging application built for private communication bet
   - Protected routes and API endpoints (requires isAdmin flag)
   - Bootstrap function ensures default chatroom exists on server startup
   - Soft deletion for users prevents FK constraint violations
+  - Default chatroom displays "Default" badge in admin panel
 - **Message Deletion**: Implemented soft deletion for both private and chatroom messages
   - Delete button appears on hover for user's own messages only
   - Deleted messages filtered from all queries and chat previews
