@@ -4,6 +4,7 @@ import {
   chatroomMessages,
   chatrooms,
   chatroomBans,
+  chatroomMembers,
   type User,
   type UpsertUser,
   type Message,
@@ -14,6 +15,7 @@ import {
   type InsertChatroom,
   type UpdateUserProfile,
   type ChatroomBan,
+  type ChatroomMember,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, and, desc, ne, isNull, count, countDistinct, sql as dsql } from "drizzle-orm";
@@ -24,6 +26,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUserProfile(userId: string, profile: UpdateUserProfile): Promise<User | undefined>;
+  updateUserTheme(userId: string, theme: string): Promise<User | undefined>;
   
   // Message operations
   createMessage(message: InsertMessage & { senderId: string }): Promise<Message>;
@@ -35,6 +38,15 @@ export interface IStorage {
   createChatroomMessage(message: InsertChatroomMessage & { senderId: string }): Promise<ChatroomMessage>;
   getChatroomMessages(chatroomId: string, limit?: number): Promise<ChatroomMessage[]>;
   deleteChatroomMessage(messageId: string, userId: string): Promise<boolean>;
+  
+  // User-owned chatroom operations
+  getUserOwnedChatroomsCount(userId: string): Promise<number>;
+  createUserChatroom(userId: string, chatroom: InsertChatroom): Promise<Chatroom>;
+  getUserOwnedChatrooms(userId: string): Promise<Chatroom[]>;
+  isChatroomOwner(userId: string, chatroomId: string): Promise<boolean>;
+  addChatroomMember(userId: string, chatroomId: string): Promise<ChatroomMember>;
+  removeChatroomMember(userId: string, chatroomId: string): Promise<boolean>;
+  getChatroomMembers(chatroomId: string): Promise<User[]>;
   
   // Admin operations
   updateUserAdminStatus(userId: string, isAdmin: boolean): Promise<User | undefined>;
@@ -87,6 +99,18 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({
         ...profile,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateUserTheme(userId: string, theme: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        themePreference: theme,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId))
@@ -209,6 +233,95 @@ export class DatabaseStorage implements IStorage {
       )
       .returning();
     return result.length > 0;
+  }
+
+  // User-owned chatroom operations
+  async getUserOwnedChatroomsCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(chatrooms)
+      .where(eq(chatrooms.createdBy, userId));
+    return result[0]?.count || 0;
+  }
+
+  async createUserChatroom(userId: string, chatroomData: InsertChatroom): Promise<Chatroom> {
+    const ownedCount = await this.getUserOwnedChatroomsCount(userId);
+    if (ownedCount >= 3) {
+      throw new Error("User has reached maximum chatroom limit (3)");
+    }
+    
+    const [chatroom] = await db
+      .insert(chatrooms)
+      .values({
+        ...chatroomData,
+        createdBy: userId,
+      })
+      .returning();
+    
+    // Auto-add creator as member
+    await this.addChatroomMember(userId, chatroom.id);
+    
+    return chatroom;
+  }
+
+  async getUserOwnedChatrooms(userId: string): Promise<Chatroom[]> {
+    return await db
+      .select()
+      .from(chatrooms)
+      .where(eq(chatrooms.createdBy, userId))
+      .orderBy(chatrooms.createdAt);
+  }
+
+  async isChatroomOwner(userId: string, chatroomId: string): Promise<boolean> {
+    const [chatroom] = await db
+      .select()
+      .from(chatrooms)
+      .where(
+        and(
+          eq(chatrooms.id, chatroomId),
+          eq(chatrooms.createdBy, userId)
+        )
+      );
+    return !!chatroom;
+  }
+
+  async addChatroomMember(userId: string, chatroomId: string): Promise<ChatroomMember> {
+    const [member] = await db
+      .insert(chatroomMembers)
+      .values({ userId, chatroomId })
+      .onConflictDoNothing()
+      .returning();
+    return member;
+  }
+
+  async removeChatroomMember(userId: string, chatroomId: string): Promise<boolean> {
+    const result = await db
+      .delete(chatroomMembers)
+      .where(
+        and(
+          eq(chatroomMembers.userId, userId),
+          eq(chatroomMembers.chatroomId, chatroomId)
+        )
+      )
+      .returning();
+    return result.length > 0;
+  }
+
+  async getChatroomMembers(chatroomId: string): Promise<User[]> {
+    const members = await db
+      .select({
+        user: users,
+      })
+      .from(chatroomMembers)
+      .innerJoin(users, eq(chatroomMembers.userId, users.id))
+      .where(
+        and(
+          eq(chatroomMembers.chatroomId, chatroomId),
+          isNull(users.deletedAt)
+        )
+      );
+    
+    return members.map(m => m.user);
   }
 
   // Admin operations

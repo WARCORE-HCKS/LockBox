@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  themePreference: varchar("theme_preference").default("light"),
   isAdmin: boolean("is_admin").default(false).notNull(),
   isBanned: boolean("is_banned").default(false).notNull(),
   deletedAt: timestamp("deleted_at"),
@@ -44,6 +45,7 @@ export const chatrooms = pgTable("chatrooms", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   description: text("description"),
+  createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -66,6 +68,14 @@ export const chatroomBans = pgTable("chatroom_bans", {
   bannedAt: timestamp("banned_at").defaultNow().notNull(),
 });
 
+// Chatroom members table - track membership and invites
+export const chatroomMembers = pgTable("chatroom_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  chatroomId: varchar("chatroom_id").notNull().references(() => chatrooms.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   sentMessages: many(messages, { relationName: "sender" }),
@@ -86,9 +96,14 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
 }));
 
-export const chatroomsRelations = relations(chatrooms, ({ many }) => ({
+export const chatroomsRelations = relations(chatrooms, ({ many, one }) => ({
   messages: many(chatroomMessages),
   bans: many(chatroomBans),
+  members: many(chatroomMembers),
+  creator: one(users, {
+    fields: [chatrooms.createdBy],
+    references: [users.id],
+  }),
 }));
 
 export const chatroomMessagesRelations = relations(chatroomMessages, ({ one }) => ({
@@ -109,6 +124,17 @@ export const chatroomBansRelations = relations(chatroomBans, ({ one }) => ({
   }),
   chatroom: one(chatrooms, {
     fields: [chatroomBans.chatroomId],
+    references: [chatrooms.id],
+  }),
+}));
+
+export const chatroomMembersRelations = relations(chatroomMembers, ({ one }) => ({
+  user: one(users, {
+    fields: [chatroomMembers.userId],
+    references: [users.id],
+  }),
+  chatroom: one(chatrooms, {
+    fields: [chatroomMembers.chatroomId],
     references: [chatrooms.id],
   }),
 }));
@@ -147,5 +173,12 @@ export const updateUserProfileSchema = z.object({
 });
 
 export type ChatroomBan = typeof chatroomBans.$inferSelect;
+export type ChatroomMember = typeof chatroomMembers.$inferSelect;
 
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
+
+export const updateThemeSchema = z.object({
+  theme: z.enum(["light", "dark"]),
+});
+
+export type UpdateTheme = z.infer<typeof updateThemeSchema>;
