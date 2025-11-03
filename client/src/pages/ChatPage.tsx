@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Search, LogOut, Menu, Users, Shield, User as UserIcon } from "lucide-react";
+import { Search, LogOut, Menu, Users, Shield, User as UserIcon, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FriendListItem from "@/components/FriendListItem";
 import MessageBubble from "@/components/MessageBubble";
@@ -378,54 +378,110 @@ export default function ChatPage() {
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="p-2 space-y-1">
-            {chatrooms.length > 0 ? (
-              chatrooms.map((chatroom) => (
-                <div
-                  key={chatroom.id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors hover-elevate",
-                    isChatroomActive && activeChatroomId === chatroom.id && "bg-accent"
-                  )}
-                  onClick={() => handleSelectChatroom(chatroom.id)}
-                  data-testid={`button-chatroom-${chatroom.id}`}
-                >
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm">{chatroom.name}</h4>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {chatroom.description || "Group conversation"}
-                    </p>
-                  </div>
+          <div className="p-2 space-y-2">
+            {/* Chatrooms Section */}
+            <div>
+              <button
+                onClick={() => setChatroomsExpanded(!chatroomsExpanded)}
+                className="flex items-center justify-between w-full px-3 py-2 rounded-md hover-elevate"
+                data-testid="button-toggle-chatrooms"
+              >
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium text-sm">Chatrooms</span>
+                  <span className="text-xs text-muted-foreground">({chatrooms.length})</span>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-4 text-sm text-muted-foreground">
-                No chatrooms available
-              </div>
-            )}
+                {chatroomsExpanded ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
 
-            <div className="h-px bg-border my-2" />
+              {chatroomsExpanded && (
+                <div className="mt-1 space-y-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start gap-2"
+                    data-testid="button-create-chatroom"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create Chatroom
+                  </Button>
 
-            {filteredUsers.length === 0 ? (
-              <div className="text-center py-8 text-sm text-muted-foreground">
-                No other users yet. Invite friends to join!
-              </div>
-            ) : (
-              filteredUsers.map((user) => (
-                <FriendListItem
-                  key={user.id}
-                  id={user.id}
-                  name={getUserDisplayName(user)}
-                  avatar={user.profileImageUrl || undefined}
-                  status={getUserStatus(user.id)}
-                  isActive={user.id === activeFriendId && !isChatroomActive}
-                  onClick={() => handleSelectFriend(user.id)}
-                />
-              ))
-            )}
+                  {chatrooms.length > 0 ? (
+                    chatrooms.map((chatroom) => (
+                      <div
+                        key={chatroom.id}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors hover-elevate",
+                          isChatroomActive && activeChatroomId === chatroom.id && "bg-accent"
+                        )}
+                        onClick={() => handleSelectChatroom(chatroom.id)}
+                        data-testid={`button-chatroom-${chatroom.id}`}
+                      >
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Users className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm">{chatroom.name}</h4>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {chatroom.description || "Group conversation"}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-sm text-muted-foreground">
+                      No chatrooms yet
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Users Section */}
+            <div>
+              <button
+                onClick={() => setUsersExpanded(!usersExpanded)}
+                className="flex items-center justify-between w-full px-3 py-2 rounded-md hover-elevate"
+                data-testid="button-toggle-users"
+              >
+                <div className="flex items-center gap-2">
+                  <UserIcon className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium text-sm">Friends</span>
+                  <span className="text-xs text-muted-foreground">({filteredUsers.length})</span>
+                </div>
+                {usersExpanded ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+
+              {usersExpanded && (
+                <div className="mt-1 space-y-1">
+                  {filteredUsers.length === 0 ? (
+                    <div className="text-center py-8 text-sm text-muted-foreground">
+                      No other users yet. Invite friends to join!
+                    </div>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <FriendListItem
+                        key={user.id}
+                        id={user.id}
+                        name={getUserDisplayName(user)}
+                        avatar={user.profileImageUrl || undefined}
+                        status={getUserStatus(user.id)}
+                        isActive={user.id === activeFriendId && !isChatroomActive}
+                        onClick={() => handleSelectFriend(user.id)}
+                      />
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </ScrollArea>
       </aside>
