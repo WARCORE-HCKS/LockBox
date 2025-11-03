@@ -102,6 +102,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user theme preference
+  app.patch('/api/theme', isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const { updateThemeSchema } = await import("@shared/schema");
+      const validationResult = updateThemeSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const updatedUser = await storage.updateUserTheme(userId, validationResult.data.theme);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating theme:", error);
+      res.status(500).json({ message: "Failed to update theme" });
+    }
+  });
+
   // Get all users (for finding friends to chat with)
   app.get("/api/users", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
@@ -198,6 +226,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching chatrooms:", error);
       res.status(500).json({ message: "Failed to fetch chatrooms" });
+    }
+  });
+
+  // User-owned chatroom operations
+  // Create a user chatroom (max 3 per user)
+  app.post("/api/my-chatrooms", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const { insertChatroomSchema } = await import("@shared/schema");
+      const validationResult = insertChatroomSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const chatroom = await storage.createUserChatroom(userId, validationResult.data);
+      res.status(201).json(chatroom);
+    } catch (error: any) {
+      console.error("Error creating user chatroom:", error);
+      if (error.message?.includes("maximum chatroom limit")) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to create chatroom" });
+    }
+  });
+
+  // Get user's owned chatrooms
+  app.get("/api/my-chatrooms", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const chatrooms = await storage.getUserOwnedChatrooms(userId);
+      res.json(chatrooms);
+    } catch (error) {
+      console.error("Error fetching user chatrooms:", error);
+      res.status(500).json({ message: "Failed to fetch chatrooms" });
+    }
+  });
+
+  // Get chatroom members (for room owners)
+  app.get("/api/chatrooms/:chatroomId/members", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const chatroomId = req.params.chatroomId;
+      
+      // Check if user is room owner
+      const isOwner = await storage.isChatroomOwner(userId, chatroomId);
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only room owners can view members" });
+      }
+      
+      const members = await storage.getChatroomMembers(chatroomId);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching chatroom members:", error);
+      res.status(500).json({ message: "Failed to fetch members" });
+    }
+  });
+
+  // Invite user to chatroom (room owner only)
+  app.post("/api/chatrooms/:chatroomId/invite/:userId", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const ownerId = req.user.claims.sub;
+      const chatroomId = req.params.chatroomId;
+      const userId = req.params.userId;
+      
+      // Check if user is room owner
+      const isOwner = await storage.isChatroomOwner(ownerId, chatroomId);
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only room owners can invite users" });
+      }
+      
+      await storage.addChatroomMember(userId, chatroomId);
+      res.json({ message: "User invited successfully" });
+    } catch (error) {
+      console.error("Error inviting user:", error);
+      res.status(500).json({ message: "Failed to invite user" });
+    }
+  });
+
+  // Kick user from chatroom (room owner only)
+  app.post("/api/chatrooms/:chatroomId/kick/:userId", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const ownerId = req.user.claims.sub;
+      const chatroomId = req.params.chatroomId;
+      const userId = req.params.userId;
+      
+      // Check if user is room owner
+      const isOwner = await storage.isChatroomOwner(ownerId, chatroomId);
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only room owners can kick users" });
+      }
+      
+      // Remove from members and add to bans
+      await storage.removeChatroomMember(userId, chatroomId);
+      await storage.kickUserFromChatroom(userId, chatroomId);
+      res.json({ message: "User kicked successfully" });
+    } catch (error) {
+      console.error("Error kicking user:", error);
+      res.status(500).json({ message: "Failed to kick user" });
+    }
+  });
+
+  // Get chatroom statistics (room owner only)
+  app.get("/api/chatrooms/:chatroomId/stats", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const chatroomId = req.params.chatroomId;
+      
+      // Check if user is room owner
+      const isOwner = await storage.isChatroomOwner(userId, chatroomId);
+      if (!isOwner) {
+        return res.status(403).json({ message: "Only room owners can view statistics" });
+      }
+      
+      const stats = await storage.getChatroomStatistics(chatroomId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching chatroom stats:", error);
+      res.status(500).json({ message: "Failed to fetch statistics" });
     }
   });
 
