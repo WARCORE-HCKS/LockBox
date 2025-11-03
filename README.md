@@ -44,8 +44,16 @@ LockBox is a modern, real-time messaging application built for private communica
 - 🟢 **Online Status** - Real-time presence indicators
 - 🔍 **Friend Discovery** - Find and connect with other users
 
+### Chatroom Ownership & Moderation
+- 👑 **Create Chatrooms** - Users can create up to 3 chatrooms and become room owners
+- 🎯 **Owner Identification** - Crown icon displays next to chatroom owner's name in messages
+- 📊 **Room Metrics** - View chatroom statistics (messages, participants, activity)
+- ➕ **Invite Users** - Room owners can invite users to their chatrooms
+- 👢 **Kick Users** - Room owners can remove users from their chatrooms
+- 📁 **Collapsible Sidebar** - Organized sections for chatrooms and friends with expand/collapse
+
 ### Platform Features
-- 🌙 **Dark Mode** - Theme persistence across all pages
+- 🌙 **Dark Mode** - Theme persistence across devices via database sync
 - 📱 **Responsive Design** - Works on desktop and mobile
 - ⚡ **Session-based Security** - Secure WebSocket authentication
 - 👑 **Admin Panel** - Comprehensive platform management (admin-only)
@@ -133,14 +141,25 @@ LockBox is a modern, real-time messaging application built for private communica
 ### Main Chat Interface
 Clean, modern interface with friend list and real-time messaging:
 - Select friends from the sidebar to start private conversations
-- Join the chatroom for group discussions
+- Join chatrooms for group discussions
 - Messages appear instantly with smooth animations
 - Online/offline status indicators for all users
+- Collapsible sidebar sections keep the interface organized
+- Crown icons identify chatroom owners in conversations
+
+### User Chatroom Creation
+Create and manage your own chatrooms:
+- **Create up to 3 chatrooms** with custom names and descriptions
+- **Automatic ownership** - become the room administrator
+- **Room moderation** - invite users, remove users, view statistics
+- **Visual indicators** - crown icon shows who created each chatroom
+- **Real-time updates** - new chatrooms appear immediately for all users
 
 ### Profile Management
 - Edit your display name
 - View account details (email, join date, admin status)
 - Changes reflect immediately across the entire app
+- Theme preferences sync across all devices
 
 ### Admin Panel
 Comprehensive platform management for admin users:
