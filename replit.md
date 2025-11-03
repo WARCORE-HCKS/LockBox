@@ -6,7 +6,22 @@ LockBox is a real-time messaging application built for private communication bet
 **Important**: This is a demonstration/MVP with simplified encryption. It provides encrypted storage and transit but does NOT implement true end-to-end encryption. See "Encryption Model" section below for details.
 
 ## Recent Changes (November 2025)
-- **Multi-Chatroom Functionality** (Latest):
+- **User-Owned Chatrooms with Moderation** (Latest):
+  - Users can create up to 3 chatrooms and become room administrators
+  - Database schema updated: themePreference field in users table, createdBy field in chatrooms table, chatroomMembers table for membership tracking
+  - Collapsible chatroom and user sections in ChatPage sidebar for better organization
+  - "Create Chatroom" button with dialog modal and form validation
+  - Crown icon (👑) displays next to chatroom owner's name in message bubbles
+  - Theme preference persistence: saved to database and synced across devices
+  - Backend API endpoints for room owner moderation:
+    - POST /api/user/chatrooms - create new chatroom (max 3 per user)
+    - GET /api/user/chatrooms - list user's owned chatrooms
+    - POST /api/chatrooms/:id/invite/:userId - invite users to chatroom
+    - POST /api/chatrooms/:id/kick/:userId - remove users from chatroom
+    - GET /api/chatrooms/:id/stats - view chatroom statistics (owner only)
+  - Storage layer methods for chatroom ownership verification and member management
+  - ThemeProvider updated to load and save theme preferences via API
+- **Multi-Chatroom Functionality**:
   - All users can now see and access all available chatrooms
   - GET /api/chatrooms endpoint provides chatroom list for authenticated users
   - ChatPage dynamically displays all chatrooms in sidebar (not hardcoded)
