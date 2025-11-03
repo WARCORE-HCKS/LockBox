@@ -34,6 +34,8 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<DecryptedMessage[]>([]);
   const [chatroomMessages, setChatroomMessages] = useState<DecryptedChatroomMessage[]>([]);
   const [userStatuses, setUserStatuses] = useState<Map<string, "online" | "offline">>(new Map());
+  const [chatroomsExpanded, setChatroomsExpanded] = useState(true);
+  const [usersExpanded, setUsersExpanded] = useState(true);
 
   // Fetch current user from auth
   const { data: currentUser } = useQuery<User>({
