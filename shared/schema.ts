@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, index, jsonb, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, index, jsonb, boolean, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -74,7 +74,9 @@ export const chatroomMembers = pgTable("chatroom_members", {
   chatroomId: varchar("chatroom_id").notNull().references(() => chatrooms.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id),
   joinedAt: timestamp("joined_at").defaultNow().notNull(),
-});
+}, (table) => [
+  unique().on(table.chatroomId, table.userId),
+]);
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({

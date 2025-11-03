@@ -103,17 +103,17 @@ export default function ChatPage() {
 
   // Fetch user's chatrooms to check count
   const { data: userChatrooms = [] } = useQuery<Chatroom[]>({
-    queryKey: ["/api/user/chatrooms"],
+    queryKey: ["/api/my-chatrooms"],
   });
 
   // Create chatroom mutation
   const createChatroomMutation = useMutation({
     mutationFn: async (data: CreateChatroomForm) => {
-      return await apiRequest("POST", "/api/user/chatrooms", data);
+      return await apiRequest("POST", "/api/my-chatrooms", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/chatrooms"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/chatrooms"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-chatrooms"] });
       toast({
         title: "Success",
         description: "Chatroom created successfully",

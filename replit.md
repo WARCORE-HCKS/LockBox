@@ -14,8 +14,8 @@ LockBox is a real-time messaging application built for private communication bet
   - Crown icon (👑) displays next to chatroom owner's name in message bubbles
   - Theme preference persistence: saved to database and synced across devices
   - Backend API endpoints for room owner moderation:
-    - POST /api/user/chatrooms - create new chatroom (max 3 per user)
-    - GET /api/user/chatrooms - list user's owned chatrooms
+    - POST /api/my-chatrooms - create new chatroom (max 3 per user)
+    - GET /api/my-chatrooms - list user's owned chatrooms
     - POST /api/chatrooms/:id/invite/:userId - invite users to chatroom
     - POST /api/chatrooms/:id/kick/:userId - remove users from chatroom
     - GET /api/chatrooms/:id/stats - view chatroom statistics (owner only)
