@@ -1,10 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Search, LogOut, Menu, Users, Shield, User as UserIcon, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import FriendListItem from "@/components/FriendListItem";
 import MessageBubble from "@/components/MessageBubble";
 import MessageInput from "@/components/MessageInput";
@@ -36,6 +43,25 @@ export default function ChatPage() {
   const [userStatuses, setUserStatuses] = useState<Map<string, "online" | "offline">>(new Map());
   const [chatroomsExpanded, setChatroomsExpanded] = useState(true);
   const [usersExpanded, setUsersExpanded] = useState(true);
+  const [createChatroomDialogOpen, setCreateChatroomDialogOpen] = useState(false);
+  
+  const { toast } = useToast();
+
+  // Form schema for create chatroom
+  const createChatroomSchema = z.object({
+    name: z.string().min(1, "Name is required").max(50, "Name must be 50 characters or less"),
+    description: z.string().max(200, "Description must be 200 characters or less").optional(),
+  });
+
+  type CreateChatroomForm = z.infer<typeof createChatroomSchema>;
+
+  const createChatroomForm = useForm<CreateChatroomForm>({
+    resolver: zodResolver(createChatroomSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
+  });
 
   // Fetch current user from auth
   const { data: currentUser } = useQuery<User>({
@@ -74,6 +100,48 @@ export default function ChatPage() {
     },
     enabled: isChatroomActive && !!activeChatroomId,
   });
+
+  // Fetch user's chatrooms to check count
+  const { data: userChatrooms = [] } = useQuery<Chatroom[]>({
+    queryKey: ["/api/user/chatrooms"],
+  });
+
+  // Create chatroom mutation
+  const createChatroomMutation = useMutation({
+    mutationFn: async (data: CreateChatroomForm) => {
+      return await apiRequest("POST", "/api/user/chatrooms", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chatrooms"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/chatrooms"] });
+      toast({
+        title: "Success",
+        description: "Chatroom created successfully",
+      });
+      setCreateChatroomDialogOpen(false);
+      createChatroomForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create chatroom",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateChatroom = (data: CreateChatroomForm) => {
+    // Check if user has reached max chatrooms
+    if (userChatrooms.length >= 3) {
+      toast({
+        title: "Limit reached",
+        description: "You can only create up to 3 chatrooms",
+        variant: "destructive",
+      });
+      return;
+    }
+    createChatroomMutation.mutate(data);
+  };
 
   // Decrypt and load messages when chat changes
   useEffect(() => {
@@ -404,6 +472,7 @@ export default function ChatPage() {
                     variant="outline"
                     size="sm"
                     className="w-full justify-start gap-2"
+                    onClick={() => setCreateChatroomDialogOpen(true)}
                     data-testid="button-create-chatroom"
                   >
                     <Plus className="h-4 w-4" />
@@ -590,6 +659,81 @@ export default function ChatPage() {
           </div>
         )}
       </main>
+
+      {/* Create Chatroom Dialog */}
+      <Dialog open={createChatroomDialogOpen} onOpenChange={setCreateChatroomDialogOpen}>
+        <DialogContent data-testid="dialog-create-chatroom">
+          <DialogHeader>
+            <DialogTitle>Create Chatroom</DialogTitle>
+            <DialogDescription>
+              Create a new chatroom for group conversations. You can create up to 3 chatrooms.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...createChatroomForm}>
+            <form onSubmit={createChatroomForm.handleSubmit(handleCreateChatroom)} className="space-y-4">
+              <FormField
+                control={createChatroomForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Chatroom Name</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Enter chatroom name" 
+                        data-testid="input-chatroom-name"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={createChatroomForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Enter chatroom description" 
+                        data-testid="input-chatroom-description"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {userChatrooms.length} / 3 chatrooms created
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setCreateChatroomDialogOpen(false)}
+                    data-testid="button-cancel-create-chatroom"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createChatroomMutation.isPending}
+                    data-testid="button-submit-create-chatroom"
+                  >
+                    {createChatroomMutation.isPending ? "Creating..." : "Create"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
