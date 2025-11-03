@@ -339,9 +339,13 @@ export default function ChatPage() {
         ? `${senderUser.firstName || ""} ${senderUser.lastName || ""}`.trim() || senderUser.email || "Unknown"
         : "Unknown";
 
+    const activeChatroom = chatrooms.find(c => c.id === activeChatroomId);
+    const isOwner = !isOwn && activeChatroom?.createdBy === msg.senderId;
+
     return {
       isOwn,
       showAvatar,
+      isOwner,
       sender: {
         name: senderName,
         avatar: senderUser?.profileImageUrl || undefined,
@@ -583,7 +587,7 @@ export default function ChatPage() {
                   </div>
                 ) : (
                   chatroomMessages.map((msg, idx) => {
-                    const { isOwn, showAvatar, sender } = getChatroomMessageDisplay(msg, idx);
+                    const { isOwn, showAvatar, isOwner, sender } = getChatroomMessageDisplay(msg, idx);
                     return (
                       <MessageBubble
                         key={msg.id}
@@ -593,6 +597,7 @@ export default function ChatPage() {
                         timestamp={msg.createdAt!}
                         isOwn={isOwn}
                         showAvatar={showAvatar}
+                        isOwner={isOwner}
                         onDelete={handleDeleteChatroomMessage}
                       />
                     );

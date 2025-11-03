@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import UserAvatar from "./UserAvatar";
 import { format } from "date-fns";
-import { Trash2 } from "lucide-react";
+import { Trash2, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MessageBubbleProps {
@@ -14,6 +14,7 @@ interface MessageBubbleProps {
   timestamp: Date;
   isOwn?: boolean;
   showAvatar?: boolean;
+  isOwner?: boolean;
   onDelete?: (messageId: string) => void;
 }
 
@@ -24,6 +25,7 @@ export default function MessageBubble({
   timestamp,
   isOwn = false,
   showAvatar = true,
+  isOwner = false,
   onDelete,
 }: MessageBubbleProps) {
   return (
@@ -38,9 +40,14 @@ export default function MessageBubble({
 
       <div className={cn("flex flex-col gap-1 max-w-[65%]", isOwn && "items-end")}>
         {showAvatar && !isOwn && (
-          <span className="text-xs font-semibold px-1" data-testid="text-sender-name">
-            {sender.name}
-          </span>
+          <div className="flex items-center gap-1 px-1">
+            <span className="text-xs font-semibold" data-testid="text-sender-name">
+              {sender.name}
+            </span>
+            {isOwner && (
+              <Crown className="h-3 w-3 text-amber-500 fill-amber-500" data-testid="icon-chatroom-owner" />
+            )}
+          </div>
         )}
         <div className="relative">
           <div
