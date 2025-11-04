@@ -21,7 +21,8 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
 import { useSignalKeyInit } from "@/hooks/useSignalKeyInit";
-import { encryptMessage, decryptMessage } from "@/lib/encryption";
+import { encryptMessage, decryptMessage, encryptPrivateMessage, decryptPrivateMessage } from "@/lib/encryption";
+import { sentMessageCache } from "@/lib/sentMessageCache";
 import type { User, Message, ChatroomMessage, Chatroom } from "@shared/schema";
 import LockIcon from "@/components/LockIcon";
 
@@ -158,17 +159,59 @@ export default function ChatPage() {
     createChatroomMutation.mutate(data);
   };
 
-  // Decrypt and load messages when chat changes
+  // Decrypt and load messages when chat changes (Signal Protocol for private messages)
   useEffect(() => {
-    if (chatMessages && !isChatroomActive) {
-      const decryptedMessages = chatMessages.map(msg => ({
-        ...msg,
-        content: decryptMessage(msg.encryptedContent, false),
-        createdAt: new Date(msg.createdAt!),
-      }));
-      setMessages(decryptedMessages);
+    if (chatMessages && !isChatroomActive && activeFriendId) {
+      const currentFriendId = activeFriendId; // Capture for async closure
+      
+      const decryptMessages = async () => {
+        const decryptedMessages: DecryptedMessage[] = [];
+        
+        for (const msg of chatMessages) {
+          try {
+            let content: string;
+            
+            // Check if this is a message we sent
+            if (msg.senderId === currentUser?.id) {
+              // Try to get from local cache first
+              const cached = await sentMessageCache.getSentMessage(msg.id);
+              if (cached) {
+                content = cached;
+              } else {
+                // Fallback: we can't decrypt our own sent messages with Signal Protocol
+                content = "[Your message - plaintext not cached]";
+              }
+            } else {
+              // Message from the other person - decrypt using Signal Protocol
+              const senderUserId = msg.senderId;
+              content = await decryptPrivateMessage(senderUserId, msg.encryptedContent);
+            }
+            
+            decryptedMessages.push({
+              ...msg,
+              content,
+              createdAt: new Date(msg.createdAt!),
+            });
+          } catch (error) {
+            console.error("Failed to decrypt message:", error);
+            // Fallback to showing error message
+            decryptedMessages.push({
+              ...msg,
+              content: "[Unable to decrypt - encryption error]",
+              createdAt: new Date(msg.createdAt!),
+            });
+          }
+        }
+        
+        // Only update state if we're still on the same chat (prevent race conditions)
+        if (currentFriendId === activeFriendId) {
+          setMessages(decryptedMessages);
+        }
+      };
+      
+      decryptMessages();
     }
-  }, [chatMessages, isChatroomActive]);
+  }, [chatMessages, isChatroomActive, activeFriendId, currentUser?.id]);
 
   // Decrypt and load chatroom messages
   useEffect(() => {
@@ -182,8 +225,8 @@ export default function ChatPage() {
     }
   }, [chatroomMessagesData, isChatroomActive]);
 
-  // Socket.io for real-time messaging
-  const handleMessageReceived = useCallback((message: Message) => {
+  // Socket.io for real-time messaging (Signal Protocol for private messages)
+  const handleMessageReceived = useCallback(async (message: Message) => {
     // Only add message if it's for the active chat and we're in private chat mode
     if (
       !isChatroomActive &&
@@ -191,22 +234,75 @@ export default function ChatPage() {
       ((message.senderId === activeFriendId && message.recipientId === currentUser?.id) ||
         (message.senderId === currentUser?.id && message.recipientId === activeFriendId))
     ) {
-      const decryptedMessage: DecryptedMessage = {
-        ...message,
-        content: decryptMessage(message.encryptedContent, false),
-        createdAt: new Date(message.createdAt!),
-      };
+      let content: string;
       
-      // Check if message already exists (avoid duplicates)
-      setMessages((prev) => {
-        const exists = prev.some(m => m.id === message.id);
-        if (exists) {
-          return prev;
+      try {
+        // Check if this is our own sent message (echo from server)
+        if (message.senderId === currentUser?.id) {
+          // Find the optimistic message by checking recent messages with temp IDs
+          const tempMessage = messages.find(m => 
+            m.id.startsWith('temp-') && 
+            m.recipientId === message.recipientId &&
+            Math.abs(m.createdAt.getTime() - new Date(message.createdAt!).getTime()) < 5000
+          );
+          
+          if (tempMessage) {
+            // Use content from optimistic message and cache with real ID
+            content = tempMessage.content;
+            await sentMessageCache.storeSentMessage(message.id, content);
+            
+            // Remove the temporary message from state
+            setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
+          } else {
+            // Try to get from local cache
+            const cached = await sentMessageCache.getSentMessage(message.id);
+            if (cached) {
+              content = cached;
+            } else {
+              // Fallback: we can't decrypt our own sent messages
+              content = "[Your message - plaintext not cached]";
+            }
+          }
+        } else {
+          // Message from the other person - decrypt using Signal Protocol
+          const senderUserId = message.senderId;
+          content = await decryptPrivateMessage(senderUserId, message.encryptedContent);
         }
-        return [...prev, decryptedMessage];
-      });
+        
+        const decryptedMessage: DecryptedMessage = {
+          ...message,
+          content,
+          createdAt: new Date(message.createdAt!),
+        };
+        
+        // Check if message already exists (avoid duplicates)
+        setMessages((prev) => {
+          const exists = prev.some(m => m.id === message.id);
+          if (exists) {
+            return prev;
+          }
+          return [...prev, decryptedMessage];
+        });
+      } catch (error) {
+        console.error("Failed to decrypt incoming message:", error);
+        
+        // Still add the message with an error placeholder (don't silently drop)
+        const fallbackMessage: DecryptedMessage = {
+          ...message,
+          content: "[Unable to decrypt - encryption error]",
+          createdAt: new Date(message.createdAt!),
+        };
+        
+        setMessages((prev) => {
+          const exists = prev.some(m => m.id === message.id);
+          if (exists) {
+            return prev;
+          }
+          return [...prev, fallbackMessage];
+        });
+      }
     }
-  }, [activeFriendId, currentUser?.id, isChatroomActive]);
+  }, [activeFriendId, currentUser?.id, isChatroomActive, messages]);
 
   const handleChatroomMessageReceived = useCallback((message: ChatroomMessage) => {
     // Only add message if it's for the currently active chatroom
@@ -251,29 +347,45 @@ export default function ChatPage() {
     onChatroomMessageDeleted: handleChatroomMessageDeleted,
   });
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     if (isChatroomActive && currentUser && activeChatroomId) {
-      // Send to chatroom with shared chatroom key
+      // Send to chatroom with shared chatroom key (legacy encryption)
       const encryptedContent = encryptMessage(content, true);
       sendChatroomMessage(encryptedContent, activeChatroomId);
       
       // Don't add optimistically - wait for server broadcast to avoid duplicates
       // The server will broadcast it back to all users including sender
     } else if (activeFriendId && currentUser) {
-      // Send to private chat with user's personal key
-      const encryptedContent = encryptMessage(content, false);
-      sendMessage(activeFriendId, encryptedContent);
-      
-      // Optimistically add the decrypted message to UI
-      const newMessage: DecryptedMessage = {
-        id: `temp-${Date.now()}`, // Temporary ID to avoid collision
-        content,
-        senderId: currentUser.id,
-        recipientId: activeFriendId,
-        deletedAt: null,
-        createdAt: new Date(),
-      };
-      setMessages((prev) => [...prev, newMessage]);
+      try {
+        // Generate temporary message ID for optimistic UI update
+        const tempId = `temp-${Date.now()}`;
+        
+        // Send to private chat using Signal Protocol E2E encryption
+        const encryptedContent = await encryptPrivateMessage(activeFriendId, content);
+        sendMessage(activeFriendId, encryptedContent);
+        
+        // Cache the plaintext locally (we'll need it to decrypt our own messages later)
+        // Note: Real message ID from server will be different, but we'll cache with that too
+        await sentMessageCache.storeSentMessage(tempId, content);
+        
+        // Optimistically add the decrypted message to UI
+        const newMessage: DecryptedMessage = {
+          id: tempId,
+          content,
+          senderId: currentUser.id,
+          recipientId: activeFriendId,
+          deletedAt: null,
+          createdAt: new Date(),
+        };
+        setMessages((prev) => [...prev, newMessage]);
+      } catch (error) {
+        console.error("Failed to encrypt and send message:", error);
+        toast({
+          title: "Send Failed",
+          description: "Failed to encrypt message. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
