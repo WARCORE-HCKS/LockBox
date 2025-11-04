@@ -115,30 +115,53 @@ export async function generatePreKeys(
 }
 
 /**
+ * Utility: Convert Uint8Array to base64 (browser-compatible)
+ */
+function arrayBufferToBase64(buffer: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < buffer.length; i++) {
+    binary += String.fromCharCode(buffer[i]);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Utility: Convert base64 to Uint8Array (browser-compatible)
+ */
+function base64ToArrayBuffer(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+/**
  * Serialize keys to base64 for storage/transmission
  */
 export function serializePublicKey(key: SignalClient.PublicKey): string {
-  return Buffer.from(key.serialize()).toString('base64');
+  return arrayBufferToBase64(key.serialize());
 }
 
 export function serializePrivateKey(key: SignalClient.PrivateKey): string {
-  return Buffer.from(key.serialize()).toString('base64');
+  return arrayBufferToBase64(key.serialize());
 }
 
 export function serializeSignature(signature: Uint8Array): string {
-  return Buffer.from(signature).toString('base64');
+  return arrayBufferToBase64(signature);
 }
 
 /**
  * Deserialize keys from base64 storage
  */
 export function deserializePublicKey(serialized: string): SignalClient.PublicKey {
-  const buffer = Buffer.from(serialized, 'base64');
+  const buffer = base64ToArrayBuffer(serialized);
   return SignalClient.PublicKey.deserialize(buffer);
 }
 
 export function deserializePrivateKey(serialized: string): SignalClient.PrivateKey {
-  const buffer = Buffer.from(serialized, 'base64');
+  const buffer = base64ToArrayBuffer(serialized);
   return SignalClient.PrivateKey.deserialize(buffer);
 }
 

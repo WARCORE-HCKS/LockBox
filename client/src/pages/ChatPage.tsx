@@ -20,6 +20,7 @@ import UserAvatar from "@/components/UserAvatar";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
+import { useSignalKeyInit } from "@/hooks/useSignalKeyInit";
 import { encryptMessage, decryptMessage } from "@/lib/encryption";
 import type { User, Message, ChatroomMessage, Chatroom } from "@shared/schema";
 import LockIcon from "@/components/LockIcon";
@@ -46,6 +47,20 @@ export default function ChatPage() {
   const [createChatroomDialogOpen, setCreateChatroomDialogOpen] = useState(false);
   
   const { toast } = useToast();
+
+  // Initialize Signal Protocol E2E encryption keys automatically
+  const { isInitialized: signalKeysInitialized, error: signalKeyError } = useSignalKeyInit();
+
+  // Show error if Signal key initialization fails
+  useEffect(() => {
+    if (signalKeyError) {
+      toast({
+        title: "Encryption Setup Failed",
+        description: "Failed to initialize end-to-end encryption. Please refresh the page.",
+        variant: "destructive",
+      });
+    }
+  }, [signalKeyError, toast]);
 
   // Form schema for create chatroom
   const createChatroomSchema = z.object({

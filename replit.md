@@ -1,216 +1,58 @@
 # LockBox - Encrypted Messenger (Demo/MVP)
 
 ## Overview
-LockBox is a real-time messaging application built for private communication between friends. Lock the gate, avoid the fate. The app features secure authentication via Replit Auth, WebSocket-based real-time messaging, and encrypted message storage. 
-
-**Important**: This is a demonstration/MVP with simplified encryption. It provides encrypted storage and transit but does NOT implement true end-to-end encryption. See "Encryption Model" section below for details.
-
-## Recent Changes (November 2025)
-- **User-Owned Chatrooms with Moderation** (Latest):
-  - Users can create up to 3 chatrooms and become room administrators
-  - Database schema updated: themePreference field in users table, createdBy field in chatrooms table, chatroomMembers table for membership tracking
-  - Collapsible chatroom and user sections in ChatPage sidebar for better organization
-  - "Create Chatroom" button with dialog modal and form validation
-  - Crown icon (👑) displays next to chatroom owner's name in message bubbles
-  - Theme preference persistence: saved to database and synced across devices
-  - Backend API endpoints for room owner moderation:
-    - POST /api/my-chatrooms - create new chatroom (max 3 per user)
-    - GET /api/my-chatrooms - list user's owned chatrooms
-    - POST /api/chatrooms/:id/invite/:userId - invite users to chatroom
-    - POST /api/chatrooms/:id/kick/:userId - remove users from chatroom
-    - GET /api/chatrooms/:id/stats - view chatroom statistics (owner only)
-  - Storage layer methods for chatroom ownership verification and member management
-  - ThemeProvider updated to load and save theme preferences via API
-- **Multi-Chatroom Functionality**:
-  - All users can now see and access all available chatrooms
-  - GET /api/chatrooms endpoint provides chatroom list for authenticated users
-  - ChatPage dynamically displays all chatrooms in sidebar (not hardcoded)
-  - Users can freely switch between different chatrooms
-  - Real-time message isolation: messages only appear in their designated chatroom
-  - Critical fix: handleChatroomMessageReceived filters by chatroomId to prevent cross-room message leakage
-  - Socket events updated to use selected chatroomId instead of hardcoded 'default-general'
-  - Admin-created chatrooms immediately visible to all users
-  - Message history persists correctly per chatroom
-  - Comprehensive testing verified real-time isolation and room switching
-- **User Profile Management**: New profile page for users to manage their account
-  - View and edit first name and last name
-  - Display email address (read-only, managed by Replit Auth)
-  - Show account creation date and admin status
-  - Profile route at /profile with navigation link in ChatPage sidebar
-  - Server-side validation with updateUserProfileSchema
-  - Form pre-population with useEffect for better UX
-  - Changes reflect immediately throughout the app (sidebar, chat headers, etc.)
-  - PATCH /api/profile endpoint with authentication and validation
-- **Code Cleanup**: Removed unused LoginPage.tsx component (dead code)
-- **Dark Mode Verification**: Confirmed theme persistence works across all pages
-- **Comprehensive Testing**: All features tested and verified working correctly
-- **Admin Control Panel**: Comprehensive admin interface for platform management
-  - User management: view all users, promote to admin, soft-delete accounts
-  - Chatroom management: create, update, delete chatrooms (multi-room support)
-  - Real-time online/offline user status monitoring
-  - Protected routes and API endpoints (requires isAdmin flag)
-  - Bootstrap function ensures default chatroom exists on server startup
-  - Soft deletion for users prevents FK constraint violations
-  - Default chatroom displays "Default" badge in admin panel
-- **Message Deletion**: Implemented soft deletion for both private and chatroom messages
-  - Delete button appears on hover for user's own messages only
-  - Deleted messages filtered from all queries and chat previews
-  - Real-time deletion broadcasts via Socket.IO
-- **Security Hardening**: Fixed critical Socket.IO security vulnerabilities
-  - Session-based authentication middleware for all socket connections
-  - All socket events use authenticated userId from server session (never trust client)
-  - withCredentials enabled for proper cookie sharing between HTTP and WebSocket
-- **Friend List Improvements**: Fixed test-id uniqueness to use user IDs instead of names
-
-## Previous Changes
-- **Database Schema**: Added users (with profile fields), messages, chatroom_messages, chatrooms, and sessions tables with proper relationships
-- **Authentication**: Integrated Replit Auth for secure user authentication with Google, GitHub, and email
-- **User Profile Management**: Added profile editing functionality with validation
-- **Real-Time Messaging**: Implemented Socket.io for instant message delivery
-- **Chatroom Feature**: Added public chatroom with persistent message history
-- **Message Encryption**: Added client-side AES encryption for message storage and transit
-- **Frontend**: Built complete chat interface with chatroom, friend list, message history, and real-time updates
-- **Storage Model**: 
-  - Messages stored in database in encrypted form only (no plaintext storage)
-  - Messages transmitted over network in encrypted form
-  - Shared encryption keys used for demo purposes (NOT production-ready security)
-
-## Encryption Model
-
-### Current Implementation
-The app uses **client-side AES encryption** with shared keys for demonstration purposes:
-
-**Private Messages:**
-- Uses a shared static key (`PRIVATE_MESSAGE_KEY`) hardcoded in client source
-- All users can decrypt all private messages
-- Provides basic obfuscation in storage/transit but not true end-to-end security
-- Messages stored and transmitted only in encrypted form
-
-**Chatroom Messages:**
-- Uses a shared static key (`CHATROOM_KEY`) hardcoded in client source  
-- All users can decrypt all chatroom messages
-- Provides basic obfuscation but not true end-to-end security
-- Messages stored and transmitted only in encrypted form
-
-### Limitations
-This is a **simplified encryption model** suitable for a demo/MVP but NOT production-ready:
-
-1. **Shared Keys**: Both private and chatroom messages use shared static keys hardcoded in client source
-2. **No True E2E**: Any user or server operator can decrypt all messages by inspecting client code
-3. **Key Visibility**: Encryption keys are visible to anyone with access to the source code
-4. **No Key Rotation**: Keys never expire or rotate
-5. **No Per-User Security**: No distinction between users' ability to decrypt messages
-6. **Server Trust**: Server operator could inject code to capture plaintext before encryption
-
-### For Production Use
-A production-ready secure messenger should implement:
-
-**For Private Messages:**
-- **Asymmetric Encryption**: Public/private key pairs (RSA, Curve25519)
-- **Key Exchange Protocol**: Diffie-Hellman or Signal Protocol for secure key sharing
-- **Perfect Forward Secrecy**: Ephemeral keys that are destroyed after use
-- **Identity Verification**: Public key fingerprints and safety numbers
-
-**For Group Chat/Chatroom:**
-- **Group Key Management**: Sender keys or tree-based key distribution (Signal's Sender Keys, MLS protocol)
-- **Member Changes**: Re-key when members join/leave for forward/backward secrecy
-- **Per-Room Keys**: Unique keys for each chatroom, encrypted separately for each member
-
-**General:**
-- **Secure Key Storage**: Hardware security modules or secure enclaves
-- **Key Backup**: Encrypted cloud backup with recovery mechanisms
-- **Audit Logs**: Track key rotations and member changes
-
-## What This App Provides
-
-✅ **Encrypted Storage**: Messages stored in database in encrypted form  
-✅ **Encrypted Transit**: Messages sent over network in encrypted form  
-✅ **Authentication**: Only authenticated users can access messages  
-✅ **Real-Time Delivery**: Instant message delivery via WebSocket  
-✅ **Persistent History**: Messages saved and retrievable  
-
-❌ **NOT True End-to-End Encryption**: All users share the same encryption keys, so any user or server operator with access to the source code can decrypt all messages. See "Encryption Model" for details.
-
-## Project Architecture
-
-### Backend (Express + Socket.io)
-- **Authentication**: Replit Auth with OpenID Connect (server/replitAuth.ts)
-- **Database**: PostgreSQL with Drizzle ORM (server/db.ts)
-- **Bootstrap**: Database initialization ensuring default chatroom exists (server/bootstrap.ts)
-- **Storage**: Database storage layer for users, chatrooms, and messages (server/storage.ts)
-- **WebSocket**: Socket.io server for real-time messaging (server/routes.ts)
-- **API Routes**: User management, chatroom management, and message history endpoints
-- **Admin Middleware**: Role-based access control for admin-only routes (isAdmin middleware)
-
-### Frontend (React + TypeScript)
-- **Pages**:
-  - LandingPage: Login page for unauthenticated users
-  - ChatPage: Main chat interface with friend list and messaging
-  - ProfilePage: User profile management (view/edit name, view email and join date)
-  - AdminPage: Admin control panel for user/chatroom management (admin-only)
-- **Hooks**:
-  - useAuth: Authentication state management
-  - useSocket: WebSocket connection and real-time messaging
-- **Components**:
-  - UserAvatar: User profile pictures with online status
-  - FriendListItem: Friend list entries with last message preview
-  - MessageBubble: Individual message display
-  - MessageInput: Message composition area
-  - ChatHeader: Chat header with call buttons and menu
-  - ThemeToggle: Dark/light mode switcher
-  - LockIcon: Custom SVG lock icon that adapts to theme
-- **Encryption**: Client-side AES encryption (client/src/lib/encryption.ts)
-
-### Database Schema
-- **users**: User profiles (id, email, firstName, lastName, profileImageUrl, isAdmin, deletedAt)
-- **chatrooms**: Chatroom definitions (id, name, description, createdAt, updatedAt)
-- **messages**: Encrypted private message storage (id, senderId, recipientId, encryptedContent, deletedAt, createdAt)
-- **chatroom_messages**: Encrypted chatroom messages (id, chatroomId, senderId, encryptedContent, deletedAt, createdAt)
-- **sessions**: Session storage for authentication
-
-### Socket.IO Security Model
-- **Authentication**: Session middleware validates all Socket.IO connections
-- **User Identity**: Server derives userId from authenticated session (socket.data.userId)
-- **No Client Trust**: All socket events ignore client-supplied user IDs
-- **Event Validation**: register, send-message, send-chatroom-message, typing, delete-message all use authenticated userId
-
-## Features
-- ✅ Real-time messaging with Socket.io
-- ✅ User authentication via Replit Auth (with logout functionality)
-- ✅ User profile management (edit name, view account details)
-- ✅ Message encryption (client-side AES)
-- ✅ Message deletion (soft deletion with real-time broadcasts)
-- ✅ Multiple chatrooms with persistent history
-- ✅ Private 1-on-1 messaging
-- ✅ Online/offline status indicators
-- ✅ Message history persistence
-- ✅ Dark mode support (persists across all pages)
-- ✅ Responsive design
-- ✅ Friend discovery (all registered users)
-- ✅ Session-based Socket.IO authentication
-- ✅ Admin control panel (user/chatroom management)
-- ✅ Role-based access control (admin vs regular users)
-
-## Known Limitations
-1. **Encryption**: Simplified model - NOT suitable for production security requirements
-   - All messages (private + chatroom) use shared hardcoded keys
-   - Any user can technically decrypt any message
-   - Encryption provides obfuscation, not true end-to-end security
-2. **File Sharing**: No support for images or file attachments
-3. **Read Receipts**: Not implemented
-4. **Message Editing**: Cannot edit sent messages (deletion only)
-5. **Voice/Video Calls**: UI buttons present but not functional
-6. **Hard Deletion**: Deleted messages and users remain in database with deletedAt timestamp (soft deletion only)
+LockBox is a real-time messaging application designed for private communication. This project serves as a demonstration and Minimum Viable Product (MVP), showcasing secure authentication, WebSocket-based real-time messaging, and encrypted message storage. The application is currently implementing the Signal Protocol for robust end-to-end encryption. While not yet fully production-ready in terms of E2E security, it provides encrypted storage and transit. The long-term vision is to deliver a secure, user-friendly platform for private conversations with advanced features like user-owned chatrooms and comprehensive administrative controls.
 
 ## User Preferences
 - Dark mode support with localStorage persistence
 - Clean, modern design with subtle interactions
 - Focus on privacy and encryption
 
-## Tech Stack
-- **Frontend**: React, TypeScript, Tailwind CSS, Shadcn UI, Socket.io-client, crypto-js
-- **Backend**: Express, Socket.io, Passport, Drizzle ORM
-- **Database**: PostgreSQL (Neon)
+## System Architecture
+
+### UI/UX Decisions
+The application features a clean, modern design with a focus on usability. Key UI elements include:
+- Collapsible chatroom and user sections in the ChatPage sidebar.
+- Crown icon (👑) to denote chatroom owners.
+- Theme preference persistence across devices and sessions.
+- User-owned chatrooms with moderation capabilities, including inviting and kicking users.
+- Admin Control Panel for comprehensive user and chatroom management, including soft-deletion and online status monitoring.
+
+### Technical Implementations
+- **Backend**: Built with Express and Socket.io, handling authentication, database interactions, and real-time communication.
+- **Frontend**: Developed using React and TypeScript, leveraging Tailwind CSS and Shadcn UI for a responsive and modern interface.
+- **Authentication**: Integrates Replit Auth for secure user authentication using OpenID Connect.
+- **Real-time Messaging**: Utilizes Socket.io for instant message delivery, including real-time isolation of messages per chatroom and soft-deletion broadcasts.
+- **Encryption**:
+    - **Current Transition**: Migrating from a simplified shared-key encryption model to the Signal Protocol for robust End-to-End Encryption (E2E).
+    - **Signal Protocol Implementation Status**: Key infrastructure, automatic key generation (identity, signed prekey, one-time prekeys), encrypted IndexedDB storage for private keys (using WebCrypto AES-GCM with PBKDF2), and backend API endpoints for public key distribution are implemented.
+    - **Pending Signal Protocol**: X3DH key exchange, Double Ratchet algorithm, Sender Keys for group chat, and UI for safety number verification are in progress.
+    - **Legacy Encryption (Temporary)**: Private and chatroom messages currently use shared static keys, which will be replaced by the Signal Protocol.
+- **Database**: PostgreSQL managed with Drizzle ORM, supporting schemas for users, chatrooms, messages, chatroom messages, and sessions.
+- **Admin Control**: Protected routes and API endpoints ensure only administrators can access management features.
+- **Security**: Session-based authentication middleware for all Socket.IO connections and server-side derivation of `userId` from authenticated sessions to prevent client-side tampering.
+
+### Feature Specifications
+- Real-time messaging with individual and chatroom capabilities.
+- User authentication and profile management (edit name, view details).
+- Client-side message encryption (transitioning to Signal Protocol).
+- Soft deletion of messages with real-time updates.
+- Multi-chatroom support with persistent message history.
+- Online/offline status indicators.
+- Dark mode support.
+- Admin control panel for user and chatroom management, including promotion to admin and soft-deletion of accounts.
+- Role-based access control for administrative functions.
+
+### System Design Choices
+- **Modular Architecture**: Clear separation between frontend and backend, and distinct modules for authentication, storage, and real-time communication.
+- **Database Schema**: Designed with `users`, `chatrooms`, `messages`, `chatroom_messages`, and `sessions` tables, including `deletedAt` for soft-deletion.
+- **Client-Side Encryption Focus**: Emphasizes protecting data in transit and at rest, with a clear understanding of browser-based E2E limitations (e.g., XSS vulnerabilities).
+- **Scalability**: Designed to handle real-time communication for multiple users and chatrooms efficiently.
+
+## External Dependencies
+- **Database**: Neon (PostgreSQL)
 - **Authentication**: Replit Auth (OpenID Connect)
-- **Encryption**: crypto-js (AES)
-- **Real-time**: Socket.io
+- **Real-time Communication**: Socket.io
+- **ORM**: Drizzle ORM
+- **Encryption Libraries**: `crypto-js` (for legacy encryption) and `@signalapp/libsignal-client` (for Signal Protocol implementation)
+- **UI Frameworks**: Tailwind CSS, Shadcn UI
