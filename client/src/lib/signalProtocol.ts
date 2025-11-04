@@ -87,14 +87,29 @@ export function base64ToArrayBuffer(base64: string): ArrayBuffer {
  */
 export async function initializeSignalKeys(): Promise<StoredKeys> {
   // Generate identity key pair (root of trust)
-  const identityKeyPair = await KeyHelper.generateIdentityKeyPair();
+  // Library returns { pubKey, privKey } - normalize to { publicKey, privateKey }
+  const rawIdentityKeyPair = await KeyHelper.generateIdentityKeyPair();
+  const identityKeyPair = {
+    publicKey: rawIdentityKeyPair.pubKey,
+    privateKey: rawIdentityKeyPair.privKey,
+  };
 
   // Generate registration ID
   const registrationId = KeyHelper.generateRegistrationId();
 
   // Generate signed prekey (id starts at 1)
   const signedPreKeyId = 1;
-  const signedPreKey = await KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId);
+  const rawSignedPreKey = await KeyHelper.generateSignedPreKey(rawIdentityKeyPair, signedPreKeyId);
+  
+  // Normalize key pair structure
+  const signedPreKey = {
+    keyId: signedPreKeyId,
+    keyPair: {
+      publicKey: rawSignedPreKey.keyPair.pubKey,
+      privateKey: rawSignedPreKey.keyPair.privKey,
+    },
+    signature: rawSignedPreKey.signature,
+  };
 
   // Generate one-time prekeys (100 keys starting at id 1)
   // Note: KeyHelper.generatePreKey is singular, so we call it in a loop
@@ -103,22 +118,21 @@ export async function initializeSignalKeys(): Promise<StoredKeys> {
   const preKeys = [];
   
   for (let i = 0; i < numPreKeys; i++) {
-    const preKey = await KeyHelper.generatePreKey(startPreKeyId + i);
-    preKeys.push(preKey);
+    const rawPreKey = await KeyHelper.generatePreKey(startPreKeyId + i);
+    preKeys.push({
+      keyId: rawPreKey.keyId,
+      keyPair: {
+        publicKey: rawPreKey.keyPair.pubKey,
+        privateKey: rawPreKey.keyPair.privKey,
+      },
+    });
   }
 
   return {
     identityKeyPair,
     registrationId,
-    signedPreKey: {
-      keyId: signedPreKeyId,
-      keyPair: signedPreKey.keyPair,
-      signature: signedPreKey.signature,
-    },
-    preKeys: preKeys.map(pk => ({
-      keyId: pk.keyId,
-      keyPair: pk.keyPair,
-    })),
+    signedPreKey,
+    preKeys,
   };
 }
 

@@ -360,8 +360,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { identityKey, signedPreKey, preKeys } = req.body;
 
+      console.log(`[Signal Keys] POST /api/signal/keys - User: ${userId}`);
+      console.log(`[Signal Keys] - Identity key length: ${identityKey?.length || 0}`);
+      console.log(`[Signal Keys] - Signed prekey exists: ${!!signedPreKey}`);
+      console.log(`[Signal Keys] - Prekeys count: ${preKeys?.length || 0}`);
+
       // Validate required fields
       if (!identityKey || !signedPreKey || !Array.isArray(preKeys)) {
+        console.log(`[Signal Keys] ❌ Validation failed for user ${userId}`);
         return res.status(400).json({ message: "Missing required key data" });
       }
 
@@ -379,9 +385,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store prekeys
       await storage.storePreKeys(userId, preKeys);
 
+      console.log(`[Signal Keys] ✅ Keys uploaded successfully for user ${userId}`);
       res.status(201).json({ message: "Keys uploaded successfully" });
     } catch (error) {
-      console.error("Error uploading keys:", error);
+      console.error(`[Signal Keys] ❌ Error uploading keys for user:`, error);
       res.status(500).json({ message: "Failed to upload keys" });
     }
   });
@@ -390,16 +397,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/signal/keys/:targetUserId", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
       const targetUserId = req.params.targetUserId;
+      const requesterId = req.user.claims.sub;
+
+      console.log(`[Signal Keys] GET /api/signal/keys/${targetUserId} - Requester: ${requesterId}`);
 
       // Get identity key
       const identityKey = await storage.getIdentityKey(targetUserId);
       if (!identityKey) {
+        console.log(`[Signal Keys] ❌ 404 - User ${targetUserId} has no identity key`);
         return res.status(404).json({ message: "User has not set up encryption keys" });
       }
 
       // Get signed prekey
       const signedPreKey = await storage.getSignedPreKey(targetUserId);
       if (!signedPreKey) {
+        console.log(`[Signal Keys] ❌ 404 - User ${targetUserId} has no signed prekey`);
         return res.status(404).json({ message: "User has no signed prekey" });
       }
 
@@ -412,6 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.markPreKeyAsUsed(targetUserId, preKey.keyId);
       }
 
+      console.log(`[Signal Keys] ✅ 200 - Returning prekey bundle for ${targetUserId}`);
       res.json({
         identityKey: identityKey.publicKey,
         signedPreKey: {
