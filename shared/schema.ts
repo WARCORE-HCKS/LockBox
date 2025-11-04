@@ -141,6 +141,80 @@ export const chatroomMembersRelations = relations(chatroomMembers, ({ one }) => 
   }),
 }));
 
+// Signal Protocol tables for E2E encryption
+export const identityKeys = pgTable("identity_keys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  publicKey: text("public_key").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const preKeys = pgTable("pre_keys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  keyId: varchar("key_id").notNull(),
+  publicKey: text("public_key").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  unique().on(table.userId, table.keyId),
+]);
+
+export const signedPreKeys = pgTable("signed_pre_keys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  keyId: varchar("key_id").notNull(),
+  publicKey: text("public_key").notNull(),
+  signature: text("signature").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  unique().on(table.userId, table.keyId),
+]);
+
+export const signalSessions = pgTable("signal_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  recipientId: varchar("recipient_id").notNull().references(() => users.id),
+  sessionData: text("session_data").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  unique().on(table.userId, table.recipientId),
+]);
+
+// Relations for Signal Protocol tables
+export const identityKeysRelations = relations(identityKeys, ({ one }) => ({
+  user: one(users, {
+    fields: [identityKeys.userId],
+    references: [users.id],
+  }),
+}));
+
+export const preKeysRelations = relations(preKeys, ({ one }) => ({
+  user: one(users, {
+    fields: [preKeys.userId],
+    references: [users.id],
+  }),
+}));
+
+export const signedPreKeysRelations = relations(signedPreKeys, ({ one }) => ({
+  user: one(users, {
+    fields: [signedPreKeys.userId],
+    references: [users.id],
+  }),
+}));
+
+export const signalSessionsRelations = relations(signalSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [signalSessions.userId],
+    references: [users.id],
+  }),
+  recipient: one(users, {
+    fields: [signalSessions.recipientId],
+    references: [users.id],
+  }),
+}));
+
 // Types and schemas
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -184,3 +258,9 @@ export const updateThemeSchema = z.object({
 });
 
 export type UpdateTheme = z.infer<typeof updateThemeSchema>;
+
+// Signal Protocol types
+export type IdentityKey = typeof identityKeys.$inferSelect;
+export type PreKey = typeof preKeys.$inferSelect;
+export type SignedPreKey = typeof signedPreKeys.$inferSelect;
+export type SignalSession = typeof signalSessions.$inferSelect;
