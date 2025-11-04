@@ -19,7 +19,7 @@ The application features a cyberpunk HUD aesthetic with neon colors and futurist
 - **Encryption Indicators**: Pulsing neon-glow E2E badges with lock icons, prominent throughout UI
 - **Color Scheme**: 
   - Dark Mode: Deep black backgrounds (#0a0a0f) with neon cyan (primary), magenta (secondary), and hot pink (accent) colors
-  - Light Mode: Bright backgrounds (#fafafa) with hot pink (primary), cyan (secondary) for cyberpunk-on-light aesthetic
+  - Light Mode: Soft lavender-gray backgrounds (#ebebf5) with blue-violet brand color (#8a2be2), softer cyan (#07b8c4), and purple (#a855f7) - designed for eye comfort while maintaining cyberpunk edge
 - **Advanced Theme Toggle**: Impressive button with orbital rings, particle effects, corner brackets, scan line, and icon rotation
   - Orbital Rings: Two animated concentric rings (outer pulsing 3s, middle reverse rotating 4s)
   - Particle Effects: 6 floating particles with staggered animations on hover
@@ -33,6 +33,20 @@ The application features a cyberpunk HUD aesthetic with neon colors and futurist
 - **Theme Support**: Seamless light/dark mode switching with cyberpunk color palette adjustments, theme persistence across navigation
 - **Sidebar**: HUD-style panels with corner brackets, scanline overlays, neon-glow avatars, and gradient section headers
 - **Admin Control**: Comprehensive panel styled with cyberpunk aesthetics
+- **HUD Telemetry Panel**: Premium real-time stats display featuring:
+  - IP Address Monitor: Displays user's connection IP from backend endpoint
+  - Latency Monitor: Live connection latency with color-coded status (OPTIMAL <30ms, GOOD <60ms, FAIR >60ms)
+  - Connection Status: Shows network location/type
+  - Local Time Clock: Real-time clock updating every second (HH:MM:SS format)
+  - Corner brackets, neon glows, and data stream animations for cyber defense aesthetic
+- **Cyber Map Visualization**: Interactive world map component with:
+  - Simplified continent SVG shapes (Africa, Europe, Asia, Americas, Australia)
+  - 8 global threat/activity nodes with pulsing animations
+  - Animated connection lines between active nodes
+  - Horizontal scanning line effect (4s loop)
+  - Grid background pattern for technical feel
+  - Legend showing secure/activity status indicators
+  - Active node counter display
 
 ### Technical Implementations
 - **Backend**: Built with Express and Socket.io, handling authentication, database interactions, and real-time communication.
