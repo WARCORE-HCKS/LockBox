@@ -18,6 +18,8 @@ import MessageInput from "@/components/MessageInput";
 import ChatHeader from "@/components/ChatHeader";
 import UserAvatar from "@/components/UserAvatar";
 import ThemeToggle from "@/components/ThemeToggle";
+import HUDStats from "@/components/HUDStats";
+import CyberMap from "@/components/CyberMap";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
 import { useSignalKeyInit } from "@/hooks/useSignalKeyInit";
@@ -366,7 +368,7 @@ export default function ChatPage() {
     setChatroomMessages((prev) => prev.filter(m => m.id !== data.messageId));
   }, []);
 
-  const { sendMessage, sendChatroomMessage, deleteMessage, deleteChatroomMessage } = useSocket({
+  const { isConnected, sendMessage, sendChatroomMessage, deleteMessage, deleteChatroomMessage } = useSocket({
     userId: currentUser?.id,
     onMessageReceived: handleMessageReceived,
     onChatroomMessageReceived: handleChatroomMessageReceived,
@@ -619,6 +621,12 @@ export default function ChatPage() {
               style={{ fontFamily: 'var(--font-display)' }}
             />
           </div>
+        </div>
+
+        {/* HUD Stats Panel */}
+        <div className="p-3 border-b border-primary/20 space-y-3">
+          <HUDStats socketConnected={isConnected} />
+          <CyberMap />
         </div>
 
         <ScrollArea className="flex-1">

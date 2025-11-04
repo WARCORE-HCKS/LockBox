@@ -5,83 +5,83 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CYBERPUNK THEME - Light mode with neon aesthetic on bright backgrounds */
+/* CYBERPUNK THEME - Premium light mode with soft, eye-friendly colors */
 :root {
-  --button-outline: rgba(255, 0, 128, 0.25);
-  --badge-outline: rgba(255, 0, 128, 0.2);
+  --button-outline: rgba(138, 43, 226, 0.2);
+  --badge-outline: rgba(138, 43, 226, 0.15);
 
   /* Automatic computation of border around primary / danger buttons */
   --opaque-button-border-intensity: -8; /* In terms of percentages */
 
   /* Backgrounds applied on top of other backgrounds when hovered/active */
-  --elevate-1: rgba(255, 0, 128, 0.08);
-  --elevate-2: rgba(255, 0, 128, 0.15);
+  --elevate-1: rgba(138, 43, 226, 0.06);
+  --elevate-2: rgba(138, 43, 226, 0.12);
 
-  /* Cyberpunk light mode - Bright backgrounds with neon accents */
-  --background: 0 0% 98%;  /* #fafafa - Very light gray */
+  /* Premium light mode - Soft muted backgrounds with sophisticated neon accents */
+  --background: 240 25% 94%;  /* #ebebf5 - Soft lavender-gray, easy on eyes */
 
-  --foreground: 240 15% 12%;  /* #1a1a2e - Dark blue-black text */
+  --foreground: 240 20% 15%;  /* #1e1e2e - Deep blue-black, high contrast */
 
-  --border: 330 100% 50% / 0.2;  /* Hot pink with transparency */
+  --border: 270 60% 65% / 0.25;  /* Soft purple with transparency */
 
-  --card: 0 0% 100%;  /* #ffffff - Pure white cards */
+  --card: 240 30% 97%;  /* #f7f7fc - Very soft lavender-white */
 
-  --card-foreground: 240 15% 12%;
+  --card-foreground: 240 20% 15%;
 
-  --card-border: 330 100% 50% / 0.25;  /* Pink border glow */
+  --card-border: 270 60% 70% / 0.3;  /* Soft purple border */
 
-  --sidebar: 270 20% 96%;  /* #f5f3f7 - Very light purple-gray */
+  --sidebar: 240 28% 92%;  /* #e5e5f2 - Muted lavender */
 
-  --sidebar-foreground: 240 15% 12%;
+  --sidebar-foreground: 240 20% 15%;
 
-  --sidebar-border: 330 100% 50% / 0.2;
+  --sidebar-border: 270 50% 65% / 0.25;
 
-  --sidebar-primary: 330 100% 50%;  /* #ff0080 - Hot pink accent */
+  --sidebar-primary: 270 75% 60%;  /* #8a2be2 - Blue-violet (sophisticated) */
 
   --sidebar-primary-foreground: 0 0% 100%;
 
-  --sidebar-accent: 270 30% 92%;  /* Light purple accent */
+  --sidebar-accent: 240 35% 88%;  /* Soft accent surface */
 
-  --sidebar-accent-foreground: 240 15% 12%;
+  --sidebar-accent-foreground: 240 20% 15%;
 
-  --sidebar-ring: 330 100% 50%;  /* Hot pink ring */
+  --sidebar-ring: 270 75% 60%;  /* Blue-violet ring */
 
-  --popover: 0 0% 100%;
+  --popover: 240 30% 97%;
 
-  --popover-foreground: 240 15% 12%;
+  --popover-foreground: 240 20% 15%;
 
-  --popover-border: 330 100% 50% / 0.3;
+  --popover-border: 270 60% 70% / 0.35;
 
-  --primary: 180 100% 50%;  /* #00ffff - Cyan primary */
+  --primary: 190 95% 45%;  /* #07b8c4 - Softer cyan, less harsh */
 
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 300 100% 50%;  /* #ff00ff - Magenta accent */
+  --secondary: 280 70% 60%;  /* #a855f7 - Softer purple instead of harsh magenta */
 
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 270 15% 90%;
+  --muted: 240 25% 88%;
 
-  --muted-foreground: 240 10% 45%;  /* Medium gray */
+  --muted-foreground: 240 15% 40%;  /* Better readability */
 
-  --accent: 330 100% 50%;  /* #ff0080 - Hot pink accent */
+  --accent: 270 75% 60%;  /* #8a2be2 - Blue-violet (brand color) */
 
   --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 75% 55%;
 
   --destructive-foreground: 0 0% 100%;
 
-  --success: 150 100% 45%;  /* Darker neon green for readability */
+  --success: 160 85% 40%;  /* Softer teal-green */
 
-  --input: 270 15% 90%;
-  --ring: 330 100% 50%;  /* Hot pink focus ring */
+  --input: 240 25% 90%;
+  --ring: 270 75% 60%;  /* Blue-violet focus ring */
   
-  --chart-1: 180 100% 45%;  /* Darker cyan for light mode */
-  --chart-2: 150 100% 45%;  /* Darker neon green */
-  --chart-3: 300 100% 50%;  /* Magenta */
-  --chart-4: 330 100% 50%;  /* Hot pink */
-  --chart-5: 270 100% 55%;  /* Purple */
+  --chart-1: 190 95% 42%;  /* Softer cyan */
+  --chart-2: 160 85% 38%;  /* Softer green */
+  --chart-3: 280 70% 58%;  /* Softer purple */
+  --chart-4: 270 75% 60%;  /* Blue-violet */
+  --chart-5: 250 80% 65%;  /* Light purple */
 
   /* Cyberpunk fonts */
   --font-sans: 'Rajdhani', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -91,21 +91,21 @@
   
   --radius: .25rem; /* 4px - Angular corners */
   
-  /* Neon glow shadows for light mode - Hot pink and cyan */
-  --glow-cyan: 0 0 12px rgba(0, 255, 255, 0.4), 0 0 24px rgba(0, 255, 255, 0.15);
-  --glow-cyan-strong: 0 0 18px rgba(0, 255, 255, 0.6), 0 0 36px rgba(0, 255, 255, 0.25);
-  --glow-magenta: 0 0 12px rgba(255, 0, 255, 0.4), 0 0 24px rgba(255, 0, 255, 0.15);
-  --glow-pink: 0 0 12px rgba(255, 0, 128, 0.5), 0 0 24px rgba(255, 0, 128, 0.2);
-  --glow-green: 0 0 12px rgba(0, 255, 136, 0.4), 0 0 24px rgba(0, 255, 136, 0.15);
+  /* Premium neon glow shadows for light mode - Soft, sophisticated */
+  --glow-cyan: 0 0 10px rgba(7, 184, 196, 0.3), 0 0 20px rgba(7, 184, 196, 0.12);
+  --glow-cyan-strong: 0 0 15px rgba(7, 184, 196, 0.5), 0 0 30px rgba(7, 184, 196, 0.2);
+  --glow-magenta: 0 0 10px rgba(168, 85, 247, 0.35), 0 0 20px rgba(168, 85, 247, 0.15);
+  --glow-pink: 0 0 10px rgba(138, 43, 226, 0.4), 0 0 20px rgba(138, 43, 226, 0.18);
+  --glow-green: 0 0 10px rgba(16, 185, 129, 0.35), 0 0 20px rgba(16, 185, 129, 0.15);
   
-  --shadow-2xs: 0px 1px 2px 0px rgba(255, 0, 128, 0.15);
-  --shadow-xs: 0px 1px 3px 0px rgba(255, 0, 128, 0.2);
-  --shadow-sm: 0px 2px 4px 0px rgba(255, 0, 128, 0.18);
-  --shadow: 0px 4px 6px -1px rgba(255, 0, 128, 0.22);
-  --shadow-md: 0px 6px 12px -2px rgba(255, 0, 128, 0.28);
-  --shadow-lg: 0px 10px 20px -4px rgba(255, 0, 128, 0.35);
-  --shadow-xl: 0px 20px 30px -6px rgba(255, 0, 128, 0.4);
-  --shadow-2xl: 0px 30px 50px -8px rgba(255, 0, 128, 0.5);
+  --shadow-2xs: 0px 1px 2px 0px rgba(138, 43, 226, 0.1);
+  --shadow-xs: 0px 1px 3px 0px rgba(138, 43, 226, 0.12);
+  --shadow-sm: 0px 2px 4px 0px rgba(138, 43, 226, 0.14);
+  --shadow: 0px 4px 6px -1px rgba(138, 43, 226, 0.16);
+  --shadow-md: 0px 6px 12px -2px rgba(138, 43, 226, 0.2);
+  --shadow-lg: 0px 10px 20px -4px rgba(138, 43, 226, 0.25);
+  --shadow-xl: 0px 20px 30px -6px rgba(138, 43, 226, 0.3);
+  --shadow-2xl: 0px 30px 50px -8px rgba(138, 43, 226, 0.35);
   
   --tracking-normal: 0em;
   --spacing: 0.25rem;
@@ -598,5 +598,18 @@
   
   .animate-scan-line {
     animation: scan-line 2s linear infinite;
+  }
+  
+  @keyframes scan-horizontal {
+    0% {
+      left: 0%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+  
+  .animate-scan-horizontal {
+    animation: scan-horizontal 4s linear infinite;
   }
 }

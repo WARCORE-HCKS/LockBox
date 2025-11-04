@@ -130,6 +130,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get connection info (IP address, location)
+  app.get('/api/connection-info', isAuthenticated, async (req: any, res) => {
+    try {
+      // Get IP from various headers (Replit, proxy, or direct)
+      const ip = (req.headers['x-replit-user-ip'] || 
+                  req.headers['x-forwarded-for'] || 
+                  req.connection.remoteAddress || 
+                  req.socket.remoteAddress ||
+                  '127.0.0.1') as string;
+      
+      // Clean up IP (remove ::ffff: prefix if present)
+      const cleanIp = ip.replace('::ffff:', '');
+      
+      // Simple location based on IP (could be enhanced with GeoIP service)
+      let location = "Unknown";
+      if (cleanIp.startsWith('127.') || cleanIp === 'localhost') {
+        location = "Local";
+      } else if (cleanIp.includes(':')) {
+        location = "IPv6 Network";
+      } else {
+        location = "Global Network";
+      }
+
+      res.json({
+        ip: cleanIp,
+        location: location,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error fetching connection info:", error);
+      res.status(500).json({ message: "Failed to fetch connection info" });
+    }
+  });
+
   // Get all users (for finding friends to chat with)
   app.get("/api/users", isAuthenticated, checkNotBanned, async (req: any, res) => {
     try {
