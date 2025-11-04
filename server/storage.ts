@@ -5,6 +5,10 @@ import {
   chatrooms,
   chatroomBans,
   chatroomMembers,
+  identityKeys,
+  preKeys,
+  signedPreKeys,
+  signalSessions,
   type User,
   type UpsertUser,
   type Message,
@@ -16,6 +20,10 @@ import {
   type UpdateUserProfile,
   type ChatroomBan,
   type ChatroomMember,
+  type IdentityKey,
+  type PreKey,
+  type SignedPreKey,
+  type SignalSession,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, or, and, desc, ne, isNull, count, countDistinct, sql as dsql } from "drizzle-orm";
@@ -66,6 +74,19 @@ export interface IStorage {
     activeUsers: number;
     uniquePosters: number;
   }>;
+  
+  // Signal Protocol E2E encryption operations
+  storeIdentityKey(userId: string, publicKey: string): Promise<IdentityKey>;
+  getIdentityKey(userId: string): Promise<IdentityKey | undefined>;
+  storePreKeys(userId: string, preKeyList: Array<{ keyId: string; publicKey: string }>): Promise<void>;
+  getPreKey(userId: string, keyId: string): Promise<PreKey | undefined>;
+  markPreKeyAsUsed(userId: string, keyId: string): Promise<void>;
+  getUnusedPreKeys(userId: string, limit?: number): Promise<PreKey[]>;
+  storeSignedPreKey(userId: string, keyId: string, publicKey: string, signature: string): Promise<SignedPreKey>;
+  getSignedPreKey(userId: string): Promise<SignedPreKey | undefined>;
+  storeSession(userId: string, recipientId: string, sessionData: string): Promise<SignalSession>;
+  getSession(userId: string, recipientId: string): Promise<SignalSession | undefined>;
+  deleteSession(userId: string, recipientId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -463,6 +484,135 @@ export class DatabaseStorage implements IStorage {
       activeUsers: 0, // This will be calculated from socket connections in real-time
       uniquePosters: Number(stats?.uniquePosters || 0),
     };
+  }
+
+  // Signal Protocol E2E encryption operations
+  async storeIdentityKey(userId: string, publicKey: string): Promise<IdentityKey> {
+    const [key] = await db
+      .insert(identityKeys)
+      .values({ userId, publicKey })
+      .onConflictDoUpdate({
+        target: identityKeys.userId,
+        set: { publicKey, createdAt: new Date() },
+      })
+      .returning();
+    return key;
+  }
+
+  async getIdentityKey(userId: string): Promise<IdentityKey | undefined> {
+    const [key] = await db
+      .select()
+      .from(identityKeys)
+      .where(eq(identityKeys.userId, userId));
+    return key;
+  }
+
+  async storePreKeys(
+    userId: string,
+    preKeyList: Array<{ keyId: string; publicKey: string }>
+  ): Promise<void> {
+    if (preKeyList.length === 0) return;
+
+    await db.insert(preKeys).values(
+      preKeyList.map(pk => ({
+        userId,
+        keyId: pk.keyId,
+        publicKey: pk.publicKey,
+        used: false,
+      }))
+    ).onConflictDoNothing();
+  }
+
+  async getPreKey(userId: string, keyId: string): Promise<PreKey | undefined> {
+    const [key] = await db
+      .select()
+      .from(preKeys)
+      .where(and(eq(preKeys.userId, userId), eq(preKeys.keyId, keyId)));
+    return key;
+  }
+
+  async markPreKeyAsUsed(userId: string, keyId: string): Promise<void> {
+    await db
+      .update(preKeys)
+      .set({ used: true })
+      .where(and(eq(preKeys.userId, userId), eq(preKeys.keyId, keyId)));
+  }
+
+  async getUnusedPreKeys(userId: string, limit: number = 10): Promise<PreKey[]> {
+    return await db
+      .select()
+      .from(preKeys)
+      .where(and(eq(preKeys.userId, userId), eq(preKeys.used, false)))
+      .limit(limit);
+  }
+
+  async storeSignedPreKey(
+    userId: string,
+    keyId: string,
+    publicKey: string,
+    signature: string
+  ): Promise<SignedPreKey> {
+    const [key] = await db
+      .insert(signedPreKeys)
+      .values({ userId, keyId, publicKey, signature })
+      .onConflictDoUpdate({
+        target: [signedPreKeys.userId, signedPreKeys.keyId],
+        set: { publicKey, signature, createdAt: new Date() },
+      })
+      .returning();
+    return key;
+  }
+
+  async getSignedPreKey(userId: string): Promise<SignedPreKey | undefined> {
+    const [key] = await db
+      .select()
+      .from(signedPreKeys)
+      .where(eq(signedPreKeys.userId, userId))
+      .orderBy(desc(signedPreKeys.createdAt))
+      .limit(1);
+    return key;
+  }
+
+  async storeSession(
+    userId: string,
+    recipientId: string,
+    sessionData: string
+  ): Promise<SignalSession> {
+    const [session] = await db
+      .insert(signalSessions)
+      .values({ userId, recipientId, sessionData })
+      .onConflictDoUpdate({
+        target: [signalSessions.userId, signalSessions.recipientId],
+        set: { sessionData, updatedAt: new Date() },
+      })
+      .returning();
+    return session;
+  }
+
+  async getSession(userId: string, recipientId: string): Promise<SignalSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(signalSessions)
+      .where(
+        and(
+          eq(signalSessions.userId, userId),
+          eq(signalSessions.recipientId, recipientId)
+        )
+      );
+    return session;
+  }
+
+  async deleteSession(userId: string, recipientId: string): Promise<boolean> {
+    const result = await db
+      .delete(signalSessions)
+      .where(
+        and(
+          eq(signalSessions.userId, userId),
+          eq(signalSessions.recipientId, recipientId)
+        )
+      )
+      .returning();
+    return result.length > 0;
   }
 }
 

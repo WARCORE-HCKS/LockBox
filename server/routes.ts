@@ -352,6 +352,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========== SIGNAL PROTOCOL E2E ENCRYPTION ROUTES ==========
+  
+  // Upload user's identity key and prekey bundle
+  app.post("/api/signal/keys", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { identityKey, signedPreKey, preKeys } = req.body;
+
+      // Validate required fields
+      if (!identityKey || !signedPreKey || !Array.isArray(preKeys)) {
+        return res.status(400).json({ message: "Missing required key data" });
+      }
+
+      // Store identity key
+      await storage.storeIdentityKey(userId, identityKey);
+
+      // Store signed prekey
+      await storage.storeSignedPreKey(
+        userId,
+        signedPreKey.keyId,
+        signedPreKey.publicKey,
+        signedPreKey.signature
+      );
+
+      // Store prekeys
+      await storage.storePreKeys(userId, preKeys);
+
+      res.status(201).json({ message: "Keys uploaded successfully" });
+    } catch (error) {
+      console.error("Error uploading keys:", error);
+      res.status(500).json({ message: "Failed to upload keys" });
+    }
+  });
+
+  // Get a prekey bundle for a specific user (for initiating encrypted session)
+  app.get("/api/signal/keys/:targetUserId", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const targetUserId = req.params.targetUserId;
+
+      // Get identity key
+      const identityKey = await storage.getIdentityKey(targetUserId);
+      if (!identityKey) {
+        return res.status(404).json({ message: "User has not set up encryption keys" });
+      }
+
+      // Get signed prekey
+      const signedPreKey = await storage.getSignedPreKey(targetUserId);
+      if (!signedPreKey) {
+        return res.status(404).json({ message: "User has no signed prekey" });
+      }
+
+      // Get one unused prekey
+      const unusedPreKeys = await storage.getUnusedPreKeys(targetUserId, 1);
+      const preKey = unusedPreKeys.length > 0 ? unusedPreKeys[0] : null;
+
+      // If a prekey was provided, mark it as used
+      if (preKey) {
+        await storage.markPreKeyAsUsed(targetUserId, preKey.keyId);
+      }
+
+      res.json({
+        identityKey: identityKey.publicKey,
+        signedPreKey: {
+          keyId: signedPreKey.keyId,
+          publicKey: signedPreKey.publicKey,
+          signature: signedPreKey.signature,
+        },
+        preKey: preKey ? {
+          keyId: preKey.keyId,
+          publicKey: preKey.publicKey,
+        } : null,
+      });
+    } catch (error) {
+      console.error("Error fetching prekey bundle:", error);
+      res.status(500).json({ message: "Failed to fetch prekey bundle" });
+    }
+  });
+
+  // Store a session with another user
+  app.post("/api/signal/sessions/:recipientId", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const recipientId = req.params.recipientId;
+      const { sessionData } = req.body;
+
+      if (!sessionData) {
+        return res.status(400).json({ message: "Session data is required" });
+      }
+
+      await storage.storeSession(userId, recipientId, sessionData);
+      res.status(201).json({ message: "Session stored successfully" });
+    } catch (error) {
+      console.error("Error storing session:", error);
+      res.status(500).json({ message: "Failed to store session" });
+    }
+  });
+
+  // Get session with another user
+  app.get("/api/signal/sessions/:recipientId", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const recipientId = req.params.recipientId;
+
+      const session = await storage.getSession(userId, recipientId);
+      if (!session) {
+        return res.status(404).json({ message: "No session found" });
+      }
+
+      res.json({ sessionData: session.sessionData });
+    } catch (error) {
+      console.error("Error fetching session:", error);
+      res.status(500).json({ message: "Failed to fetch session" });
+    }
+  });
+
+  // Delete session with another user
+  app.delete("/api/signal/sessions/:recipientId", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const recipientId = req.params.recipientId;
+
+      const deleted = await storage.deleteSession(userId, recipientId);
+      if (!deleted) {
+        return res.status(404).json({ message: "No session found" });
+      }
+
+      res.json({ message: "Session deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      res.status(500).json({ message: "Failed to delete session" });
+    }
+  });
+
+  // Replenish prekeys (when running low)
+  app.post("/api/signal/keys/replenish", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { preKeys } = req.body;
+
+      if (!Array.isArray(preKeys) || preKeys.length === 0) {
+        return res.status(400).json({ message: "Prekeys array is required" });
+      }
+
+      await storage.storePreKeys(userId, preKeys);
+      res.status(201).json({ message: "Prekeys replenished successfully" });
+    } catch (error) {
+      console.error("Error replenishing prekeys:", error);
+      res.status(500).json({ message: "Failed to replenish prekeys" });
+    }
+  });
+
   // ========== ADMIN ROUTES ==========
   
   // Get all users (with admin status and online status)
