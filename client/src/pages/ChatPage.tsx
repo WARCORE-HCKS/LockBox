@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Search, LogOut, Menu, Users, Shield, User as UserIcon, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { Search, LogOut, Menu, Users, Shield, User as UserIcon, ChevronDown, ChevronUp, Plus, MessageCircle, Lock as LockIconLucide } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -709,8 +709,12 @@ export default function ChatPage() {
             <ScrollArea className="flex-1 p-6">
               <div className="max-w-4xl mx-auto space-y-1">
                 {chatroomMessages.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No messages yet. Start the conversation!</p>
+                  <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                    <div className="rounded-full bg-muted p-4 mb-4">
+                      <MessageCircle className="h-8 w-8" />
+                    </div>
+                    <p className="text-base font-medium mb-1">No messages yet</p>
+                    <p className="text-sm opacity-70">Start the conversation!</p>
                   </div>
                 ) : (
                   chatroomMessages.map((msg, idx) => {
@@ -756,8 +760,12 @@ export default function ChatPage() {
             <ScrollArea className="flex-1 p-6">
               <div className="max-w-4xl mx-auto space-y-1">
                 {messages.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No messages yet. Start the conversation!</p>
+                  <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                    <div className="rounded-full bg-primary/10 p-4 mb-4">
+                      <LockIconLucide className="h-8 w-8 text-primary" />
+                    </div>
+                    <p className="text-base font-medium mb-1">End-to-end encrypted chat</p>
+                    <p className="text-sm opacity-70">Send your first secure message</p>
                   </div>
                 ) : (
                   messages.map((msg, idx) => {
@@ -781,12 +789,26 @@ export default function ChatPage() {
             <MessageInput onSend={handleSendMessage} />
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            <div className="text-center space-y-2">
-              <p className="text-lg">Select a friend or chatroom to start chatting</p>
-              {users.length === 0 && (
-                <p className="text-sm">Invite friends to join SecureChat!</p>
-              )}
+          <div className="flex-1 flex items-center justify-center bg-muted/20">
+            <div className="text-center space-y-4 max-w-md px-6">
+              <div className="rounded-full bg-primary/10 p-6 w-24 h-24 mx-auto flex items-center justify-center">
+                <LockIconLucide className="h-12 w-12 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">Your messages are private</h3>
+                <p className="text-muted-foreground">
+                  {users.length === 0 
+                    ? "Invite friends to start secure conversations with end-to-end encryption"
+                    : "Select a friend or chatroom to start chatting securely"
+                  }
+                </p>
+              </div>
+              <div className="flex items-center gap-2 justify-center pt-2">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-card px-3 py-1.5 rounded-full border">
+                  <Shield className="h-3.5 w-3.5 text-primary" />
+                  <span>Signal Protocol</span>
+                </div>
+              </div>
             </div>
           </div>
         )}

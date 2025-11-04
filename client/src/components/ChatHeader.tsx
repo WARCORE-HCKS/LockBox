@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Lock } from "lucide-react";
 import UserAvatar from "./UserAvatar";
 import {
   DropdownMenu,
@@ -7,6 +7,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ChatHeaderProps {
   friend: {
@@ -29,19 +34,32 @@ export default function ChatHeader({ friend, onSettings, onClearMessages }: Chat
   
   return (
     <header className="h-16 border-b bg-background px-6 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
         <UserAvatar name={friend.name} src={friend.avatar} size="md" status={friend.status} />
-        <div>
-          <h2 className="font-semibold text-base" data-testid="text-friend-name">
-            {friend.name}
-          </h2>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold text-base truncate" data-testid="text-friend-name">
+              {friend.name}
+            </h2>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0" data-testid="encryption-badge">
+                  <Lock className="h-3 w-3" />
+                  <span className="text-[10px] font-medium uppercase tracking-wide">E2E</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p className="text-xs">End-to-end encrypted with Signal Protocol</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <p className="text-xs text-muted-foreground">
             {statusLabels[friend.status]}
           </p>
         </div>
       </div>
-      {hasMenuItems && (
-        <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 shrink-0">
+        {hasMenuItems && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost" data-testid="button-menu">
@@ -61,8 +79,8 @@ export default function ChatHeader({ friend, onSettings, onClearMessages }: Chat
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 }
