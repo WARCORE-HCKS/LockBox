@@ -807,17 +807,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     // Handle sending encrypted messages
-    socket.on("send-message", async (data: { recipientId: string; encryptedContent: string }) => {
+    socket.on("send-message", async (data: { recipientId: string; encryptedContent: string; clientMessageId?: string }) => {
       try {
         // Use authenticated user ID from socket data (ignore any client-provided senderId)
         const senderId = authenticatedUserId;
-        const { recipientId, encryptedContent } = data;
+        const { recipientId, encryptedContent, clientMessageId } = data;
 
-        // Save encrypted message to database
+        // Save encrypted message to database (include clientMessageId for cache matching)
         const message = await storage.createMessage({
           senderId,
           recipientId,
           encryptedContent,
+          clientMessageId,
         });
 
         // Send to recipient if online
@@ -826,8 +827,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           io.to(recipientSocketId).emit("receive-message", message);
         }
 
-        // Confirm to sender
-        socket.emit("message-sent", message);
+        // Echo back to sender for cache matching (includes clientMessageId for deterministic matching)
+        socket.emit("receive-message", message);
       } catch (error) {
         console.error("Error sending message:", error);
         socket.emit("message-error", { error: "Failed to send message" });

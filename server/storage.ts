@@ -141,10 +141,24 @@ export class DatabaseStorage implements IStorage {
 
   // Message operations
   async createMessage(messageData: InsertMessage & { senderId: string }): Promise<Message> {
+    console.log('[Storage] createMessage called with data:', {
+      senderId: messageData.senderId,
+      recipientId: messageData.recipientId,
+      clientMessageId: messageData.clientMessageId,
+      hasEncryptedContent: !!messageData.encryptedContent
+    });
+    
     const [message] = await db
       .insert(messages)
       .values(messageData)
       .returning();
+    
+    console.log('[Storage] Message created:', {
+      id: message.id,
+      clientMessageId: message.clientMessageId,
+      senderId: message.senderId
+    });
+    
     return message;
   }
 

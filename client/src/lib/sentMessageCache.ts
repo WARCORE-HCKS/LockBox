@@ -9,8 +9,20 @@
  */
 
 const DB_NAME = 'lockbox-sent-messages';
-const DB_VERSION = 1;
+const DB_VERSION = 3; // Increment version for schema change (tempId as primary key)
 const STORE_NAME = 'sent_messages';
+const PENDING_STORE_NAME = 'pending_messages';
+
+// In-memory cache for recently sent messages (temp ID → plaintext)
+// This helps match messages when server echo arrives
+interface PendingSentMessage {
+  tempId: string;
+  plaintext: string;
+  recipientId: string;
+  timestamp: number;
+}
+
+const pendingSentMessages: PendingSentMessage[] = [];
 
 class SentMessageCache {
   private db: IDBDatabase | null = null;
@@ -39,9 +51,21 @@ class SentMessageCache {
         request.onupgradeneeded = (event) => {
           const db = (event.target as IDBOpenDBRequest).result;
           
+          // Create sent_messages store if it doesn't exist
           if (!db.objectStoreNames.contains(STORE_NAME)) {
             const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'messageId' });
             objectStore.createIndex('timestamp', 'timestamp', { unique: false });
+          }
+          
+          // Create pending_messages store for temp caching (use tempId as primary key)
+          if (!db.objectStoreNames.contains(PENDING_STORE_NAME)) {
+            const pendingStore = db.createObjectStore(PENDING_STORE_NAME, { keyPath: 'tempId' });
+            pendingStore.createIndex('expiresAt', 'expiresAt', { unique: false });
+          } else {
+            // Recreate store if upgrading from version 2 to 3
+            db.deleteObjectStore(PENDING_STORE_NAME);
+            const pendingStore = db.createObjectStore(PENDING_STORE_NAME, { keyPath: 'tempId' });
+            pendingStore.createIndex('expiresAt', 'expiresAt', { unique: false });
           }
         };
       });
@@ -150,6 +174,183 @@ class SentMessageCache {
       };
       request.onerror = () => reject(request.error);
     });
+  }
+
+  /**
+   * Track a pending sent message (both in-memory and IndexedDB for persistence)
+   * This allows matching even after page reload
+   */
+  async trackPendingMessage(tempId: string, plaintext: string, recipientId: string): Promise<void> {
+    const newPending = {
+      tempId,
+      plaintext,
+      recipientId,
+      timestamp: Date.now(),
+    };
+    
+    // Store in-memory for fast access
+    pendingSentMessages.push(newPending);
+    console.log('[SentMessageCache] Tracked pending:', { 
+      tempId, 
+      recipientId, 
+      timestamp: newPending.timestamp,
+      pendingCount: pendingSentMessages.length
+    });
+    
+    // Also persist to IndexedDB for reliability across page reloads
+    try {
+      await this.init();
+      if (!this.db) return;
+      
+      return new Promise((resolve) => {
+        const transaction = this.db!.transaction([PENDING_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(PENDING_STORE_NAME);
+        
+        // Store with tempId as primary key for simple, deterministic lookup
+        const data = {
+          tempId,
+          recipientId,
+          plaintext,
+          timestamp: newPending.timestamp,
+          expiresAt: Date.now() + 60000, // Expire after 60 seconds
+        };
+        
+        const request = store.put(data);
+        
+        request.onsuccess = () => {
+          console.log('[SentMessageCache] Successfully persisted pending message to IndexedDB:', tempId);
+          resolve();
+        };
+        request.onerror = () => {
+          console.warn('[SentMessageCache] Failed to persist pending message:', request.error);
+          resolve(); // Don't fail the operation
+        };
+      });
+    } catch (error) {
+      console.warn('[SentMessageCache] Failed to persist pending:', error);
+      // Continue without IndexedDB persistence
+    }
+    
+    // Clean up old in-memory pending messages (older than 30 seconds)
+    const cutoff = Date.now() - 30000;
+    const index = pendingSentMessages.findIndex(m => m.timestamp < cutoff);
+    if (index >= 0) {
+      pendingSentMessages.splice(0, index + 1);
+    }
+  }
+
+  /**
+   * Find and remove a pending message by clientMessageId (deterministic matching)
+   * This replaces the brittle timestamp-based matching approach
+   */
+  async matchPendingMessage(clientMessageId: string | undefined): Promise<string | null> {
+    if (!clientMessageId) {
+      console.warn('[SentMessageCache] No clientMessageId provided for matching');
+      return null;
+    }
+    
+    console.log('[SentMessageCache] Matching pending message by clientMessageId:', {
+      clientMessageId,
+      pendingCount: pendingSentMessages.length
+    });
+    
+    // First, try IndexedDB (more reliable, persists across reloads)
+    try {
+      await this.init();
+      if (this.db) {
+        const result: string | null = await new Promise((resolve) => {
+          const transaction = this.db!.transaction([PENDING_STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(PENDING_STORE_NAME);
+          
+          // Direct lookup by tempId (primary key) - deterministic and efficient
+          const request = store.get(clientMessageId);
+          
+          request.onsuccess = () => {
+            const pending = request.result;
+            
+            if (pending) {
+              console.log('[SentMessageCache] Match found in IndexedDB by clientMessageId!', {
+                tempId: pending.tempId,
+                recipientId: pending.recipientId
+              });
+              
+              // Delete the matched entry
+              store.delete(clientMessageId);
+              
+              resolve(pending.plaintext);
+            } else {
+              console.warn('[SentMessageCache] No pending entry found in IndexedDB for clientMessageId:', clientMessageId);
+              resolve(null);
+            }
+          };
+          
+          request.onerror = () => {
+            console.error('[SentMessageCache] IndexedDB get error:', request.error);
+            resolve(null);
+          };
+        });
+        
+        if (result) {
+          // Also clean from in-memory if present
+          const index = pendingSentMessages.findIndex(m => m.tempId === clientMessageId);
+          if (index >= 0) {
+            pendingSentMessages.splice(index, 1);
+          }
+          return result;
+        }
+      }
+    } catch (error) {
+      console.warn('[SentMessageCache] IndexedDB lookup failed:', error);
+    }
+    
+    // Fall back to in-memory matching (also deterministic by tempId)
+    const index = pendingSentMessages.findIndex(m => m.tempId === clientMessageId);
+    
+    if (index >= 0) {
+      const pending = pendingSentMessages[index];
+      console.log('[SentMessageCache] Match found in memory by clientMessageId!');
+      // Remove from pending list
+      pendingSentMessages.splice(index, 1);
+      return pending.plaintext;
+    }
+    
+    console.warn('[SentMessageCache] No match found for clientMessageId:', clientMessageId);
+    return null;
+  }
+
+  /**
+   * Clean up expired pending messages from IndexedDB
+   */
+  async cleanupExpiredPending(): Promise<void> {
+    try {
+      await this.init();
+      if (!this.db) return;
+      
+      const now = Date.now();
+      
+      return new Promise((resolve) => {
+        const transaction = this.db!.transaction([PENDING_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(PENDING_STORE_NAME);
+        const index = store.index('expiresAt');
+        
+        const range = IDBKeyRange.upperBound(now);
+        const request = index.openCursor(range);
+        
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (cursor) {
+            cursor.delete();
+            cursor.continue();
+          } else {
+            resolve();
+          }
+        };
+        
+        request.onerror = () => resolve();
+      });
+    } catch (error) {
+      console.warn('[SentMessageCache] Cleanup failed:', error);
+    }
   }
 }
 

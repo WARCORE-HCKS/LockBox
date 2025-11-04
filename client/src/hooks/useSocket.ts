@@ -80,12 +80,14 @@ export function useSocket({
     };
   }, [userId, onMessageReceived, onChatroomMessageReceived, onUserStatus, onUserTyping, onMessageDeleted, onChatroomMessageDeleted]);
 
-  const sendMessage = (recipientId: string, encryptedContent: string) => {
+  const sendMessage = (recipientId: string, encryptedContent: string, clientMessageId?: string) => {
     if (socketRef.current && userId) {
       // senderId is authenticated server-side from session, not sent from client
+      // clientMessageId is used for deterministic cache matching
       socketRef.current.emit("send-message", {
         recipientId,
         encryptedContent,
+        clientMessageId,
       });
     }
   };

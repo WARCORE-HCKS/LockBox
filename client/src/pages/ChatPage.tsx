@@ -227,7 +227,36 @@ export default function ChatPage() {
 
   // Socket.io for real-time messaging (Signal Protocol for private messages)
   const handleMessageReceived = useCallback(async (message: Message) => {
-    // Only add message if it's for the active chat and we're in private chat mode
+    console.log('[ChatPage] handleMessageReceived called:', {
+      messageId: message.id,
+      senderId: message.senderId,
+      currentUserId: currentUser?.id,
+      clientMessageId: message.clientMessageId,
+      isSenderEcho: message.senderId === currentUser?.id
+    });
+    
+    // IMPORTANT: Cache our own sent messages with real ID regardless of active chat
+    // This ensures message history persists even if we navigate away quickly
+    if (message.senderId === currentUser?.id) {
+      // This is our own sent message echoing back from the server
+      console.log('[Cache Debug] Received echo for message:', message.id, 'clientMessageId:', message.clientMessageId);
+      
+      // Try to match it with a pending sent message using clientMessageId (deterministic)
+      const plaintext = await sentMessageCache.matchPendingMessage(message.clientMessageId);
+      
+      if (plaintext) {
+        console.log('[Cache Debug] Matched pending message, caching with real ID:', message.id);
+        // Cache with real ID so it's available on future loads
+        await sentMessageCache.storeSentMessage(message.id, plaintext);
+        console.log('[Cache Debug] Successfully cached message with real ID');
+      } else {
+        console.warn('[Cache Debug] No pending message found for echo, cannot cache. clientMessageId:', message.clientMessageId);
+      }
+    } else {
+      console.log('[ChatPage] Message from other user (not an echo):', message.senderId);
+    }
+    
+    // Only add message to UI if it's for the active chat and we're in private chat mode
     if (
       !isChatroomActive &&
       activeFriendId &&
@@ -247,9 +276,8 @@ export default function ChatPage() {
           );
           
           if (tempMessage) {
-            // Use content from optimistic message and cache with real ID
+            // Use content from optimistic message
             content = tempMessage.content;
-            await sentMessageCache.storeSentMessage(message.id, content);
             
             // Remove the temporary message from state
             setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
@@ -357,16 +385,26 @@ export default function ChatPage() {
       // The server will broadcast it back to all users including sender
     } else if (activeFriendId && currentUser) {
       try {
-        // Generate temporary message ID for optimistic UI update
+        // Generate temporary message ID for optimistic UI update and cache matching
         const tempId = `temp-${Date.now()}`;
+        console.log('[ChatPage] Sending message with tempId:', tempId);
         
         // Send to private chat using Signal Protocol E2E encryption
         const encryptedContent = await encryptPrivateMessage(activeFriendId, content);
-        sendMessage(activeFriendId, encryptedContent);
+        console.log('[ChatPage] Message encrypted, sending to server with clientMessageId:', tempId);
         
-        // Cache the plaintext locally (we'll need it to decrypt our own messages later)
-        // Note: Real message ID from server will be different, but we'll cache with that too
+        // Pass tempId as clientMessageId for deterministic cache matching
+        sendMessage(activeFriendId, encryptedContent, tempId);
+        console.log('[ChatPage] sendMessage called');
+        
+        // Track pending message for matching when server echo arrives
+        console.log('[Cache Debug] Tracking pending message:', { tempId, recipientId: activeFriendId, content: content.substring(0, 30) });
+        await sentMessageCache.trackPendingMessage(tempId, content, activeFriendId);
+        console.log('[Cache Debug] trackPendingMessage completed');
+        
+        // Also cache with temp ID for immediate UI display
         await sentMessageCache.storeSentMessage(tempId, content);
+        console.log('[Cache Debug] Cached message with temp ID:', tempId);
         
         // Optimistically add the decrypted message to UI
         const newMessage: DecryptedMessage = {

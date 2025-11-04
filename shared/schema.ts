@@ -33,6 +33,7 @@ export const users = pgTable("users", {
 // Messages table - only stores encrypted content
 export const messages = pgTable("messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientMessageId: varchar("client_message_id"), // Client-provided ID for caching
   senderId: varchar("sender_id").notNull().references(() => users.id),
   recipientId: varchar("recipient_id").notNull().references(() => users.id),
   encryptedContent: text("encrypted_content").notNull(),
@@ -222,6 +223,7 @@ export type User = typeof users.$inferSelect;
 export const insertMessageSchema = createInsertSchema(messages).pick({
   recipientId: true,
   encryptedContent: true,
+  clientMessageId: true,
 });
 
 export type InsertMessage = z.infer<typeof insertMessageSchema>;

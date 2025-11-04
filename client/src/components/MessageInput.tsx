@@ -64,7 +64,7 @@ export default function MessageInput({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80" align="start" data-testid="emoji-picker">
-            <div className="space-y-3 max-h-80 overflow-y-auto">
+            <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-hidden">
               {Object.entries(EMOJI_CATEGORIES).map(([category, emojis]) => (
                 <div key={category}>
                   <h4 className="text-xs font-semibold text-muted-foreground mb-2 sticky top-0 bg-popover py-1">

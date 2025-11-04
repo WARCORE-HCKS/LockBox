@@ -32,6 +32,12 @@ The application features a polished, modern design following Discord/Signal aest
     - **Key Management**: Automatic generation and upload of identity keys, signed prekeys, and one-time prekeys
     - **Secure Storage**: Private keys encrypted in IndexedDB using WebCrypto AES-GCM with PBKDF2
     - **Message Encryption**: Proper ArrayBuffer handling for Uint8Array views (fixed buffer slicing bug)
+    - **Message Persistence**: Deterministic caching system using client-provided message IDs
+        - Server echoes messages back to sender with `clientMessageId` for cache matching
+        - IndexedDB stores pending messages (tempId → plaintext mapping)
+        - Direct lookup by tempId (primary key) for efficient, deterministic matching
+        - Automatic cleanup of expired pending entries (60s TTL)
+        - Enables message history persistence across page reloads
     - **UI Integration**: Encryption status visible throughout interface with E2E badges and security indicators
     - **Legacy Encryption**: Chatroom messages use shared-key encryption (planned upgrade to Sender Keys)
 - **Database**: PostgreSQL managed with Drizzle ORM, supporting schemas for users, chatrooms, messages, chatroom messages, and sessions.
