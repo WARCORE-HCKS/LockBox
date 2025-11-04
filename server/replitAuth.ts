@@ -53,6 +53,10 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
+  const userId = claims["sub"];
+  const fullName = `${claims["first_name"]} ${claims["last_name"]}`;
+  console.log(`[User Auth] Upserting user: ${userId} (${fullName})`);
+  
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
@@ -60,6 +64,8 @@ async function upsertUser(
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
   });
+  
+  console.log(`[User Auth] ✅ User upserted successfully: ${userId} (${fullName})`);
 }
 
 export async function setupAuth(app: Express) {
