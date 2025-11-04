@@ -5,83 +5,83 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CYBERPUNK THEME - Both light and dark use same neon aesthetic */
+/* CYBERPUNK THEME - Light mode with neon aesthetic on bright backgrounds */
 :root {
-  --button-outline: rgba(0, 255, 255, 0.2);
-  --badge-outline: rgba(0, 255, 255, 0.15);
+  --button-outline: rgba(255, 0, 128, 0.25);
+  --badge-outline: rgba(255, 0, 128, 0.2);
 
   /* Automatic computation of border around primary / danger buttons */
   --opaque-button-border-intensity: -8; /* In terms of percentages */
 
   /* Backgrounds applied on top of other backgrounds when hovered/active */
-  --elevate-1: rgba(0, 255, 255, 0.08);
-  --elevate-2: rgba(0, 255, 255, 0.15);
+  --elevate-1: rgba(255, 0, 128, 0.08);
+  --elevate-2: rgba(255, 0, 128, 0.15);
 
-  /* Cyberpunk color palette - Deep blacks with neon accents */
-  --background: 240 20% 4%;  /* #0a0a0f - Deep space black */
+  /* Cyberpunk light mode - Bright backgrounds with neon accents */
+  --background: 0 0% 98%;  /* #fafafa - Very light gray */
 
-  --foreground: 240 10% 90%;  /* #e0e0ff - Soft white with blue tint */
+  --foreground: 240 15% 12%;  /* #1a1a2e - Dark blue-black text */
 
-  --border: 180 100% 50% / 0.15;  /* Cyan with transparency */
+  --border: 330 100% 50% / 0.2;  /* Hot pink with transparency */
 
-  --card: 240 15% 10%;  /* #1a1a24 - Elevated dark surface */
+  --card: 0 0% 100%;  /* #ffffff - Pure white cards */
 
-  --card-foreground: 240 10% 90%;
+  --card-foreground: 240 15% 12%;
 
-  --card-border: 180 100% 50% / 0.2;  /* Cyan border glow */
+  --card-border: 330 100% 50% / 0.25;  /* Pink border glow */
 
-  --sidebar: 240 20% 7%;  /* #12121a - Dark panel */
+  --sidebar: 270 20% 96%;  /* #f5f3f7 - Very light purple-gray */
 
-  --sidebar-foreground: 240 10% 90%;
+  --sidebar-foreground: 240 15% 12%;
 
-  --sidebar-border: 180 100% 50% / 0.15;
+  --sidebar-border: 330 100% 50% / 0.2;
 
-  --sidebar-primary: 180 100% 50%;  /* #00ffff - Cyan accent */
+  --sidebar-primary: 330 100% 50%;  /* #ff0080 - Hot pink accent */
 
-  --sidebar-primary-foreground: 240 20% 4%;
+  --sidebar-primary-foreground: 0 0% 100%;
 
-  --sidebar-accent: 240 15% 14%;  /* Slightly elevated */
+  --sidebar-accent: 270 30% 92%;  /* Light purple accent */
 
-  --sidebar-accent-foreground: 240 10% 90%;
+  --sidebar-accent-foreground: 240 15% 12%;
 
-  --sidebar-ring: 180 100% 50%;  /* Cyan ring */
+  --sidebar-ring: 330 100% 50%;  /* Hot pink ring */
 
-  --popover: 240 15% 10%;
+  --popover: 0 0% 100%;
 
-  --popover-foreground: 240 10% 90%;
+  --popover-foreground: 240 15% 12%;
 
-  --popover-border: 180 100% 50% / 0.25;
+  --popover-border: 330 100% 50% / 0.3;
 
   --primary: 180 100% 50%;  /* #00ffff - Cyan primary */
 
-  --primary-foreground: 240 20% 4%;
+  --primary-foreground: 0 0% 100%;
 
   --secondary: 300 100% 50%;  /* #ff00ff - Magenta accent */
 
-  --secondary-foreground: 240 10% 90%;
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 240 13% 16%;
+  --muted: 270 15% 90%;
 
-  --muted-foreground: 240 10% 60%;  /* #9090aa */
+  --muted-foreground: 240 10% 45%;  /* Medium gray */
 
   --accent: 330 100% 50%;  /* #ff0080 - Hot pink accent */
 
-  --accent-foreground: 240 10% 90%;
+  --accent-foreground: 0 0% 100%;
 
   --destructive: 0 84% 60%;
 
   --destructive-foreground: 0 0% 100%;
 
-  --success: 150 100% 50%;  /* #00ff88 - Neon green */
+  --success: 150 100% 45%;  /* Darker neon green for readability */
 
-  --input: 220 13% 28%;
-  --ring: 180 100% 50%;  /* Cyan focus ring */
+  --input: 270 15% 90%;
+  --ring: 330 100% 50%;  /* Hot pink focus ring */
   
-  --chart-1: 180 100% 50%;  /* Cyan */
-  --chart-2: 150 100% 50%;  /* Neon green */
+  --chart-1: 180 100% 45%;  /* Darker cyan for light mode */
+  --chart-2: 150 100% 45%;  /* Darker neon green */
   --chart-3: 300 100% 50%;  /* Magenta */
   --chart-4: 330 100% 50%;  /* Hot pink */
-  --chart-5: 270 100% 60%;  /* Purple */
+  --chart-5: 270 100% 55%;  /* Purple */
 
   /* Cyberpunk fonts */
   --font-sans: 'Rajdhani', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -91,21 +91,21 @@
   
   --radius: .25rem; /* 4px - Angular corners */
   
-  /* Neon glow shadows */
-  --glow-cyan: 0 0 10px rgba(0, 255, 255, 0.3), 0 0 20px rgba(0, 255, 255, 0.1);
-  --glow-cyan-strong: 0 0 15px rgba(0, 255, 255, 0.5), 0 0 30px rgba(0, 255, 255, 0.2);
-  --glow-magenta: 0 0 10px rgba(255, 0, 255, 0.3), 0 0 20px rgba(255, 0, 255, 0.1);
-  --glow-pink: 0 0 10px rgba(255, 0, 128, 0.3), 0 0 20px rgba(255, 0, 128, 0.1);
-  --glow-green: 0 0 10px rgba(0, 255, 136, 0.3), 0 0 20px rgba(0, 255, 136, 0.1);
+  /* Neon glow shadows for light mode - Hot pink and cyan */
+  --glow-cyan: 0 0 12px rgba(0, 255, 255, 0.4), 0 0 24px rgba(0, 255, 255, 0.15);
+  --glow-cyan-strong: 0 0 18px rgba(0, 255, 255, 0.6), 0 0 36px rgba(0, 255, 255, 0.25);
+  --glow-magenta: 0 0 12px rgba(255, 0, 255, 0.4), 0 0 24px rgba(255, 0, 255, 0.15);
+  --glow-pink: 0 0 12px rgba(255, 0, 128, 0.5), 0 0 24px rgba(255, 0, 128, 0.2);
+  --glow-green: 0 0 12px rgba(0, 255, 136, 0.4), 0 0 24px rgba(0, 255, 136, 0.15);
   
-  --shadow-2xs: 0px 1px 2px 0px rgba(0, 255, 255, 0.1);
-  --shadow-xs: 0px 1px 3px 0px rgba(0, 255, 255, 0.15);
-  --shadow-sm: 0px 2px 4px 0px rgba(0, 255, 255, 0.12);
-  --shadow: 0px 4px 6px -1px rgba(0, 255, 255, 0.15);
-  --shadow-md: 0px 6px 12px -2px rgba(0, 255, 255, 0.2);
-  --shadow-lg: 0px 10px 20px -4px rgba(0, 255, 255, 0.25);
-  --shadow-xl: 0px 20px 30px -6px rgba(0, 255, 255, 0.3);
-  --shadow-2xl: 0px 30px 50px -8px rgba(0, 255, 255, 0.4);
+  --shadow-2xs: 0px 1px 2px 0px rgba(255, 0, 128, 0.15);
+  --shadow-xs: 0px 1px 3px 0px rgba(255, 0, 128, 0.2);
+  --shadow-sm: 0px 2px 4px 0px rgba(255, 0, 128, 0.18);
+  --shadow: 0px 4px 6px -1px rgba(255, 0, 128, 0.22);
+  --shadow-md: 0px 6px 12px -2px rgba(255, 0, 128, 0.28);
+  --shadow-lg: 0px 10px 20px -4px rgba(255, 0, 128, 0.35);
+  --shadow-xl: 0px 20px 30px -6px rgba(255, 0, 128, 0.4);
+  --shadow-2xl: 0px 30px 50px -8px rgba(255, 0, 128, 0.5);
   
   --tracking-normal: 0em;
   --spacing: 0.25rem;
@@ -535,5 +535,68 @@
   
   .typing-dot:nth-child(3) {
     animation-delay: 0.4s;
+  }
+  
+  /* Advanced Theme Toggle Animations */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  @keyframes spin-reverse {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
+  
+  @keyframes particle-float {
+    0% {
+      transform: translateY(0) translateX(0) scale(0);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+      transform: translateY(-4px) translateX(2px) scale(1);
+    }
+    80% {
+      opacity: 1;
+      transform: translateY(-12px) translateX(-2px) scale(1);
+    }
+    100% {
+      transform: translateY(-16px) translateX(4px) scale(0);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes scan-line {
+    0% {
+      top: -2px;
+    }
+    100% {
+      top: 100%;
+    }
+  }
+  
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+  
+  .animate-spin-reverse {
+    animation: spin-reverse 4s linear infinite;
+  }
+  
+  .animate-particle-float {
+    animation: particle-float 2s ease-out infinite;
+  }
+  
+  .animate-scan-line {
+    animation: scan-line 2s linear infinite;
   }
 }
