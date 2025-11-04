@@ -114,9 +114,11 @@ export default function LandingPage() {
             </Button>
 
             <a
-              href="https://github.com/yourusername/lockbox"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                alert("🔓 LockBox is open source!\n\nThis is a demonstration project showcasing:\n• Signal Protocol E2E encryption\n• Real-time WebSocket messaging\n• PostgreSQL + Drizzle ORM\n• React + TypeScript frontend\n\nTo deploy your own instance:\n1. Clone this Replit project\n2. Configure your GitHub repository link here\n3. Share your encrypted messenger!");
+              }}
               className="group"
             >
               <Button
