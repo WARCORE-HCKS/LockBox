@@ -612,4 +612,300 @@
   .animate-scan-horizontal {
     animation: scan-horizontal 4s linear infinite;
   }
+
+  /* ===== LANDING PAGE ADVANCED EFFECTS ===== */
+  
+  /* Animated Grid Background */
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, hsl(var(--primary) / 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--primary) / 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: grid-slide 20s linear infinite;
+  }
+  
+  @keyframes grid-slide {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 40px 40px;
+    }
+  }
+  
+  /* Scanline Overlay */
+  .scanline-overlay {
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      hsl(var(--primary) / 0.03) 2px,
+      hsl(var(--primary) / 0.03) 4px
+    );
+    animation: scanline-move 8s linear infinite;
+  }
+  
+  @keyframes scanline-move {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 0 100%;
+    }
+  }
+  
+  /* Particle System */
+  .particle {
+    animation: particle-drift 10s linear infinite;
+    filter: blur(1px);
+  }
+  
+  @keyframes particle-drift {
+    0% {
+      transform: translateY(0) translateX(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.6;
+    }
+    90% {
+      opacity: 0.6;
+    }
+    100% {
+      transform: translateY(-100vh) translateX(20px);
+      opacity: 0;
+    }
+  }
+  
+  /* Hexagon Pattern */
+  .hexagon-pattern {
+    background-image: 
+      radial-gradient(circle at 50% 50%, hsl(var(--primary) / 0.08) 1px, transparent 1px),
+      radial-gradient(circle at 0% 0%, hsl(var(--primary) / 0.08) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+  }
+  
+  /* Logo Glitch Effect */
+  .logo-glitch-container {
+    position: relative;
+  }
+  
+  .glitch-layer-1 {
+    animation: glitch-1 3s infinite;
+    pointer-events: none;
+  }
+  
+  .glitch-layer-2 {
+    animation: glitch-2 3s infinite;
+    pointer-events: none;
+  }
+  
+  @keyframes glitch-1 {
+    0%, 90%, 100% {
+      transform: translate(0, 0);
+      opacity: 0;
+    }
+    91% {
+      transform: translate(-3px, -2px);
+      opacity: 0.7;
+    }
+    93% {
+      transform: translate(2px, 2px);
+      opacity: 0.5;
+    }
+    95% {
+      transform: translate(-2px, 1px);
+      opacity: 0.7;
+    }
+  }
+  
+  @keyframes glitch-2 {
+    0%, 85%, 100% {
+      transform: translate(0, 0);
+      opacity: 0;
+    }
+    86% {
+      transform: translate(2px, -3px);
+      opacity: 0.5;
+    }
+    88% {
+      transform: translate(-3px, 1px);
+      opacity: 0.7;
+    }
+    90% {
+      transform: translate(1px, -2px);
+      opacity: 0.4;
+    }
+  }
+  
+  /* Holographic Text Effect */
+  .holographic-text {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 25%,
+      hsl(var(--primary)) 50%,
+      hsl(var(--secondary)) 75%,
+      hsl(var(--primary)) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: holographic-shift 3s linear infinite;
+    filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.5));
+  }
+  
+  @keyframes holographic-shift {
+    0% {
+      background-position: 0% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+  
+  /* Pulse Animations */
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  
+  .animate-pulse-text {
+    animation: pulse-text 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.02);
+    }
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  
+  @keyframes pulse-text {
+    0%, 100% {
+      opacity: 0.9;
+      text-shadow: 0 0 10px hsl(var(--primary) / 0.3);
+    }
+    50% {
+      opacity: 1;
+      text-shadow: 0 0 20px hsl(var(--primary) / 0.6);
+    }
+  }
+  
+  /* Energy Button Effects */
+  .energy-button {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .energy-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(
+      45deg,
+      hsl(var(--primary)),
+      hsl(var(--secondary)),
+      hsl(var(--primary))
+    );
+    -webkit-mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    mask: 
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: energy-border 2s linear infinite;
+  }
+  
+  @keyframes energy-border {
+    0% {
+      filter: hue-rotate(0deg);
+    }
+    100% {
+      filter: hue-rotate(360deg);
+    }
+  }
+  
+  /* Data Stream Animation */
+  .data-stream {
+    animation: data-scroll 8s linear infinite;
+  }
+  
+  @keyframes data-scroll {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  /* Corner Brackets */
+  .corner-brackets {
+    position: relative;
+  }
+  
+  .corner-brackets::before,
+  .corner-brackets::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid hsl(var(--primary) / 0.5);
+    transition: all 0.3s ease;
+  }
+  
+  .corner-brackets::before {
+    top: -2px;
+    left: -2px;
+    border-right: none;
+    border-bottom: none;
+  }
+  
+  .corner-brackets::after {
+    bottom: -2px;
+    right: -2px;
+    border-left: none;
+    border-top: none;
+  }
+  
+  .corner-brackets:hover::before,
+  .corner-brackets:hover::after {
+    width: 30px;
+    height: 30px;
+    border-color: hsl(var(--primary));
+  }
+  
+  /* Neon Drop Shadow */
+  .drop-shadow-neon {
+    filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.6))
+            drop-shadow(0 0 40px hsl(var(--primary) / 0.4));
+  }
+  
+  /* Font Display Class */
+  .font-display {
+    font-family: var(--font-display);
+  }
 }
