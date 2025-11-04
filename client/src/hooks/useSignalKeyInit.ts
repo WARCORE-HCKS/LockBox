@@ -17,35 +17,28 @@ export function useSignalKeyInit() {
       return;
     }
 
-    // TODO: Signal Protocol initialization temporarily disabled due to library compatibility issues
-    // The @signalapp/libsignal-client library requires Node.js polyfills for browser use
-    // This will be re-enabled once proper browser build configuration is in place
+    // Initialize Signal Protocol keys using browser-native library
+    const initKeys = async () => {
+      try {
+        console.log('Checking Signal Protocol key initialization...');
+        const keysGenerated = await ensureSignalKeysExist();
+        
+        if (keysGenerated) {
+          console.log('✅ New Signal Protocol keys generated for user');
+        } else {
+          console.log('✅ Signal Protocol keys already exist');
+        }
+        
+        setIsInitialized(true);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to initialize Signal Protocol keys:', err);
+        setError(err instanceof Error ? err : new Error('Unknown error'));
+        setIsInitialized(false);
+      }
+    };
     
-    console.log('Signal Protocol key initialization: disabled (work in progress)');
-    setIsInitialized(true);
-    setError(null);
-
-    // ORIGINAL CODE (commented out until library compatibility is resolved):
-    // const initKeys = async () => {
-    //   try {
-    //     console.log('Checking Signal Protocol key initialization...');
-    //     const keysGenerated = await ensureSignalKeysExist();
-    //     
-    //     if (keysGenerated) {
-    //       console.log('✅ New Signal Protocol keys generated for user');
-    //     } else {
-    //       console.log('✅ Signal Protocol keys already exist');
-    //     }
-    //     
-    //     setIsInitialized(true);
-    //     setError(null);
-    //   } catch (err) {
-    //     console.error('Failed to initialize Signal Protocol keys:', err);
-    //     setError(err instanceof Error ? err : new Error('Unknown error'));
-    //     setIsInitialized(false);
-    //   }
-    // };
-    // initKeys();
+    initKeys();
   }, [isAuthenticated, user?.id]);
 
   return {

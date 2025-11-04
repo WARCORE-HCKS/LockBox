@@ -406,20 +406,24 @@ export const keyStorage = new KeyStorage();
 
 export interface SignalKeySet {
   identityKeyPair: {
-    publicKey: string;
-    privateKey: string;
+    publicKey: ArrayBuffer;
+    privateKey: ArrayBuffer;
   };
   registrationId: number;
   signedPreKey: {
     keyId: number;
-    publicKey: string;
-    privateKey: string;
-    signature: string;
+    keyPair: {
+      publicKey: ArrayBuffer;
+      privateKey: ArrayBuffer;
+    };
+    signature: ArrayBuffer;
   };
   preKeys: Array<{
     keyId: number;
-    publicKey: string;
-    privateKey: string;
+    keyPair: {
+      publicKey: ArrayBuffer;
+      privateKey: ArrayBuffer;
+    };
   }>;
 }
 
@@ -433,23 +437,62 @@ const KEYS = {
 };
 
 /**
+ * Helper: Convert ArrayBuffer to base64
+ */
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Helper: Convert base64 to ArrayBuffer
+ */
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+/**
  * Store Signal Protocol keys
  */
 export async function storeSignalKeys(keys: SignalKeySet): Promise<void> {
   await keyStorage.init();
   
-  // Store identity key pair
-  await keyStorage.setItem(KEYS.IDENTITY_PRIVATE_KEY, keys.identityKeyPair.privateKey);
-  await keyStorage.setItem(KEYS.IDENTITY_PUBLIC_KEY, keys.identityKeyPair.publicKey);
+  // Store identity key pair (convert ArrayBuffer to base64)
+  await keyStorage.setItem(KEYS.IDENTITY_PRIVATE_KEY, arrayBufferToBase64(keys.identityKeyPair.privateKey));
+  await keyStorage.setItem(KEYS.IDENTITY_PUBLIC_KEY, arrayBufferToBase64(keys.identityKeyPair.publicKey));
   
   // Store registration ID
   await keyStorage.setItem(KEYS.REGISTRATION_ID, keys.registrationId.toString());
   
-  // Store signed prekey
-  await keyStorage.setItem(KEYS.SIGNED_PREKEY, JSON.stringify(keys.signedPreKey));
+  // Store signed prekey (convert ArrayBuffers to base64)
+  const signedPreKeyForStorage = {
+    keyId: keys.signedPreKey.keyId,
+    keyPair: {
+      publicKey: arrayBufferToBase64(keys.signedPreKey.keyPair.publicKey),
+      privateKey: arrayBufferToBase64(keys.signedPreKey.keyPair.privateKey),
+    },
+    signature: arrayBufferToBase64(keys.signedPreKey.signature),
+  };
+  await keyStorage.setItem(KEYS.SIGNED_PREKEY, JSON.stringify(signedPreKeyForStorage));
   
-  // Store prekeys
-  await keyStorage.setItem(KEYS.PREKEYS, JSON.stringify(keys.preKeys));
+  // Store prekeys (convert ArrayBuffers to base64)
+  const preKeysForStorage = keys.preKeys.map(pk => ({
+    keyId: pk.keyId,
+    keyPair: {
+      publicKey: arrayBufferToBase64(pk.keyPair.publicKey),
+      privateKey: arrayBufferToBase64(pk.keyPair.privateKey),
+    },
+  }));
+  await keyStorage.setItem(KEYS.PREKEYS, JSON.stringify(preKeysForStorage));
 }
 
 /**
@@ -458,24 +501,42 @@ export async function storeSignalKeys(keys: SignalKeySet): Promise<void> {
 export async function getSignalKeys(): Promise<SignalKeySet | null> {
   await keyStorage.init();
   
-  const privateKey = await keyStorage.getItem(KEYS.IDENTITY_PRIVATE_KEY);
-  const publicKey = await keyStorage.getItem(KEYS.IDENTITY_PUBLIC_KEY);
+  const privateKeyB64 = await keyStorage.getItem(KEYS.IDENTITY_PRIVATE_KEY);
+  const publicKeyB64 = await keyStorage.getItem(KEYS.IDENTITY_PUBLIC_KEY);
   const regIdStr = await keyStorage.getItem(KEYS.REGISTRATION_ID);
   const signedPreKeyStr = await keyStorage.getItem(KEYS.SIGNED_PREKEY);
   const preKeysStr = await keyStorage.getItem(KEYS.PREKEYS);
   
-  if (!privateKey || !publicKey || !regIdStr || !signedPreKeyStr || !preKeysStr) {
+  if (!privateKeyB64 || !publicKeyB64 || !regIdStr || !signedPreKeyStr || !preKeysStr) {
     return null;
   }
   
+  // Parse stored data
+  const signedPreKeyStored = JSON.parse(signedPreKeyStr);
+  const preKeysStored = JSON.parse(preKeysStr);
+  
+  // Convert base64 back to ArrayBuffer
   return {
     identityKeyPair: {
-      publicKey,
-      privateKey,
+      publicKey: base64ToArrayBuffer(publicKeyB64),
+      privateKey: base64ToArrayBuffer(privateKeyB64),
     },
     registrationId: parseInt(regIdStr, 10),
-    signedPreKey: JSON.parse(signedPreKeyStr),
-    preKeys: JSON.parse(preKeysStr),
+    signedPreKey: {
+      keyId: signedPreKeyStored.keyId,
+      keyPair: {
+        publicKey: base64ToArrayBuffer(signedPreKeyStored.keyPair.publicKey),
+        privateKey: base64ToArrayBuffer(signedPreKeyStored.keyPair.privateKey),
+      },
+      signature: base64ToArrayBuffer(signedPreKeyStored.signature),
+    },
+    preKeys: preKeysStored.map((pk: any) => ({
+      keyId: pk.keyId,
+      keyPair: {
+        publicKey: base64ToArrayBuffer(pk.keyPair.publicKey),
+        privateKey: base64ToArrayBuffer(pk.keyPair.privateKey),
+      },
+    })),
   };
 }
 

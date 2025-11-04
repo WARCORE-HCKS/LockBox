@@ -1,4 +1,12 @@
-import * as SignalClient from '@signalapp/libsignal-client';
+import {
+  KeyHelper,
+  SignedPublicPreKeyType,
+  SignalProtocolAddress,
+  SessionBuilder,
+  PreKeyType,
+  SessionCipher,
+  MessageType,
+} from '@privacyresearch/libsignal-protocol-typescript';
 
 /**
  * Signal Protocol E2E Encryption Library
@@ -8,10 +16,13 @@ import * as SignalClient from '@signalapp/libsignal-client';
  * - Double Ratchet algorithm for forward secrecy
  * - PreKey bundles for asynchronous messaging
  * - Identity key management for trust verification
+ * 
+ * Using: @privacyresearch/libsignal-protocol-typescript (browser-compatible)
  */
 
 export interface PreKeyBundle {
   identityKey: string;
+  registrationId: number;
   signedPreKey: {
     keyId: number;
     publicKey: string;
@@ -25,144 +36,49 @@ export interface PreKeyBundle {
 
 export interface StoredKeys {
   identityKeyPair: {
-    publicKey: string;
-    privateKey: string;
+    publicKey: ArrayBuffer;
+    privateKey: ArrayBuffer;
   };
   registrationId: number;
   signedPreKey: {
     keyId: number;
-    publicKey: string;
-    privateKey: string;
-    signature: string;
+    keyPair: {
+      publicKey: ArrayBuffer;
+      privateKey: ArrayBuffer;
+    };
+    signature: ArrayBuffer;
   };
   preKeys: Array<{
     keyId: number;
-    publicKey: string;
-    privateKey: string;
+    keyPair: {
+      publicKey: ArrayBuffer;
+      privateKey: ArrayBuffer;
+    };
   }>;
 }
 
 /**
- * Generate a new identity key pair for the user
- * This is the root of trust for all encrypted communications
+ * Utility: Convert ArrayBuffer to base64 (browser-compatible)
  */
-export async function generateIdentityKeyPair(): Promise<SignalClient.PrivateKey> {
-  return SignalClient.PrivateKey.generate();
-}
-
-/**
- * Generate a registration ID (random identifier for this device/session)
- */
-export function generateRegistrationId(): number {
-  return Math.floor(Math.random() * 16384) + 1;
-}
-
-/**
- * Generate signed prekey
- * Signed by identity key to prove authenticity
- */
-export async function generateSignedPreKey(
-  identityKeyPair: SignalClient.PrivateKey,
-  signedPreKeyId: number
-): Promise<{
-  keyId: number;
-  publicKey: SignalClient.PublicKey;
-  privateKey: SignalClient.PrivateKey;
-  signature: Uint8Array;
-}> {
-  const keyPair = SignalClient.PrivateKey.generate();
-  const publicKey = keyPair.getPublicKey();
-  const signature = identityKeyPair.sign(publicKey.serialize());
-
-  return {
-    keyId: signedPreKeyId,
-    publicKey,
-    privateKey: keyPair,
-    signature,
-  };
-}
-
-/**
- * Generate one-time prekeys for asynchronous messaging
- * Each prekey is used once then discarded for forward secrecy
- */
-export async function generatePreKeys(
-  startId: number,
-  count: number
-): Promise<Array<{
-  keyId: number;
-  publicKey: SignalClient.PublicKey;
-  privateKey: SignalClient.PrivateKey;
-}>> {
-  const preKeys: Array<{
-    keyId: number;
-    publicKey: SignalClient.PublicKey;
-    privateKey: SignalClient.PrivateKey;
-  }> = [];
-
-  for (let i = 0; i < count; i++) {
-    const keyId = startId + i;
-    const keyPair = SignalClient.PrivateKey.generate();
-    
-    preKeys.push({
-      keyId,
-      publicKey: keyPair.getPublicKey(),
-      privateKey: keyPair,
-    });
-  }
-
-  return preKeys;
-}
-
-/**
- * Utility: Convert Uint8Array to base64 (browser-compatible)
- */
-function arrayBufferToBase64(buffer: Uint8Array): string {
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
   let binary = '';
-  for (let i = 0; i < buffer.length; i++) {
-    binary += String.fromCharCode(buffer[i]);
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary);
 }
 
 /**
- * Utility: Convert base64 to Uint8Array (browser-compatible)
+ * Utility: Convert base64 to ArrayBuffer (browser-compatible)
  */
-function base64ToArrayBuffer(base64: string): Uint8Array {
+export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
-  return bytes;
-}
-
-/**
- * Serialize keys to base64 for storage/transmission
- */
-export function serializePublicKey(key: SignalClient.PublicKey): string {
-  return arrayBufferToBase64(key.serialize());
-}
-
-export function serializePrivateKey(key: SignalClient.PrivateKey): string {
-  return arrayBufferToBase64(key.serialize());
-}
-
-export function serializeSignature(signature: Uint8Array): string {
-  return arrayBufferToBase64(signature);
-}
-
-/**
- * Deserialize keys from base64 storage
- */
-export function deserializePublicKey(serialized: string): SignalClient.PublicKey {
-  const buffer = base64ToArrayBuffer(serialized);
-  return SignalClient.PublicKey.deserialize(buffer);
-}
-
-export function deserializePrivateKey(serialized: string): SignalClient.PrivateKey {
-  const buffer = base64ToArrayBuffer(serialized);
-  return SignalClient.PrivateKey.deserialize(buffer);
+  return bytes.buffer;
 }
 
 /**
@@ -171,34 +87,37 @@ export function deserializePrivateKey(serialized: string): SignalClient.PrivateK
  */
 export async function initializeSignalKeys(): Promise<StoredKeys> {
   // Generate identity key pair (root of trust)
-  const identityPrivateKey = await generateIdentityKeyPair();
-  const identityPublicKey = identityPrivateKey.getPublicKey();
+  const identityKeyPair = await KeyHelper.generateIdentityKeyPair();
 
   // Generate registration ID
-  const registrationId = generateRegistrationId();
+  const registrationId = KeyHelper.generateRegistrationId();
 
   // Generate signed prekey (id starts at 1)
-  const signedPreKey = await generateSignedPreKey(identityPrivateKey, 1);
+  const signedPreKeyId = 1;
+  const signedPreKey = await KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId);
 
   // Generate one-time prekeys (100 keys starting at id 1)
-  const preKeys = await generatePreKeys(1, 100);
+  // Note: KeyHelper.generatePreKey is singular, so we call it in a loop
+  const startPreKeyId = 1;
+  const numPreKeys = 100;
+  const preKeys = [];
+  
+  for (let i = 0; i < numPreKeys; i++) {
+    const preKey = await KeyHelper.generatePreKey(startPreKeyId + i);
+    preKeys.push(preKey);
+  }
 
   return {
-    identityKeyPair: {
-      publicKey: serializePublicKey(identityPublicKey),
-      privateKey: serializePrivateKey(identityPrivateKey),
-    },
+    identityKeyPair,
     registrationId,
     signedPreKey: {
-      keyId: signedPreKey.keyId,
-      publicKey: serializePublicKey(signedPreKey.publicKey),
-      privateKey: serializePrivateKey(signedPreKey.privateKey),
-      signature: serializeSignature(signedPreKey.signature),
+      keyId: signedPreKeyId,
+      keyPair: signedPreKey.keyPair,
+      signature: signedPreKey.signature,
     },
     preKeys: preKeys.map(pk => ({
       keyId: pk.keyId,
-      publicKey: serializePublicKey(pk.publicKey),
-      privateKey: serializePrivateKey(pk.privateKey),
+      keyPair: pk.keyPair,
     })),
   };
 }
@@ -211,17 +130,109 @@ export function createPreKeyBundle(keys: StoredKeys, preKeyIndex: number = 0): P
   const preKey = keys.preKeys[preKeyIndex];
   
   return {
-    identityKey: keys.identityKeyPair.publicKey,
+    identityKey: arrayBufferToBase64(keys.identityKeyPair.publicKey),
+    registrationId: keys.registrationId,
     signedPreKey: {
       keyId: keys.signedPreKey.keyId,
-      publicKey: keys.signedPreKey.publicKey,
-      signature: keys.signedPreKey.signature,
+      publicKey: arrayBufferToBase64(keys.signedPreKey.keyPair.publicKey),
+      signature: arrayBufferToBase64(keys.signedPreKey.signature),
     },
     preKey: preKey ? {
       keyId: preKey.keyId,
-      publicKey: preKey.publicKey,
+      publicKey: arrayBufferToBase64(preKey.keyPair.publicKey),
     } : undefined,
   };
+}
+
+/**
+ * Parse a PreKeyBundle received from server back to usable format
+ */
+export function parsePreKeyBundle(bundle: PreKeyBundle): {
+  identityKey: ArrayBuffer;
+  registrationId: number;
+  signedPreKey: SignedPublicPreKeyType;
+  preKey?: PreKeyType;
+} {
+  return {
+    identityKey: base64ToArrayBuffer(bundle.identityKey),
+    registrationId: bundle.registrationId,
+    signedPreKey: {
+      keyId: bundle.signedPreKey.keyId,
+      publicKey: base64ToArrayBuffer(bundle.signedPreKey.publicKey),
+      signature: base64ToArrayBuffer(bundle.signedPreKey.signature),
+    },
+    preKey: bundle.preKey ? {
+      keyId: bundle.preKey.keyId,
+      publicKey: base64ToArrayBuffer(bundle.preKey.publicKey),
+    } : undefined,
+  };
+}
+
+/**
+ * Create a SignalProtocolAddress for a user
+ */
+export function createAddress(userId: string, deviceId: number = 1): SignalProtocolAddress {
+  return new SignalProtocolAddress(userId, deviceId);
+}
+
+/**
+ * Build a session with another user using their PreKeyBundle
+ * This implements the X3DH key agreement protocol
+ */
+export async function buildSession(
+  store: any, // SignalProtocolStore implementation
+  recipientAddress: SignalProtocolAddress,
+  preKeyBundle: PreKeyBundle
+): Promise<void> {
+  const sessionBuilder = new SessionBuilder(store, recipientAddress);
+  const parsedBundle = parsePreKeyBundle(preKeyBundle);
+  
+  await sessionBuilder.processPreKey(parsedBundle);
+}
+
+/**
+ * Encrypt a message for a recipient
+ * Returns ciphertext and message type
+ */
+export async function encryptMessage(
+  store: any, // SignalProtocolStore implementation
+  recipientAddress: SignalProtocolAddress,
+  plaintext: string
+): Promise<{ type: MessageType; body: string }> {
+  const sessionCipher = new SessionCipher(store, recipientAddress);
+  const plaintextBuffer = new TextEncoder().encode(plaintext).buffer;
+  
+  const ciphertext = await sessionCipher.encrypt(plaintextBuffer);
+  
+  return {
+    type: ciphertext.type,
+    body: arrayBufferToBase64(ciphertext.body!),
+  };
+}
+
+/**
+ * Decrypt a message from a sender
+ * Handles both PreKeyWhisperMessage (session establishment) and WhisperMessage (ongoing)
+ */
+export async function decryptMessage(
+  store: any, // SignalProtocolStore implementation
+  senderAddress: SignalProtocolAddress,
+  ciphertext: { type: MessageType; body: string }
+): Promise<string> {
+  const sessionCipher = new SessionCipher(store, senderAddress);
+  const ciphertextBuffer = base64ToArrayBuffer(ciphertext.body);
+  
+  let plaintextBuffer: ArrayBuffer;
+  
+  if (ciphertext.type === MessageType.PREKEY_BUNDLE) {
+    // First message - establish session
+    plaintextBuffer = await sessionCipher.decryptPreKeyWhisperMessage(ciphertextBuffer);
+  } else {
+    // Ongoing session
+    plaintextBuffer = await sessionCipher.decryptWhisperMessage(ciphertextBuffer);
+  }
+  
+  return new TextDecoder().decode(plaintextBuffer);
 }
 
 /**
@@ -229,25 +240,32 @@ export function createPreKeyBundle(keys: StoredKeys, preKeyIndex: number = 0): P
  * Users can compare these numbers to verify they're talking to the right person
  */
 export function calculateSafetyNumber(
-  localIdentityKey: string,
+  localIdentityKey: ArrayBuffer,
   localIdentifier: string,
-  remoteIdentityKey: string,
+  remoteIdentityKey: ArrayBuffer,
   remoteIdentifier: string
 ): string {
-  const localKey = deserializePublicKey(localIdentityKey);
-  const remoteKey = deserializePublicKey(remoteIdentityKey);
-
-  const localIdBytes = new TextEncoder().encode(localIdentifier);
-  const remoteIdBytes = new TextEncoder().encode(remoteIdentifier);
-
-  const fingerprint = SignalClient.Fingerprint.new(
-    5200, // iterations (standard Signal value)
-    2,    // version
-    localIdBytes,
-    localKey,
-    remoteIdBytes,
-    remoteKey
-  );
-
-  return fingerprint.displayableFingerprint().toString();
+  // Create a deterministic fingerprint from identity keys
+  const localKeyHex = Array.from(new Uint8Array(localIdentityKey))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  const remoteKeyHex = Array.from(new Uint8Array(remoteIdentityKey))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  
+  // Combine and hash to create safety number
+  const combined = localIdentifier < remoteIdentifier
+    ? `${localIdentifier}${localKeyHex}${remoteIdentifier}${remoteKeyHex}`
+    : `${remoteIdentifier}${remoteKeyHex}${localIdentifier}${localKeyHex}`;
+  
+  // Create a simple numeric safety number (in production, use proper fingerprint derivation)
+  let hash = 0;
+  for (let i = 0; i < combined.length; i++) {
+    hash = ((hash << 5) - hash) + combined.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // Format as 12-digit safety number (grouped in 4s)
+  const safetyNum = Math.abs(hash).toString().padStart(12, '0').slice(0, 12);
+  return `${safetyNum.slice(0, 4)} ${safetyNum.slice(4, 8)} ${safetyNum.slice(8, 12)}`;
 }

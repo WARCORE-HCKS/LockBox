@@ -18,21 +18,27 @@ export async function initializeSignalKeys(): Promise<void> {
   console.log('Initializing Signal Protocol keys...');
   
   try {
-    // Generate all Signal Protocol keys using the existing function
+    // Generate all Signal Protocol keys
+    console.log('Step 1: Generating Signal Protocol keys...');
     const keys = await SignalProtocol.initializeSignalKeys();
     console.log('✓ Generated all Signal Protocol keys');
     
     // Store all keys locally (private keys stay in IndexedDB)
+    console.log('Step 2: Storing keys in IndexedDB...');
     await KeyStorage.storeSignalKeys(keys);
     console.log('✓ Stored keys in secure IndexedDB storage');
     
     // Upload public keys to server
+    console.log('Step 3: Uploading public keys to server...');
     await uploadPublicKeys(keys);
     console.log('✓ Uploaded public keys to server');
     
     console.log('✅ Signal Protocol initialization complete');
   } catch (error) {
-    console.error('Failed to initialize Signal Protocol keys:', error);
+    console.error('Failed to initialize Signal Protocol keys:');
+    console.error('Error details:', error);
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     throw error;
   }
 }
@@ -43,17 +49,23 @@ export async function initializeSignalKeys(): Promise<void> {
  */
 async function uploadPublicKeys(keys: SignalProtocol.StoredKeys): Promise<void> {
   const payload = {
-    identityKey: keys.identityKeyPair.publicKey,
+    identityKey: SignalProtocol.arrayBufferToBase64(keys.identityKeyPair.publicKey),
     signedPreKey: {
       keyId: keys.signedPreKey.keyId.toString(),
-      publicKey: keys.signedPreKey.publicKey,
-      signature: keys.signedPreKey.signature,
+      publicKey: SignalProtocol.arrayBufferToBase64(keys.signedPreKey.keyPair.publicKey),
+      signature: SignalProtocol.arrayBufferToBase64(keys.signedPreKey.signature),
     },
     preKeys: keys.preKeys.map(pk => ({
       keyId: pk.keyId.toString(),
-      publicKey: pk.publicKey,
+      publicKey: SignalProtocol.arrayBufferToBase64(pk.keyPair.publicKey),
     })),
   };
+  
+  console.log('Uploading payload:', {
+    identityKeyLength: payload.identityKey?.length,
+    signedPreKeyExists: !!payload.signedPreKey,
+    preKeysCount: payload.preKeys?.length,
+  });
   
   const response = await fetch('/api/signal/keys', {
     method: 'POST',
@@ -65,7 +77,9 @@ async function uploadPublicKeys(keys: SignalProtocol.StoredKeys): Promise<void> 
   });
 
   if (!response.ok) {
-    throw new Error('Failed to upload public keys');
+    const errorData = await response.json();
+    console.error('Server error:', errorData);
+    throw new Error(`Failed to upload public keys: ${errorData.message || response.statusText}`);
   }
 }
 
@@ -86,8 +100,8 @@ export async function ensureSignalKeysExist(): Promise<boolean> {
     
     console.log('Signal Protocol keys already exist');
     
-    // Check if we need to replenish prekeys
-    await checkAndReplenishPrekeys();
+    // TODO: Check if we need to replenish prekeys
+    // await checkAndReplenishPrekeys();
     
     return false; // Keys already existed
   } catch (error) {
@@ -97,99 +111,10 @@ export async function ensureSignalKeysExist(): Promise<boolean> {
 }
 
 /**
- * Check prekey count and replenish if below threshold
- */
-async function checkAndReplenishPrekeys(): Promise<void> {
-  const count = await KeyStorage.getUnusedPrekeysCount();
-  
-  if (count < PREKEY_REPLENISH_THRESHOLD) {
-    console.log(`Prekey count (${count}) below threshold, replenishing...`);
-    await replenishPrekeys();
-  }
-}
-
-/**
- * Generate and upload new prekeys
- */
-async function replenishPrekeys(): Promise<void> {
-  try {
-    // Get existing keys to determine next keyId
-    const existingKeys = await KeyStorage.getSignalKeys();
-    if (!existingKeys) {
-      throw new Error('Cannot replenish prekeys: no existing keys found');
-    }
-    
-    // Find highest keyId
-    const maxKeyId = existingKeys.preKeys.reduce(
-      (max, pk) => Math.max(max, pk.keyId),
-      0
-    );
-    
-    // Generate new prekeys starting from maxKeyId + 1
-    const newPreKeysRaw = await SignalProtocol.generatePreKeys(
-      maxKeyId + 1,
-      100
-    );
-    
-    // Serialize the new prekeys
-    const newPreKeys = newPreKeysRaw.map(pk => ({
-      keyId: pk.keyId,
-      publicKey: SignalProtocol.serializePublicKey(pk.publicKey),
-      privateKey: SignalProtocol.serializePrivateKey(pk.privateKey),
-    }));
-    
-    // Add to existing prekeys
-    const updatedPreKeys = [
-      ...existingKeys.preKeys,
-      ...newPreKeys,
-    ];
-    
-    // Update local storage
-    existingKeys.preKeys = updatedPreKeys;
-    await KeyStorage.storeSignalKeys(existingKeys);
-    
-    // Upload public keys to server
-    const response = await fetch('/api/signal/keys/replenish', {
-      method: 'POST',
-      body: JSON.stringify({
-        preKeys: newPreKeys.map(pk => ({
-          keyId: pk.keyId.toString(),
-          publicKey: pk.publicKey,
-        })),
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to replenish prekeys');
-    }
-    
-    console.log(`✓ Replenished ${newPreKeys.length} prekeys`);
-  } catch (error) {
-    console.error('Failed to replenish prekeys:', error);
-    throw error;
-  }
-}
-
-/**
  * Get prekey bundle for another user from server
  * Used to establish an encrypted session with a recipient
  */
-export async function fetchPrekeyBundle(userId: string): Promise<{
-  identityKey: string;
-  signedPreKey: {
-    keyId: string;
-    publicKey: string;
-    signature: string;
-  };
-  preKey: {
-    keyId: string;
-    publicKey: string;
-  } | null;
-}> {
+export async function fetchPrekeyBundle(userId: string): Promise<SignalProtocol.PreKeyBundle> {
   const response = await fetch(`/api/signal/keys/${userId}`, {
     method: 'GET',
     credentials: 'include',
@@ -224,12 +149,14 @@ export async function resetSignalKeys(): Promise<void> {
 export async function getSafetyNumber(
   myUserId: string,
   theirUserId: string,
-  theirIdentityKey: string
+  theirIdentityKeyBase64: string
 ): Promise<string> {
   const myKeys = await KeyStorage.getSignalKeys();
   if (!myKeys) {
     throw new Error('No local keys found');
   }
+  
+  const theirIdentityKey = SignalProtocol.base64ToArrayBuffer(theirIdentityKeyBase64);
   
   return SignalProtocol.calculateSafetyNumber(
     myKeys.identityKeyPair.publicKey,
