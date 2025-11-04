@@ -50,24 +50,24 @@ export default function MessageInput({
   };
 
   return (
-    <div className="border-t bg-background p-4">
+    <div className="border-t border-primary/20 bg-sidebar/30 backdrop-blur-sm p-4 corner-brackets">
       <div className="flex items-end gap-2">
         <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
           <PopoverTrigger asChild>
             <Button
               size="icon"
               variant="ghost"
-              className="shrink-0 mb-px"
+              className="shrink-0 mb-px neon-glow-cyan"
               data-testid="button-emoji"
             >
-              <Smile className="h-5 w-5 text-muted-foreground" />
+              <Smile className="h-5 w-5 text-primary" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80" align="start" data-testid="emoji-picker">
-            <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-hidden">
+          <PopoverContent className="w-80 glass-panel border-primary/30" align="start" data-testid="emoji-picker">
+            <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
               {Object.entries(EMOJI_CATEGORIES).map(([category, emojis]) => (
                 <div key={category}>
-                  <h4 className="text-xs font-semibold text-muted-foreground mb-2 sticky top-0 bg-popover py-1">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 sticky top-0 bg-popover/90 backdrop-blur-sm py-1" style={{ fontFamily: 'var(--font-display)' }}>
                     {category}
                   </h4>
                   <div className="grid grid-cols-8 gap-1">
@@ -75,7 +75,7 @@ export default function MessageInput({
                       <button
                         key={emoji}
                         onClick={() => handleEmojiSelect(emoji)}
-                        className="text-2xl hover-elevate active-elevate-2 rounded-md p-1.5 transition-colors"
+                        className="text-2xl hover-elevate active-elevate-2 rounded-sm p-1.5 transition-colors border border-transparent hover:border-primary/30"
                         data-testid={`emoji-${emoji}`}
                       >
                         {emoji}
@@ -95,9 +95,11 @@ export default function MessageInput({
           disabled={disabled}
           className={cn(
             "resize-none min-h-[44px] max-h-[120px] text-[15px]",
-            "border-input bg-card rounded-xl transition-shadow",
-            "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0"
+            "border-primary/30 bg-background/50 backdrop-blur-sm rounded-sm transition-all",
+            "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0 focus-visible:neon-glow-cyan",
+            "placeholder:text-muted-foreground/40 placeholder:uppercase placeholder:text-xs placeholder:tracking-wide"
           )}
+          style={{ fontFamily: 'var(--font-sans)' }}
           rows={1}
           data-testid="input-message"
         />
@@ -105,7 +107,7 @@ export default function MessageInput({
           size="icon"
           onClick={handleSend}
           disabled={!message.trim() || disabled}
-          className="shrink-0 mb-px"
+          className="shrink-0 mb-px bg-primary/20 hover:bg-primary/30 border border-primary/40 neon-glow-cyan text-primary hover:text-primary-foreground"
           data-testid="button-send"
         >
           <Send className="h-4 w-4" />

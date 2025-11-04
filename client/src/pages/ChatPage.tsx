@@ -535,31 +535,34 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background dot-grid-bg relative">
       <aside
         className={cn(
-          "w-80 border-r bg-sidebar flex flex-col transition-all duration-300",
+          "w-80 border-r border-primary/20 bg-sidebar flex flex-col transition-all duration-300 relative z-10 scanline-overlay",
           !sidebarOpen && "w-0 overflow-hidden lg:w-80"
         )}
       >
-        <div className="p-4 border-b space-y-4">
+        <div className="p-4 border-b border-primary/20 space-y-4 corner-brackets">
           <div className="flex items-center justify-center gap-2 pb-2">
-            <LockIcon className="h-7 w-auto text-foreground" />
-            <h1 className="text-lg font-bold">LockBox</h1>
+            <LockIcon className="h-7 w-auto text-primary neon-glow-cyan" />
+            <h1 className="text-2xl font-bold uppercase tracking-widest text-glow-cyan" style={{ fontFamily: 'var(--font-display)' }}>LockBox</h1>
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
-              <UserAvatar 
-                name={getUserDisplayName(currentUser)} 
-                src={currentUser.profileImageUrl || undefined} 
-                size="md" 
-                status="online" 
-              />
+              <div className="relative">
+                <UserAvatar 
+                  name={getUserDisplayName(currentUser)} 
+                  src={currentUser.profileImageUrl || undefined} 
+                  size="md" 
+                  status="online" 
+                />
+                <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-40 pointer-events-none neon-pulse" />
+              </div>
               <div className="min-w-0">
-                <h3 className="font-semibold text-sm truncate" data-testid="text-current-user">
+                <h3 className="font-bold text-sm truncate uppercase tracking-wide text-primary" data-testid="text-current-user" style={{ fontFamily: 'var(--font-display)' }}>
                   {getUserDisplayName(currentUser)}
                 </h3>
-                <p className="text-xs text-muted-foreground">Online</p>
+                <p className="text-[10px] text-success uppercase tracking-widest font-medium" style={{ fontFamily: 'var(--font-display)' }}>● Online</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -569,6 +572,7 @@ export default function ChatPage() {
                 variant="ghost"
                 onClick={handleLogout}
                 data-testid="button-logout"
+                className="neon-glow-pink"
               >
                 <LogOut className="h-5 w-5" />
               </Button>
@@ -579,8 +583,9 @@ export default function ChatPage() {
             <Link href="/profile">
               <Button 
                 variant="outline" 
-                className="w-full justify-start gap-2"
+                className="w-full justify-start gap-2 border-primary/30 neon-glow-cyan uppercase tracking-wide text-xs"
                 data-testid="button-profile"
+                style={{ fontFamily: 'var(--font-display)' }}
               >
                 <UserIcon className="h-4 w-4" />
                 My Profile
@@ -591,8 +596,9 @@ export default function ChatPage() {
               <Link href="/admin">
                 <Button 
                   variant="outline" 
-                  className="w-full justify-start gap-2"
+                  className="w-full justify-start gap-2 border-secondary/30 neon-glow-magenta uppercase tracking-wide text-xs"
                   data-testid="button-admin-panel"
+                  style={{ fontFamily: 'var(--font-display)' }}
                 >
                   <Shield className="h-4 w-4" />
                   Admin Panel
@@ -602,14 +608,15 @@ export default function ChatPage() {
           </div>
           
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
             <Input
               type="search"
-              placeholder="Search friends..."
+              placeholder="SEARCH CONTACTS..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-9 bg-background/50 border-primary/30 focus:border-primary focus:neon-glow-cyan uppercase text-xs tracking-wide placeholder:text-muted-foreground/50"
               data-testid="input-search-friends"
+              style={{ fontFamily: 'var(--font-display)' }}
             />
           </div>
         </div>
@@ -620,18 +627,18 @@ export default function ChatPage() {
             <div>
               <button
                 onClick={() => setChatroomsExpanded(!chatroomsExpanded)}
-                className="flex items-center justify-between w-full px-3 py-2 rounded-md hover-elevate"
+                className="flex items-center justify-between w-full px-3 py-2 rounded-sm hover-elevate border-l-2 border-transparent hover:border-secondary transition-colors"
                 data-testid="button-toggle-chatrooms"
               >
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium text-sm">Chatrooms</span>
-                  <span className="text-xs text-muted-foreground">({chatrooms.length})</span>
+                  <Users className="h-4 w-4 text-secondary" />
+                  <span className="font-bold text-xs uppercase tracking-widest text-secondary" style={{ fontFamily: 'var(--font-display)' }}>Chatrooms</span>
+                  <span className="text-[10px] text-secondary/60 font-mono">({chatrooms.length})</span>
                 </div>
                 {chatroomsExpanded ? (
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  <ChevronUp className="h-4 w-4 text-secondary" />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 text-secondary" />
                 )}
               </button>
 
@@ -748,11 +755,14 @@ export default function ChatPage() {
               <div className="max-w-4xl mx-auto space-y-1">
                 {chatroomMessages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                    <div className="rounded-full bg-muted p-4 mb-4">
-                      <MessageCircle className="h-8 w-8" />
+                    <div className="relative">
+                      <div className="rounded-full bg-secondary/10 p-6 mb-4 neon-glow-magenta">
+                        <MessageCircle className="h-10 w-10 text-secondary" />
+                      </div>
+                      <div className="absolute inset-0 rounded-full neon-glow-magenta opacity-30 neon-pulse pointer-events-none" />
                     </div>
-                    <p className="text-base font-medium mb-1">No messages yet</p>
-                    <p className="text-sm opacity-70">Start the conversation!</p>
+                    <p className="text-base font-bold mb-2 uppercase tracking-wide text-secondary" style={{ fontFamily: 'var(--font-display)' }}>No messages yet</p>
+                    <p className="text-xs opacity-60 uppercase tracking-widest" style={{ fontFamily: 'var(--font-display)' }}>Initiate conversation</p>
                   </div>
                 ) : (
                   chatroomMessages.map((msg, idx) => {
@@ -799,11 +809,18 @@ export default function ChatPage() {
               <div className="max-w-4xl mx-auto space-y-1">
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                    <div className="rounded-full bg-primary/10 p-4 mb-4">
-                      <LockIconLucide className="h-8 w-8 text-primary" />
+                    <div className="relative">
+                      <div className="rounded-full bg-primary/10 p-6 mb-4 neon-glow-cyan-strong">
+                        <LockIconLucide className="h-12 w-12 text-primary" />
+                      </div>
+                      <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-50 neon-pulse pointer-events-none" />
                     </div>
-                    <p className="text-base font-medium mb-1">End-to-end encrypted chat</p>
-                    <p className="text-sm opacity-70">Send your first secure message</p>
+                    <p className="text-lg font-bold mb-2 uppercase tracking-wide text-primary" style={{ fontFamily: 'var(--font-display)' }}>E2E Encrypted</p>
+                    <p className="text-xs opacity-60 uppercase tracking-widest mb-3" style={{ fontFamily: 'var(--font-display)' }}>Send secure message</p>
+                    <div className="flex items-center gap-1.5 text-[10px] text-primary bg-primary/10 px-3 py-1.5 rounded-sm border border-primary/30 neon-glow-cyan uppercase tracking-widest font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                      <Shield className="h-3 w-3" />
+                      <span>Signal Protocol</span>
+                    </div>
                   </div>
                 ) : (
                   messages.map((msg, idx) => {
@@ -827,23 +844,26 @@ export default function ChatPage() {
             <MessageInput onSend={handleSendMessage} />
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-muted/20">
-            <div className="text-center space-y-4 max-w-md px-6">
-              <div className="rounded-full bg-primary/10 p-6 w-24 h-24 mx-auto flex items-center justify-center">
-                <LockIconLucide className="h-12 w-12 text-primary" />
+          <div className="flex-1 flex items-center justify-center bg-background/50 dot-grid-bg">
+            <div className="text-center space-y-6 max-w-md px-6 glass-panel p-8 corner-brackets">
+              <div className="relative mx-auto w-28 h-28">
+                <div className="rounded-full bg-primary/10 p-8 w-full h-full flex items-center justify-center neon-glow-cyan-strong">
+                  <LockIconLucide className="h-14 w-14 text-primary" />
+                </div>
+                <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-60 neon-pulse pointer-events-none" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">Your messages are private</h3>
-                <p className="text-muted-foreground">
+                <h3 className="text-2xl font-bold text-primary mb-3 uppercase tracking-wide text-glow-cyan" style={{ fontFamily: 'var(--font-display)' }}>Secure Messaging</h3>
+                <p className="text-muted-foreground text-sm" style={{ fontFamily: 'var(--font-display)' }}>
                   {users.length === 0 
-                    ? "Invite friends to start secure conversations with end-to-end encryption"
-                    : "Select a friend or chatroom to start chatting securely"
+                    ? "INVITE CONTACTS TO START ENCRYPTED CONVERSATIONS"
+                    : "SELECT CONTACT OR CHATROOM TO BEGIN"
                   }
                 </p>
               </div>
               <div className="flex items-center gap-2 justify-center pt-2">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-card px-3 py-1.5 rounded-full border">
-                  <Shield className="h-3.5 w-3.5 text-primary" />
+                <div className="flex items-center gap-2 text-[10px] text-primary bg-primary/10 px-4 py-2 rounded-sm border border-primary/30 neon-glow-cyan uppercase tracking-widest font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                  <Shield className="h-4 w-4" />
                   <span>Signal Protocol</span>
                 </div>
               </div>

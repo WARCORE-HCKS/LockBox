@@ -4,23 +4,26 @@
 LockBox is a real-time messaging application designed for private communication. This project demonstrates secure authentication, WebSocket-based real-time messaging, and Signal Protocol end-to-end encryption. The application now features a modern, polished UI with encryption indicators throughout, making security transparent to users. This MVP showcases production-grade E2E encryption with user-friendly design, user-owned chatrooms, and comprehensive administrative controls.
 
 ## User Preferences
-- Modern, polished UI with Discord/Signal-inspired aesthetics
-- Dark mode support with localStorage persistence and improved color contrast
-- Clean design with refined message bubbles (rounded corners with cutoff effect)
-- Prominent encryption indicators (E2E badges, lock icons, security-focused empty states)
-- Focus on privacy with clear visual cues
+- Cyberpunk-themed UI with neon aesthetics and HUD-style elements
+- Dark backgrounds (#0a0a0f) with neon accents (cyan #00ffff, magenta #ff00ff, hot pink #ff0080)
+- Futuristic typography (Orbitron for headings, Rajdhani for body text)
+- Glowing effects on interactive elements and encryption indicators
+- Dark mode support with localStorage persistence
+- Focus on security with prominent neon-glowing encryption badges and HUD-style panels
 
 ## System Architecture
 
 ### UI/UX Decisions
-The application features a polished, modern design following Discord/Signal aesthetics with security transparency:
-- **Message Bubbles**: Refined with rounded corners and cutoff effect (rounded-2xl + corner cutoff), subtle shadows, improved spacing
-- **Encryption Indicators**: E2E badges with lock icons in chat headers, security-focused empty states
-- **Color Scheme**: Refined palette with better contrast in light/dark modes, improved text readability
-- **Empty States**: Enhanced with icons and encryption-focused messaging ("End-to-end encrypted chat", "Signal Protocol" badges)
-- **Theme Support**: Seamless light/dark mode switching with localStorage persistence
-- **Sidebar**: Collapsible chatroom and user sections with improved spacing and hover states
-- **Admin Control**: Comprehensive panel for user and chatroom management
+The application features a cyberpunk HUD aesthetic with neon colors and futuristic elements:
+- **Message Bubbles**: Angular clip-path with cut corners, gradient backgrounds (cyan/magenta tints), neon borders with glow effects
+- **Encryption Indicators**: Pulsing neon-glow E2E badges with lock icons, prominent throughout UI
+- **Color Scheme**: Deep black backgrounds (#0a0a0f) with neon cyan (primary), magenta (secondary), and hot pink (accent) colors
+- **Visual Effects**: Corner brackets on panels, animated scanlines, dot grid backgrounds, glass-morphism effects, neon pulse animations
+- **Typography**: Orbitron (display font) for UI elements with uppercase tracking-wide text, Rajdhani (sans) for message content
+- **Empty States**: HUD-style with glowing circular icons, pulsing animations, and glass-panel containers
+- **Theme Support**: Seamless light/dark mode switching with cyberpunk color palette adjustments
+- **Sidebar**: HUD-style panels with corner brackets, scanline overlays, neon-glow avatars, and gradient section headers
+- **Admin Control**: Comprehensive panel styled with cyberpunk aesthetics
 
 ### Technical Implementations
 - **Backend**: Built with Express and Socket.io, handling authentication, database interactions, and real-time communication.

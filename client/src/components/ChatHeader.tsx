@@ -29,32 +29,43 @@ const statusLabels = {
   offline: "Offline",
 };
 
+const statusColors = {
+  online: "text-success",
+  away: "text-secondary",
+  offline: "text-muted-foreground",
+};
+
 export default function ChatHeader({ friend, onSettings, onClearMessages }: ChatHeaderProps) {
   const hasMenuItems = !!(onSettings || onClearMessages);
   
   return (
-    <header className="h-16 border-b bg-background px-6 flex items-center justify-between gap-4">
+    <header className="h-16 border-b border-primary/20 bg-sidebar/50 backdrop-blur-sm px-6 flex items-center justify-between gap-4 gradient-border-b relative">
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <UserAvatar name={friend.name} src={friend.avatar} size="md" status={friend.status} />
+        <div className="relative">
+          <UserAvatar name={friend.name} src={friend.avatar} size="md" status={friend.status} />
+          {friend.status === "online" && (
+            <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-40 pointer-events-none" />
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-base truncate" data-testid="text-friend-name">
+            <h2 className="font-bold text-base truncate uppercase tracking-wide text-primary" data-testid="text-friend-name" style={{ fontFamily: 'var(--font-display)' }}>
               {friend.name}
             </h2>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0" data-testid="encryption-badge">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-primary/10 text-primary shrink-0 border border-primary/30 neon-glow-cyan" data-testid="encryption-badge">
                   <Lock className="h-3 w-3" />
-                  <span className="text-[10px] font-medium uppercase tracking-wide">E2E</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ fontFamily: 'var(--font-display)' }}>E2E</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p className="text-xs">End-to-end encrypted with Signal Protocol</p>
+              <TooltipContent side="bottom" className="glass-panel border-primary/30">
+                <p className="text-xs uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>End-to-end encrypted with Signal Protocol</p>
               </TooltipContent>
             </Tooltip>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {statusLabels[friend.status]}
+          <p className={`text-[10px] uppercase tracking-widest font-medium ${statusColors[friend.status]}`} style={{ fontFamily: 'var(--font-display)' }}>
+            {friend.status === "online" && "● "}{statusLabels[friend.status]}
           </p>
         </div>
       </div>
@@ -62,18 +73,18 @@ export default function ChatHeader({ friend, onSettings, onClearMessages }: Chat
         {hasMenuItems && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" data-testid="button-menu">
+              <Button size="icon" variant="ghost" data-testid="button-menu" className="neon-glow-cyan">
                 <MoreVertical className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="glass-panel border-primary/30">
               {onClearMessages && (
-                <DropdownMenuItem onClick={onClearMessages} data-testid="menu-item-clear">
+                <DropdownMenuItem onClick={onClearMessages} data-testid="menu-item-clear" className="uppercase text-xs tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
                   Clear messages
                 </DropdownMenuItem>
               )}
               {onSettings && (
-                <DropdownMenuItem onClick={onSettings} data-testid="menu-item-settings">
+                <DropdownMenuItem onClick={onSettings} data-testid="menu-item-settings" className="uppercase text-xs tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
                   Settings
                 </DropdownMenuItem>
               )}
