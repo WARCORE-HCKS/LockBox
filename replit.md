@@ -15,6 +15,15 @@ LockBox is a real-time messaging application designed for private communication.
 
 ### UI/UX Decisions
 The application features a cyberpunk HUD aesthetic with neon colors and futuristic elements:
+- **Advanced Landing Page**: Premium interface with tons of special effects making users feel like they're operating a highly intelligent machine:
+  - **Background Layers**: Animated grid pattern (40px×40px sliding), scanline overlay (vertical movement), 20 floating particles, hexagonal dot pattern
+  - **Logo Effects**: 3 rotating energy rings (different speeds), holographic glow background, glitch effect (2 offset layers), neon drop shadow
+  - **Typography**: Holographic "LOCKBOX" title with animated gradient shift (primary→secondary), pulsing tagline animation, Orbitron display font
+  - **Button Effects**: "INITIALIZE SECURE SESSION" with energy pulse, animated gradient border (hue rotation), glow trail on hover
+  - **Encryption Showcase**: Corner brackets (expand on hover), 4 detailed cards (Signal Protocol, Perfect Forward Secrecy, Zero Knowledge, Authenticated Encryption), scrolling binary data stream
+  - **Features Grid**: Real-Time, Multi-Room, Open Source cards with pulsing icons and neon glows
+  - **Open Source**: Interactive button with project information and deployment instructions
+  - **15+ CSS Animations**: GPU-accelerated effects (grid-slide, scanline-move, particle-drift, glitch, holographic-shift, pulse variants, energy-border, data-scroll)
 - **Message Bubbles**: Angular clip-path with cut corners, gradient backgrounds (cyan/magenta tints), neon borders with glow effects
 - **Encryption Indicators**: Pulsing neon-glow E2E badges with lock icons, prominent throughout UI
 - **Color Scheme**: 
