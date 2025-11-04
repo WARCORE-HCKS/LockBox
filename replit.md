@@ -1,7 +1,7 @@
 # LockBox - Encrypted Messenger (Demo/MVP)
 
 ## Overview
-LockBox is a real-time messaging application designed for private communication. This project demonstrates secure authentication, WebSocket-based real-time messaging, and Signal Protocol end-to-end encryption. The application now features a modern, polished UI with encryption indicators throughout, making security transparent to users. This MVP showcases production-grade E2E encryption with user-friendly design, user-owned chatrooms, and comprehensive administrative controls.
+LockBox is a real-time messaging application designed for private communication. This project demonstrates secure authentication, WebSocket-based real-time messaging, and Signal Protocol end-to-end encryption. The application features an advanced cyberpunk HUD aesthetic with neon effects, orbital animations, and particle systems. This MVP showcases production-grade E2E encryption with an impressive, futuristic design featuring an advanced theme toggle with orbital rings, particle effects, and smooth light/dark mode transitions.
 
 ## User Preferences
 - Cyberpunk-themed UI with neon aesthetics and HUD-style elements
@@ -17,11 +17,20 @@ LockBox is a real-time messaging application designed for private communication.
 The application features a cyberpunk HUD aesthetic with neon colors and futuristic elements:
 - **Message Bubbles**: Angular clip-path with cut corners, gradient backgrounds (cyan/magenta tints), neon borders with glow effects
 - **Encryption Indicators**: Pulsing neon-glow E2E badges with lock icons, prominent throughout UI
-- **Color Scheme**: Deep black backgrounds (#0a0a0f) with neon cyan (primary), magenta (secondary), and hot pink (accent) colors
+- **Color Scheme**: 
+  - Dark Mode: Deep black backgrounds (#0a0a0f) with neon cyan (primary), magenta (secondary), and hot pink (accent) colors
+  - Light Mode: Bright backgrounds (#fafafa) with hot pink (primary), cyan (secondary) for cyberpunk-on-light aesthetic
+- **Advanced Theme Toggle**: Impressive button with orbital rings, particle effects, corner brackets, scan line, and icon rotation
+  - Orbital Rings: Two animated concentric rings (outer pulsing 3s, middle reverse rotating 4s)
+  - Particle Effects: 6 floating particles with staggered animations on hover
+  - Corner Brackets: HUD-style expanding accents (2px → 3px on hover)
+  - Neon Glow: Dynamic box-shadow (cyan in dark, pink in light)
+  - Smooth Transitions: 500-700ms icon rotation and color changes
+  - GPU-Accelerated: Pure CSS animations for optimal performance
 - **Visual Effects**: Corner brackets on panels, animated scanlines, dot grid backgrounds, glass-morphism effects, neon pulse animations
 - **Typography**: Orbitron (display font) for UI elements with uppercase tracking-wide text, Rajdhani (sans) for message content
 - **Empty States**: HUD-style with glowing circular icons, pulsing animations, and glass-panel containers
-- **Theme Support**: Seamless light/dark mode switching with cyberpunk color palette adjustments
+- **Theme Support**: Seamless light/dark mode switching with cyberpunk color palette adjustments, theme persistence across navigation
 - **Sidebar**: HUD-style panels with corner brackets, scanline overlays, neon-glow avatars, and gradient section headers
 - **Admin Control**: Comprehensive panel styled with cyberpunk aesthetics
 
