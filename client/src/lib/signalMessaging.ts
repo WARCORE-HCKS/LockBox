@@ -111,8 +111,11 @@ export async function encryptMessageForUser(
     throw new Error('Encryption failed: no ciphertext body');
   }
   
-  // Convert to ArrayBuffer if needed
-  const bodyBuffer: ArrayBuffer = (body instanceof Uint8Array) ? body.buffer : body;
+  // Convert to proper ArrayBuffer
+  // IMPORTANT: If body is a Uint8Array view, we need to slice the buffer properly
+  const bodyBuffer: ArrayBuffer = (body instanceof Uint8Array) 
+    ? body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)
+    : body;
   
   return {
     type: ciphertext.type!,
