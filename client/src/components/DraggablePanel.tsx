@@ -57,10 +57,10 @@ export default function DraggablePanel({
 
       {/* Panel Header */}
       <div className={cn(
-        "flex items-center justify-between px-3 py-2 border-b border-primary/20 relative z-10 bg-sidebar/50 backdrop-blur-sm",
+        "flex items-center justify-between px-3 py-2 border-b border-primary/20 relative z-10 bg-sidebar/50 backdrop-blur-sm cursor-move",
         headerClassName
       )}>
-        <div className="flex items-center gap-2 cursor-move">
+        <div className="flex items-center gap-2">
           <Move className="h-3 w-3 text-primary opacity-60" />
           <h3 
             className="text-xs font-bold uppercase tracking-widest text-primary"
@@ -69,12 +69,12 @@ export default function DraggablePanel({
             {title}
           </h3>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 cursor-default">
           {showMinimizeButton && (
             <Button
               size="icon"
               variant="ghost"
-              className="h-6 w-6 hover:bg-primary/10"
+              className="h-6 w-6 hover:bg-primary/10 cursor-pointer"
               onClick={onMinimize}
               data-testid={`button-minimize-${title.toLowerCase().replace(/\s+/g, '-')}`}
             >
@@ -89,7 +89,7 @@ export default function DraggablePanel({
             <Button
               size="icon"
               variant="ghost"
-              className="h-6 w-6 hover:bg-destructive/10"
+              className="h-6 w-6 hover:bg-destructive/10 cursor-pointer"
               onClick={onClose}
               data-testid={`button-close-${title.toLowerCase().replace(/\s+/g, '-')}`}
             >

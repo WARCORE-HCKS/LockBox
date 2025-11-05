@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import GridLayout from "react-grid-layout";
@@ -53,8 +53,10 @@ export default function ChatPage() {
   const [chatroomsExpanded, setChatroomsExpanded] = useState(true);
   const [usersExpanded, setUsersExpanded] = useState(true);
   const [createChatroomDialogOpen, setCreateChatroomDialogOpen] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(1200);
   
   const { toast } = useToast();
+  const gridContainerRef = useRef<HTMLDivElement>(null);
 
   // Layout manager for customizable panels
   const {
@@ -80,6 +82,29 @@ export default function ChatPage() {
       });
     }
   }, [signalKeyError, toast]);
+
+  // Measure grid container width for responsive layout
+  useEffect(() => {
+    if (!gridContainerRef.current) return;
+
+    const updateWidth = () => {
+      if (gridContainerRef.current) {
+        const width = gridContainerRef.current.offsetWidth;
+        setContainerWidth(width || 1200);
+      }
+    };
+
+    // Initial measurement
+    updateWidth();
+
+    // Watch for resize
+    const resizeObserver = new ResizeObserver(updateWidth);
+    resizeObserver.observe(gridContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   // Form schema for create chatroom
   const createChatroomSchema = z.object({
@@ -609,13 +634,13 @@ export default function ChatPage() {
       </div>
 
       {/* Customizable Grid Layout */}
-      <div className="absolute top-14 left-0 right-0 bottom-0 overflow-auto z-10">
+      <div ref={gridContainerRef} className="absolute top-14 left-0 right-0 bottom-0 overflow-auto z-10">
         <GridLayout
           className="layout"
           layout={layout}
           cols={12}
           rowHeight={32}
-          width={1200}
+          width={containerWidth}
           onLayoutChange={onLayoutChange}
           draggableHandle=".cursor-move"
           isResizable={true}

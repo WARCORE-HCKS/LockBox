@@ -74,8 +74,10 @@ export function useLayoutManager() {
     }, SAVE_DEBOUNCE_MS);
 
     return () => {
+      // Flush pending save before cleanup to prevent data loss on fast reloads
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
       }
     };
   }, [layout]);
