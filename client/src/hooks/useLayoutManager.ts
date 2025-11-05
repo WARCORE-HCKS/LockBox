@@ -12,6 +12,7 @@ export interface PanelVisibility {
   securityMonitor: boolean;
   systemDiagnostics: boolean;
   activityFeed: boolean;
+  quickCommand: boolean;
 }
 
 export interface PanelMinimized {
@@ -23,6 +24,7 @@ export interface PanelMinimized {
   securityMonitor: boolean;
   systemDiagnostics: boolean;
   activityFeed: boolean;
+  quickCommand: boolean;
 }
 
 const STORAGE_KEY = "lockbox-layout";
@@ -41,6 +43,7 @@ const defaultLayout: Layout[] = [
   { i: "securityMonitor", x: 9, y: 12, w: 3, h: 6, minW: 1, maxW: 4, minH: 3 },
   { i: "systemDiagnostics", x: 0, y: 21, w: 2, h: 5, minW: 1, maxW: 4, minH: 3 },
   { i: "activityFeed", x: 9, y: 18, w: 3, h: 8, minW: 1, maxW: 4, minH: 3 },
+  { i: "quickCommand", x: 2, y: 21, w: 2, h: 5, minW: 1, maxW: 4, minH: 3 },
 ];
 
 const defaultVisibility: PanelVisibility = {
@@ -54,6 +57,7 @@ const defaultVisibility: PanelVisibility = {
   securityMonitor: true,
   systemDiagnostics: true,
   activityFeed: true,
+  quickCommand: true,
 };
 
 const defaultMinimized: PanelMinimized = {
@@ -65,6 +69,7 @@ const defaultMinimized: PanelMinimized = {
   securityMonitor: false,
   systemDiagnostics: false,
   activityFeed: false,
+  quickCommand: false,
 };
 
 export function useLayoutManager() {

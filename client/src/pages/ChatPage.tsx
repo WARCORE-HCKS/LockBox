@@ -30,6 +30,7 @@ import UserIntel from "@/components/UserIntel";
 import SecurityMonitor from "@/components/SecurityMonitor";
 import SystemDiagnostics from "@/components/SystemDiagnostics";
 import ActivityFeed from "@/components/ActivityFeed";
+import QuickCommand from "@/components/QuickCommand";
 import { useLayoutManager } from "@/hooks/useLayoutManager";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
@@ -1090,6 +1091,22 @@ export default function ChatPage() {
                 onClose={() => togglePanelVisibility("activityFeed")}
               >
                 <ActivityFeed />
+              </DraggablePanel>
+            </div>
+          )}
+
+          {/* Quick Command Panel */}
+          {panelVisibility.quickCommand && (
+            <div key="quickCommand">
+              <DraggablePanel
+                title="Quick Command"
+                isMinimized={panelMinimized.quickCommand}
+                onMinimize={() => togglePanelMinimized("quickCommand")}
+                onClose={() => togglePanelVisibility("quickCommand")}
+              >
+                <QuickCommand
+                  onNewChatroom={() => setCreateChatroomDialogOpen(true)}
+                />
               </DraggablePanel>
             </div>
           )}

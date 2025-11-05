@@ -35,6 +35,7 @@ export default function LayoutSettings({
     securityMonitor: "Security Monitor",
     systemDiagnostics: "System Diagnostics",
     activityFeed: "Activity Feed",
+    quickCommand: "Quick Commands",
   };
 
   return (
