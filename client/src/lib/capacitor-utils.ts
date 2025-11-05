@@ -49,15 +49,16 @@ export class SecureKeyStorage {
   /**
    * Store a value securely
    * @param key - Storage key
-   * @param value - Value to store (will be stringified if object)
+   * @param value - Value to store (any JSON-serializable type except null)
    */
-  static async set(key: string, value: string | object): Promise<void> {
+  static async set(key: string, value: string | number | boolean | object): Promise<void> {
     const storage = await this.getStorage();
     if (storage) {
-      const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-      await storage.set(key, stringValue);
+      // SecureStorage.set() accepts any JSON type directly (except null)
+      await storage.set(key, value);
     } else {
       // On web, delegate to existing IndexedDB encryption system
+      // This should be integrated with the existing signal-encryption.ts storage
       throw new Error('Use existing IndexedDB key storage on web platform');
     }
   }
@@ -71,6 +72,7 @@ export class SecureKeyStorage {
     const storage = await this.getStorage();
     if (storage) {
       try {
+        // SecureStorage.get() returns the value directly (or null)
         const value = await storage.get(key);
         return value !== null && value !== undefined ? String(value) : null;
       } catch (error) {
@@ -109,6 +111,7 @@ export class SecureKeyStorage {
   static async keys(): Promise<string[]> {
     const storage = await this.getStorage();
     if (storage) {
+      // SecureStorage.keys() returns string[] directly
       return await storage.keys();
     }
     return [];
