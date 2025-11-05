@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
+import GridLayout from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Search, LogOut, Menu, Users, Shield, User as UserIcon, ChevronDown, ChevronUp, Plus, MessageCircle, Lock as LockIconLucide } from "lucide-react";
+import { Search, LogOut, Users, Shield, User as UserIcon, ChevronDown, ChevronUp, Plus, MessageCircle, Lock as LockIconLucide } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -20,6 +23,9 @@ import UserAvatar from "@/components/UserAvatar";
 import ThemeToggle from "@/components/ThemeToggle";
 import HUDStats from "@/components/HUDStats";
 import CyberMap from "@/components/CyberMap";
+import DraggablePanel from "@/components/DraggablePanel";
+import LayoutSettings from "@/components/LayoutSettings";
+import { useLayoutManager } from "@/hooks/useLayoutManager";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
 import { useSignalKeyInit } from "@/hooks/useSignalKeyInit";
@@ -37,7 +43,6 @@ interface DecryptedChatroomMessage extends Omit<ChatroomMessage, 'encryptedConte
 }
 
 export default function ChatPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFriendId, setActiveFriendId] = useState<string | null>(null);
   const [activeChatroomId, setActiveChatroomId] = useState<string | null>(null);
@@ -50,6 +55,17 @@ export default function ChatPage() {
   const [createChatroomDialogOpen, setCreateChatroomDialogOpen] = useState(false);
   
   const { toast } = useToast();
+
+  // Layout manager for customizable panels
+  const {
+    layout,
+    panelVisibility,
+    panelMinimized,
+    onLayoutChange,
+    togglePanelVisibility,
+    togglePanelMinimized,
+    resetLayout,
+  } = useLayoutManager();
 
   // Initialize Signal Protocol E2E encryption keys automatically
   const { isInitialized: signalKeysInitialized, error: signalKeyError } = useSignalKeyInit();
@@ -244,7 +260,7 @@ export default function ChatPage() {
       console.log('[Cache Debug] Received echo for message:', message.id, 'clientMessageId:', message.clientMessageId);
       
       // Try to match it with a pending sent message using clientMessageId (deterministic)
-      const plaintext = await sentMessageCache.matchPendingMessage(message.clientMessageId);
+      const plaintext = await sentMessageCache.matchPendingMessage(message.clientMessageId || undefined);
       
       if (plaintext) {
         console.log('[Cache Debug] Matched pending message, caching with real ID:', message.id);
@@ -416,6 +432,7 @@ export default function ChatPage() {
           recipientId: activeFriendId,
           deletedAt: null,
           createdAt: new Date(),
+          clientMessageId: tempId,
         };
         setMessages((prev) => [...prev, newMessage]);
       } catch (error) {
@@ -563,362 +580,416 @@ export default function ChatPage() {
       {/* Hexagonal Pattern Overlay */}
       <div className="absolute inset-0 hexagon-pattern opacity-5 pointer-events-none z-0" />
 
-      <aside
-        className={cn(
-          "w-80 border-r border-primary/20 bg-sidebar/95 backdrop-blur-sm flex flex-col transition-all duration-300 relative z-10",
-          !sidebarOpen && "w-0 overflow-hidden lg:w-80"
-        )}
-      >
-        <div className="p-4 border-b border-primary/20 space-y-4 relative">
-          {/* Corner Brackets */}
-          <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary/40" />
-          <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary/40" />
-          <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary/40" />
-          <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary/40" />
-          
-          <div className="flex items-center justify-center gap-2 pb-2 relative">
-            {/* Holographic glow behind logo */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 blur-xl animate-pulse-glow" />
-            <LockIcon className="h-7 w-auto text-primary neon-glow-cyan relative z-10" />
-            <h1 className="text-2xl font-bold uppercase tracking-widest text-glow-cyan relative z-10" style={{ fontFamily: 'var(--font-display)' }}>LockBox</h1>
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <UserAvatar 
-                  name={getUserDisplayName(currentUser)} 
-                  src={currentUser.profileImageUrl || undefined} 
-                  size="md" 
-                  status="online" 
-                />
-                <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-40 pointer-events-none neon-pulse" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-bold text-sm truncate uppercase tracking-wide text-primary" data-testid="text-current-user" style={{ fontFamily: 'var(--font-display)' }}>
-                  {getUserDisplayName(currentUser)}
-                </h3>
-                <p className="text-[10px] text-success uppercase tracking-widest font-medium" style={{ fontFamily: 'var(--font-display)' }}>● Online</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <ThemeToggle />
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={handleLogout}
-                data-testid="button-logout"
-                className="neon-glow-pink"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Link href="/profile">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start gap-2 border-primary/30 neon-glow-cyan uppercase tracking-wide text-xs"
-                data-testid="button-profile"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                <UserIcon className="h-4 w-4" />
-                My Profile
-              </Button>
-            </Link>
-            
-            {currentUser.isAdmin && (
-              <Link href="/admin">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-2 border-secondary/30 neon-glow-magenta uppercase tracking-wide text-xs"
-                  data-testid="button-admin-panel"
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
-                  <Shield className="h-4 w-4" />
-                  Admin Panel
-                </Button>
-              </Link>
-            )}
-          </div>
-          
+      {/* Top Header with Layout Settings */}
+      <div className="absolute top-0 left-0 right-0 h-14 bg-sidebar/95 backdrop-blur-sm border-b border-primary/20 flex items-center justify-between px-4 z-20">
+        <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
-            <Input
-              type="search"
-              placeholder="SEARCH CONTACTS..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-background/50 border-primary/30 focus:border-primary focus:neon-glow-cyan uppercase text-xs tracking-wide placeholder:text-muted-foreground/50"
-              data-testid="input-search-friends"
-              style={{ fontFamily: 'var(--font-display)' }}
-            />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 blur-xl animate-pulse-glow" />
+            <LockIcon className="h-6 w-auto text-primary neon-glow-cyan relative z-10" />
           </div>
+          <h1 className="text-xl font-bold uppercase tracking-widest text-glow-cyan" style={{ fontFamily: 'var(--font-display)' }}>LockBox</h1>
         </div>
-
-        {/* HUD Stats Panel */}
-        <div className="p-3 border-b border-primary/20 space-y-3 relative">
-          <HUDStats socketConnected={isConnected} />
-          <CyberMap />
-          
-          {/* Data Stream Separator */}
-          <div className="absolute bottom-0 left-0 right-0 h-px overflow-hidden">
-            <div className="data-stream text-[8px] text-primary/30 font-mono whitespace-nowrap">
-              01001100 01101111 01100011 01101011 01000010 01101111 01111000 00100000 01010011 01100101 01100011 01110101 01110010 01100101
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <LayoutSettings
+            panelVisibility={panelVisibility}
+            onToggleVisibility={togglePanelVisibility}
+            onResetLayout={resetLayout}
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleLogout}
+            data-testid="button-logout"
+            className="neon-glow-pink"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
         </div>
+      </div>
 
-        <ScrollArea className="flex-1">
-          <div className="p-2 space-y-2">
-            {/* Chatrooms Section */}
-            <div className="relative">
-              <button
-                onClick={() => setChatroomsExpanded(!chatroomsExpanded)}
-                className="flex items-center justify-between w-full px-3 py-2 rounded-sm hover-elevate border-l-2 border-transparent hover:border-secondary transition-colors relative z-10"
-                data-testid="button-toggle-chatrooms"
+      {/* Customizable Grid Layout */}
+      <div className="absolute top-14 left-0 right-0 bottom-0 overflow-auto z-10">
+        <GridLayout
+          className="layout"
+          layout={layout}
+          cols={12}
+          rowHeight={30}
+          width={1200}
+          onLayoutChange={onLayoutChange}
+          draggableHandle=".cursor-move"
+          isResizable={true}
+          isDraggable={true}
+          compactType={null}
+          preventCollision={false}
+        >
+          {/* Sidebar Panel */}
+          {panelVisibility.sidebar && (
+            <div key="sidebar">
+              <DraggablePanel
+                title="Friends & Chatrooms"
+                isMinimized={panelMinimized.sidebar}
+                onMinimize={() => togglePanelMinimized("sidebar")}
+                onClose={() => togglePanelVisibility("sidebar")}
               >
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-secondary" />
-                  <span className="font-bold text-xs uppercase tracking-widest text-secondary holographic-text-subtle" style={{ fontFamily: 'var(--font-display)' }}>Chatrooms</span>
-                  <span className="text-[10px] text-secondary/60 font-mono">({chatrooms.length})</span>
-                </div>
-                {chatroomsExpanded ? (
-                  <ChevronUp className="h-4 w-4 text-secondary" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-secondary" />
-                )}
-              </button>
-
-              {chatroomsExpanded && (
-                <div className="mt-1 space-y-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start gap-2"
-                    onClick={() => setCreateChatroomDialogOpen(true)}
-                    data-testid="button-create-chatroom"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Create Chatroom
-                  </Button>
-
-                  {chatrooms.length > 0 ? (
-                    chatrooms.map((chatroom) => (
-                      <div
-                        key={chatroom.id}
-                        className={cn(
-                          "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors hover-elevate",
-                          isChatroomActive && activeChatroomId === chatroom.id && "bg-accent"
-                        )}
-                        onClick={() => handleSelectChatroom(chatroom.id)}
-                        data-testid={`button-chatroom-${chatroom.id}`}
-                      >
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-primary" />
+                <div className="flex flex-col h-full">
+                  <div className="p-4 border-b border-primary/20 space-y-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <UserAvatar 
+                            name={getUserDisplayName(currentUser)} 
+                            src={currentUser.profileImageUrl || undefined} 
+                            size="md" 
+                            status="online" 
+                          />
+                          <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-40 pointer-events-none neon-pulse" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-sm">{chatroom.name}</h4>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {chatroom.description || "Group conversation"}
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-sm truncate uppercase tracking-wide text-primary" data-testid="text-current-user" style={{ fontFamily: 'var(--font-display)' }}>
+                            {getUserDisplayName(currentUser)}
+                          </h3>
+                          <p className="text-[10px] text-success uppercase tracking-widest font-medium" style={{ fontFamily: 'var(--font-display)' }}>● Online</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Link href="/profile">
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start gap-2 border-primary/30 neon-glow-cyan uppercase tracking-wide text-xs"
+                          data-testid="button-profile"
+                          style={{ fontFamily: 'var(--font-display)' }}
+                        >
+                          <UserIcon className="h-4 w-4" />
+                          My Profile
+                        </Button>
+                      </Link>
+                      
+                      {currentUser.isAdmin && (
+                        <Link href="/admin">
+                          <Button 
+                            variant="outline" 
+                            className="w-full justify-start gap-2 border-secondary/30 neon-glow-magenta uppercase tracking-wide text-xs"
+                            data-testid="button-admin-panel"
+                            style={{ fontFamily: 'var(--font-display)' }}
+                          >
+                            <Shield className="h-4 w-4" />
+                            Admin Panel
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                    
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                      <Input
+                        type="search"
+                        placeholder="SEARCH CONTACTS..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 bg-background/50 border-primary/30 focus:border-primary focus:neon-glow-cyan uppercase text-xs tracking-wide placeholder:text-muted-foreground/50"
+                        data-testid="input-search-friends"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                      />
+                    </div>
+                  </div>
+
+                  <ScrollArea className="flex-1">
+                    <div className="p-2 space-y-2">
+                      {/* Chatrooms Section */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setChatroomsExpanded(!chatroomsExpanded)}
+                          className="flex items-center justify-between w-full px-3 py-2 rounded-sm hover-elevate border-l-2 border-transparent hover:border-secondary transition-colors relative z-10"
+                          data-testid="button-toggle-chatrooms"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-secondary" />
+                            <span className="font-bold text-xs uppercase tracking-widest text-secondary holographic-text-subtle" style={{ fontFamily: 'var(--font-display)' }}>Chatrooms</span>
+                            <span className="text-[10px] text-secondary/60 font-mono">({chatrooms.length})</span>
+                          </div>
+                          {chatroomsExpanded ? (
+                            <ChevronUp className="h-4 w-4 text-secondary" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-secondary" />
+                          )}
+                        </button>
+
+                        {chatroomsExpanded && (
+                          <div className="mt-1 space-y-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full justify-start gap-2"
+                              onClick={() => setCreateChatroomDialogOpen(true)}
+                              data-testid="button-create-chatroom"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Create Chatroom
+                            </Button>
+
+                            {chatrooms.length > 0 ? (
+                              chatrooms.map((chatroom) => (
+                                <div
+                                  key={chatroom.id}
+                                  className={cn(
+                                    "flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors hover-elevate",
+                                    isChatroomActive && activeChatroomId === chatroom.id && "bg-accent"
+                                  )}
+                                  onClick={() => handleSelectChatroom(chatroom.id)}
+                                  data-testid={`button-chatroom-${chatroom.id}`}
+                                >
+                                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <Users className="h-5 w-5 text-primary" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-sm">{chatroom.name}</h4>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {chatroom.description || "Group conversation"}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center py-4 text-sm text-muted-foreground">
+                                No chatrooms yet
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Users Section */}
+                      <div>
+                        <button
+                          onClick={() => setUsersExpanded(!usersExpanded)}
+                          className="flex items-center justify-between w-full px-3 py-2 rounded-md hover-elevate"
+                          data-testid="button-toggle-users"
+                        >
+                          <div className="flex items-center gap-2">
+                            <UserIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium text-sm">Friends</span>
+                            <span className="text-xs text-muted-foreground">({filteredUsers.length})</span>
+                          </div>
+                          {usersExpanded ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </button>
+
+                        {usersExpanded && (
+                          <div className="mt-1 space-y-1">
+                            {filteredUsers.length === 0 ? (
+                              <div className="text-center py-8 text-sm text-muted-foreground">
+                                No other users yet. Invite friends to join!
+                              </div>
+                            ) : (
+                              filteredUsers.map((user) => (
+                                <FriendListItem
+                                  key={user.id}
+                                  id={user.id}
+                                  name={getUserDisplayName(user)}
+                                  avatar={user.profileImageUrl || undefined}
+                                  status={getUserStatus(user.id)}
+                                  isActive={user.id === activeFriendId && !isChatroomActive}
+                                  onClick={() => handleSelectFriend(user.id)}
+                                />
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </div>
+              </DraggablePanel>
+            </div>
+          )}
+
+          {/* HUD Stats Panel */}
+          {panelVisibility.hudStats && (
+            <div key="hudStats">
+              <DraggablePanel
+                title="HUD Telemetry"
+                isMinimized={panelMinimized.hudStats}
+                onMinimize={() => togglePanelMinimized("hudStats")}
+                onClose={() => togglePanelVisibility("hudStats")}
+              >
+                <div className="p-3">
+                  <HUDStats socketConnected={isConnected} />
+                </div>
+              </DraggablePanel>
+            </div>
+          )}
+
+          {/* Cyber Map Panel */}
+          {panelVisibility.cyberMap && (
+            <div key="cyberMap">
+              <DraggablePanel
+                title="Cyber Map"
+                isMinimized={panelMinimized.cyberMap}
+                onMinimize={() => togglePanelMinimized("cyberMap")}
+                onClose={() => togglePanelVisibility("cyberMap")}
+              >
+                <div className="p-3">
+                  <CyberMap />
+                </div>
+              </DraggablePanel>
+            </div>
+          )}
+
+          {/* Chat Messages Panel */}
+          {panelVisibility.chatMessages && (
+            <div key="chatMessages">
+              <DraggablePanel
+                title={isChatroomActive 
+                  ? chatrooms.find(c => c.id === activeChatroomId)?.name || "Chatroom"
+                  : activeFriend 
+                    ? getUserDisplayName(activeFriend)
+                    : "Chat Messages"
+                }
+                showMinimizeButton={false}
+                showCloseButton={false}
+              >
+                <div className="flex flex-col h-full">
+                  {isChatroomActive ? (
+                    <>
+                      <ChatHeader
+                        friend={{
+                          name: chatrooms.find(c => c.id === activeChatroomId)?.name || "Chatroom",
+                          avatar: undefined,
+                          status: "online",
+                        }}
+                      />
+                      <ScrollArea className="flex-1 p-6">
+                        <div className="max-w-4xl mx-auto space-y-1">
+                          {chatroomMessages.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                              <div className="relative">
+                                <div className="rounded-full bg-secondary/10 p-6 mb-4 neon-glow-magenta">
+                                  <MessageCircle className="h-10 w-10 text-secondary" />
+                                </div>
+                                <div className="absolute inset-0 rounded-full neon-glow-magenta opacity-30 neon-pulse pointer-events-none" />
+                              </div>
+                              <p className="text-base font-bold mb-2 uppercase tracking-wide text-secondary" style={{ fontFamily: 'var(--font-display)' }}>No messages yet</p>
+                              <p className="text-xs opacity-60 uppercase tracking-widest" style={{ fontFamily: 'var(--font-display)' }}>Initiate conversation</p>
+                            </div>
+                          ) : (
+                            chatroomMessages.map((msg, idx) => {
+                              const { isOwn, showAvatar, isOwner, sender } = getChatroomMessageDisplay(msg, idx);
+                              return (
+                                <MessageBubble
+                                  key={msg.id}
+                                  id={msg.id}
+                                  content={msg.content}
+                                  sender={sender}
+                                  timestamp={msg.createdAt!}
+                                  isOwn={isOwn}
+                                  showAvatar={showAvatar}
+                                  isOwner={isOwner}
+                                  onDelete={handleDeleteChatroomMessage}
+                                />
+                              );
+                            })
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </>
+                  ) : activeFriend ? (
+                    <>
+                      <ChatHeader
+                        friend={{
+                          name: getUserDisplayName(activeFriend),
+                          avatar: activeFriend.profileImageUrl || undefined,
+                          status: getUserStatus(activeFriend.id),
+                        }}
+                      />
+                      <ScrollArea className="flex-1 p-6">
+                        <div className="max-w-4xl mx-auto space-y-1">
+                          {messages.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                              <div className="relative">
+                                <div className="rounded-full bg-primary/10 p-6 mb-4 neon-glow-cyan-strong">
+                                  <LockIconLucide className="h-12 w-12 text-primary" />
+                                </div>
+                                <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-50 neon-pulse pointer-events-none" />
+                              </div>
+                              <p className="text-lg font-bold mb-2 uppercase tracking-wide text-primary" style={{ fontFamily: 'var(--font-display)' }}>E2E Encrypted</p>
+                              <p className="text-xs opacity-60 uppercase tracking-widest mb-3" style={{ fontFamily: 'var(--font-display)' }}>Send secure message</p>
+                              <div className="flex items-center gap-1.5 text-[10px] text-primary bg-primary/10 px-3 py-1.5 rounded-sm border border-primary/30 neon-glow-cyan uppercase tracking-widest font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                                <Shield className="h-3 w-3" />
+                                <span>Signal Protocol</span>
+                              </div>
+                            </div>
+                          ) : (
+                            messages.map((msg, idx) => {
+                              const { isOwn, showAvatar, sender } = getPrivateMessageDisplay(msg, idx);
+                              return (
+                                <MessageBubble
+                                  key={msg.id}
+                                  id={msg.id}
+                                  content={msg.content}
+                                  sender={sender}
+                                  timestamp={msg.createdAt!}
+                                  isOwn={isOwn}
+                                  showAvatar={showAvatar}
+                                  onDelete={handleDeletePrivateMessage}
+                                />
+                              );
+                            })
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center bg-background/50 dot-grid-bg">
+                      <div className="text-center space-y-6 max-w-md px-6 glass-panel p-8 corner-brackets">
+                        <div className="relative mx-auto w-28 h-28">
+                          <div className="rounded-full bg-primary/10 p-8 w-full h-full flex items-center justify-center neon-glow-cyan-strong">
+                            <LockIconLucide className="h-14 w-14 text-primary" />
+                          </div>
+                          <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-60 neon-pulse pointer-events-none" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-bold text-primary mb-3 uppercase tracking-wide text-glow-cyan" style={{ fontFamily: 'var(--font-display)' }}>Secure Messaging</h3>
+                          <p className="text-muted-foreground text-sm" style={{ fontFamily: 'var(--font-display)' }}>
+                            {users.length === 0 
+                              ? "INVITE CONTACTS TO START ENCRYPTED CONVERSATIONS"
+                              : "SELECT CONTACT OR CHATROOM TO BEGIN"
+                            }
                           </p>
                         </div>
+                        <div className="flex items-center gap-2 justify-center pt-2">
+                          <div className="flex items-center gap-2 text-[10px] text-primary bg-primary/10 px-4 py-2 rounded-sm border border-primary/30 neon-glow-cyan uppercase tracking-widest font-bold" style={{ fontFamily: 'var(--font-display)' }}>
+                            <Shield className="h-4 w-4" />
+                            <span>Signal Protocol</span>
+                          </div>
+                        </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-4 text-sm text-muted-foreground">
-                      No chatrooms yet
                     </div>
                   )}
                 </div>
-              )}
+              </DraggablePanel>
             </div>
+          )}
 
-            {/* Users Section */}
-            <div>
-              <button
-                onClick={() => setUsersExpanded(!usersExpanded)}
-                className="flex items-center justify-between w-full px-3 py-2 rounded-md hover-elevate"
-                data-testid="button-toggle-users"
+          {/* Message Input Panel */}
+          {panelVisibility.messageInput && (activeFriend || isChatroomActive) && (
+            <div key="messageInput">
+              <DraggablePanel
+                title="Message Input"
+                showMinimizeButton={false}
+                showCloseButton={false}
               >
-                <div className="flex items-center gap-2">
-                  <UserIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium text-sm">Friends</span>
-                  <span className="text-xs text-muted-foreground">({filteredUsers.length})</span>
-                </div>
-                {usersExpanded ? (
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                )}
-              </button>
-
-              {usersExpanded && (
-                <div className="mt-1 space-y-1">
-                  {filteredUsers.length === 0 ? (
-                    <div className="text-center py-8 text-sm text-muted-foreground">
-                      No other users yet. Invite friends to join!
-                    </div>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <FriendListItem
-                        key={user.id}
-                        id={user.id}
-                        name={getUserDisplayName(user)}
-                        avatar={user.profileImageUrl || undefined}
-                        status={getUserStatus(user.id)}
-                        isActive={user.id === activeFriendId && !isChatroomActive}
-                        onClick={() => handleSelectFriend(user.id)}
-                      />
-                    ))
-                  )}
-                </div>
-              )}
+                <MessageInput onSend={handleSendMessage} />
+              </DraggablePanel>
             </div>
-          </div>
-        </ScrollArea>
-      </aside>
-
-      <main className="flex-1 flex flex-col">
-        {isChatroomActive ? (
-          <>
-            <div className="lg:hidden p-2 border-b flex items-center gap-2">
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                data-testid="button-toggle-sidebar"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            </div>
-            <ChatHeader
-              friend={{
-                name: chatrooms.find(c => c.id === activeChatroomId)?.name || "Chatroom",
-                avatar: undefined,
-                status: "online",
-              }}
-            />
-            <ScrollArea className="flex-1 p-6">
-              <div className="max-w-4xl mx-auto space-y-1">
-                {chatroomMessages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                    <div className="relative">
-                      <div className="rounded-full bg-secondary/10 p-6 mb-4 neon-glow-magenta">
-                        <MessageCircle className="h-10 w-10 text-secondary" />
-                      </div>
-                      <div className="absolute inset-0 rounded-full neon-glow-magenta opacity-30 neon-pulse pointer-events-none" />
-                    </div>
-                    <p className="text-base font-bold mb-2 uppercase tracking-wide text-secondary" style={{ fontFamily: 'var(--font-display)' }}>No messages yet</p>
-                    <p className="text-xs opacity-60 uppercase tracking-widest" style={{ fontFamily: 'var(--font-display)' }}>Initiate conversation</p>
-                  </div>
-                ) : (
-                  chatroomMessages.map((msg, idx) => {
-                    const { isOwn, showAvatar, isOwner, sender } = getChatroomMessageDisplay(msg, idx);
-                    return (
-                      <MessageBubble
-                        key={msg.id}
-                        id={msg.id}
-                        content={msg.content}
-                        sender={sender}
-                        timestamp={msg.createdAt!}
-                        isOwn={isOwn}
-                        showAvatar={showAvatar}
-                        isOwner={isOwner}
-                        onDelete={handleDeleteChatroomMessage}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            </ScrollArea>
-            <MessageInput onSend={handleSendMessage} />
-          </>
-        ) : activeFriend ? (
-          <>
-            <div className="lg:hidden p-2 border-b flex items-center gap-2">
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                data-testid="button-toggle-sidebar"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            </div>
-            <ChatHeader
-              friend={{
-                name: getUserDisplayName(activeFriend),
-                avatar: activeFriend.profileImageUrl || undefined,
-                status: getUserStatus(activeFriend.id),
-              }}
-            />
-            <ScrollArea className="flex-1 p-6">
-              <div className="max-w-4xl mx-auto space-y-1">
-                {messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                    <div className="relative">
-                      <div className="rounded-full bg-primary/10 p-6 mb-4 neon-glow-cyan-strong">
-                        <LockIconLucide className="h-12 w-12 text-primary" />
-                      </div>
-                      <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-50 neon-pulse pointer-events-none" />
-                    </div>
-                    <p className="text-lg font-bold mb-2 uppercase tracking-wide text-primary" style={{ fontFamily: 'var(--font-display)' }}>E2E Encrypted</p>
-                    <p className="text-xs opacity-60 uppercase tracking-widest mb-3" style={{ fontFamily: 'var(--font-display)' }}>Send secure message</p>
-                    <div className="flex items-center gap-1.5 text-[10px] text-primary bg-primary/10 px-3 py-1.5 rounded-sm border border-primary/30 neon-glow-cyan uppercase tracking-widest font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                      <Shield className="h-3 w-3" />
-                      <span>Signal Protocol</span>
-                    </div>
-                  </div>
-                ) : (
-                  messages.map((msg, idx) => {
-                    const { isOwn, showAvatar, sender } = getPrivateMessageDisplay(msg, idx);
-                    return (
-                      <MessageBubble
-                        key={msg.id}
-                        id={msg.id}
-                        content={msg.content}
-                        sender={sender}
-                        timestamp={msg.createdAt!}
-                        isOwn={isOwn}
-                        showAvatar={showAvatar}
-                        onDelete={handleDeletePrivateMessage}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            </ScrollArea>
-            <MessageInput onSend={handleSendMessage} />
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center bg-background/50 dot-grid-bg">
-            <div className="text-center space-y-6 max-w-md px-6 glass-panel p-8 corner-brackets">
-              <div className="relative mx-auto w-28 h-28">
-                <div className="rounded-full bg-primary/10 p-8 w-full h-full flex items-center justify-center neon-glow-cyan-strong">
-                  <LockIconLucide className="h-14 w-14 text-primary" />
-                </div>
-                <div className="absolute inset-0 rounded-full neon-glow-cyan opacity-60 neon-pulse pointer-events-none" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-primary mb-3 uppercase tracking-wide text-glow-cyan" style={{ fontFamily: 'var(--font-display)' }}>Secure Messaging</h3>
-                <p className="text-muted-foreground text-sm" style={{ fontFamily: 'var(--font-display)' }}>
-                  {users.length === 0 
-                    ? "INVITE CONTACTS TO START ENCRYPTED CONVERSATIONS"
-                    : "SELECT CONTACT OR CHATROOM TO BEGIN"
-                  }
-                </p>
-              </div>
-              <div className="flex items-center gap-2 justify-center pt-2">
-                <div className="flex items-center gap-2 text-[10px] text-primary bg-primary/10 px-4 py-2 rounded-sm border border-primary/30 neon-glow-cyan uppercase tracking-widest font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-                  <Shield className="h-4 w-4" />
-                  <span>Signal Protocol</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
+          )}
+        </GridLayout>
+      </div>
 
       {/* Create Chatroom Dialog */}
       <Dialog open={createChatroomDialogOpen} onOpenChange={setCreateChatroomDialogOpen}>

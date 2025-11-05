@@ -923,4 +923,72 @@
   .font-display {
     font-family: var(--font-display);
   }
+
+  /* React Grid Layout Styles - Cyberpunk Themed */
+  .react-grid-layout {
+    position: relative;
+  }
+
+  .react-grid-item {
+    transition: all 200ms ease;
+    transition-property: left, top, width, height;
+  }
+
+  .react-grid-item.react-grid-placeholder {
+    background: hsl(var(--primary) / 0.1);
+    border: 2px dashed hsl(var(--primary) / 0.5);
+    border-radius: 0.25rem;
+    opacity: 0.3;
+    transition-duration: 100ms;
+    z-index: 2;
+    user-select: none;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Resize Handle - Cyberpunk Style */
+  .react-resizable-handle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    bottom: 0;
+    right: 0;
+    cursor: se-resize;
+  }
+
+  .react-resizable-handle::after {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid hsl(var(--primary) / 0.5);
+    border-bottom: 2px solid hsl(var(--primary) / 0.5);
+    transition: all 0.2s ease;
+  }
+
+  .react-resizable-handle:hover::after {
+    border-right-color: hsl(var(--primary));
+    border-bottom-color: hsl(var(--primary));
+    box-shadow: var(--glow-cyan);
+  }
+
+  /* Dragging State */
+  .react-grid-item.react-dragging {
+    transition: none;
+    z-index: 100;
+    will-change: transform;
+    opacity: 0.8;
+  }
+
+  .react-grid-item.resizing {
+    transition: none;
+    z-index: 100;
+    will-change: transform;
+  }
+
+  /* Static items */
+  .react-grid-item.static {
+    background-color: hsl(var(--muted) / 0.1);
+  }
 }
