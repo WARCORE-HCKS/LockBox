@@ -7,12 +7,18 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     iosScheme: 'https',
+    // Point to your deployed backend URL when building for production
+    // url: 'https://your-replit-app.replit.app',
+    // cleartext: true,
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: '#0a0a0f',
       showSpinner: false,
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
     },
   },
 };
