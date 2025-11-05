@@ -40,7 +40,13 @@ export default function ChatHeader({ friend, onSettings, onClearMessages }: Chat
   
   return (
     <header className="h-16 border-b border-primary/20 bg-sidebar/50 backdrop-blur-sm px-6 flex items-center justify-between gap-4 gradient-border-b relative">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      {/* Corner Brackets */}
+      <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-primary/30" />
+      <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-primary/30" />
+      <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-primary/30" />
+      <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-primary/30" />
+      
+      <div className="flex items-center gap-3 flex-1 min-w-0 relative z-10">
         <div className="relative">
           <UserAvatar name={friend.name} src={friend.avatar} size="md" status={friend.status} />
           {friend.status === "online" && (
@@ -69,7 +75,7 @@ export default function ChatHeader({ friend, onSettings, onClearMessages }: Chat
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1 shrink-0 relative z-10">
         {hasMenuItems && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

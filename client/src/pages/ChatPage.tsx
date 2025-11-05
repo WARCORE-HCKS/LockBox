@@ -537,17 +537,50 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background dot-grid-bg relative">
+    <div className="flex h-screen bg-background relative overflow-hidden">
+      {/* Animated Grid Background */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-20 z-0" />
+      
+      {/* Scanline Effect */}
+      <div className="absolute inset-0 scanline-overlay pointer-events-none z-0" />
+      
+      {/* Particle System */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={i}
+            className="particle absolute w-1 h-1 bg-primary rounded-full opacity-40"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${8 + Math.random() * 4}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Hexagonal Pattern Overlay */}
+      <div className="absolute inset-0 hexagon-pattern opacity-5 pointer-events-none z-0" />
+
       <aside
         className={cn(
-          "w-80 border-r border-primary/20 bg-sidebar flex flex-col transition-all duration-300 relative z-10 scanline-overlay",
+          "w-80 border-r border-primary/20 bg-sidebar/95 backdrop-blur-sm flex flex-col transition-all duration-300 relative z-10",
           !sidebarOpen && "w-0 overflow-hidden lg:w-80"
         )}
       >
-        <div className="p-4 border-b border-primary/20 space-y-4 corner-brackets">
-          <div className="flex items-center justify-center gap-2 pb-2">
-            <LockIcon className="h-7 w-auto text-primary neon-glow-cyan" />
-            <h1 className="text-2xl font-bold uppercase tracking-widest text-glow-cyan" style={{ fontFamily: 'var(--font-display)' }}>LockBox</h1>
+        <div className="p-4 border-b border-primary/20 space-y-4 relative">
+          {/* Corner Brackets */}
+          <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary/40" />
+          <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary/40" />
+          <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary/40" />
+          <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary/40" />
+          
+          <div className="flex items-center justify-center gap-2 pb-2 relative">
+            {/* Holographic glow behind logo */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 blur-xl animate-pulse-glow" />
+            <LockIcon className="h-7 w-auto text-primary neon-glow-cyan relative z-10" />
+            <h1 className="text-2xl font-bold uppercase tracking-widest text-glow-cyan relative z-10" style={{ fontFamily: 'var(--font-display)' }}>LockBox</h1>
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3">
