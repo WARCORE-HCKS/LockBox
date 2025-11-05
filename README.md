@@ -25,16 +25,15 @@
 
 ## 🎯 About
 
-**LockBox** is a futuristic real-time messaging platform that implements **production-grade end-to-end encryption** using the **Signal Protocol**. Built with privacy-first principles and a stunning cyberpunk HUD aesthetic, LockBox ensures that only you and your intended recipients can read your messages—not even the server can decrypt them.
+**LockBox** is a modern real-time messaging platform that implements **production-grade end-to-end encryption** using the **Signal Protocol**. Built with privacy-first principles, LockBox ensures that only you and your intended recipients can read your messages—not even the server can decrypt them.
 
 ### Why LockBox?
 
 - 🔐 **True E2E Encryption** - Signal Protocol with X3DH key exchange & Double Ratchet algorithm
 - ⚡ **Real-time Delivery** - Instant messaging with WebSocket technology
-- 🎨 **Cyberpunk HUD Design** - Premium interface with neon effects, particles, and 15+ animations
-- 🔒 **Privacy Focused** - Neon-glowing encryption indicators throughout the app
+- 🎨 **Modern UI/UX** - Discord/Signal-inspired interface with dark mode
+- 🔒 **Privacy Focused** - Visual encryption indicators throughout the app
 - 🛡️ **Secure by Design** - Session-based auth with encrypted key storage
-- 🎛️ **Customizable Workspace** - Fully draggable/resizable dashboard panels
 
 > **Production Ready**: LockBox implements the same encryption protocol used by Signal, WhatsApp, and Google Messages for billions of users worldwide.
 
@@ -101,12 +100,12 @@
 
 ### 🎨 Modern Interface
 
-- **🌙 Dark/Light Mode** - Full theme support with advanced toggle featuring orbital rings and particle effects
+- **🌙 Dark Mode** - Full theme support with persistence
 - **📱 Responsive Design** - Desktop and mobile optimized
-- **🎯 Cyberpunk HUD Aesthetic** - Neon colors, corner brackets, scanlines, and futuristic effects
-- **⚡ Advanced Animations** - Grid patterns, particles, scanlines, glitch effects, holographic gradients
-- **🔒 Security Indicators** - Prominent neon-glowing E2E encryption badges
-- **📂 HUD-Style Panels** - Corner brackets, neon glows, and glass-morphism effects
+- **🎯 Clean UI** - Discord/Signal-inspired aesthetics
+- **⚡ Smooth Animations** - Polished transitions and interactions
+- **🔒 Security Indicators** - Prominent E2E encryption badges
+- **📂 Organized Layout** - Collapsible sidebar sections
 - **🎛️ Customizable Dashboard** - Fully draggable and resizable workspace (NEW!)
 
 ### 🎛️ Customizable Dashboard **(NEW!)**
@@ -408,17 +407,14 @@ Comprehensive platform management:
 - Analytics (messages, users, activity)
 - Real-time monitoring (online status, sessions)
 
-### 🎨 Cyberpunk HUD Interface
+### 🎨 Modern Interface
 
-- **Premium Cyberpunk Aesthetic** - Neon cyan/magenta colors, corner brackets, scanlines
-- **Advanced Landing Page** - 15+ GPU-accelerated animations including grid slides, particle drift, holographic effects
-- **HUD Telemetry Panel** - Real-time IP address, latency monitor, connection status, local time clock
-- **Cyber Map Visualization** - Interactive world map with threat nodes and animated scanning effects
-- **Advanced Theme Toggle** - Orbital rings, particle effects, smooth light/dark mode transitions
-- **Futuristic Typography** - Orbitron display font for headings, Rajdhani for body text
-- **Visual Effects** - Animated grid patterns, scanline overlays, floating particles, hexagonal dot patterns
-- **Neon Message Bubbles** - Angular clip-path with gradient backgrounds and glowing borders
-- **Glass-Morphism Panels** - Backdrop blur effects with translucent backgrounds
+- Clean Discord/Signal-inspired design
+- Smooth animations and transitions
+- Responsive layout for all screen sizes
+- Dark mode with localStorage persistence
+- Refined message bubbles with rounded corners
+- Collapsible sidebar for organization
 
 ### 🎛️ Customizable Dashboard **(NEW!)**
 
