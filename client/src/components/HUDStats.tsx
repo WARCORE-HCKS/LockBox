@@ -70,9 +70,9 @@ export default function HUDStats({ socketConnected }: HUDStatsProps) {
   };
 
   return (
-    <div className="space-y-2 p-3 bg-card/50 backdrop-blur-sm border border-primary/20 rounded-sm corner-brackets">
+    <div className="space-y-2">
       {/* System Status Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between">
         <h3 
           className="text-[10px] font-bold uppercase tracking-widest text-primary"
           style={{ fontFamily: 'var(--font-display)' }}

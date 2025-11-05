@@ -643,6 +643,7 @@ export default function ChatPage() {
           width={containerWidth}
           onLayoutChange={onLayoutChange}
           draggableHandle=".cursor-move"
+          draggableCancel=".cursor-default"
           isResizable={true}
           isDraggable={true}
           compactType={null}
