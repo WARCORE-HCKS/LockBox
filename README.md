@@ -102,10 +102,10 @@
 
 - **🌙 Dark Mode** - Full theme support with persistence
 - **📱 Responsive Design** - Desktop and mobile optimized
-- **🎯 Clean UI** - Discord/Signal-inspired aesthetics
-- **⚡ Smooth Animations** - Polished transitions and interactions
-- **🔒 Security Indicators** - Prominent E2E encryption badges
-- **📂 Organized Layout** - Collapsible sidebar sections
+- **🎯 Cyberpunk HUD Aesthetic** - Neon effects, corner brackets, holographic glows
+- **⚡ Smooth Animations** - GPU-accelerated transitions and effects
+- **🔒 Security Indicators** - Prominent neon-glowing E2E encryption badges
+- **📂 Organized Layout** - HUD-style panels with scanlines and particles
 - **🎛️ Customizable Dashboard** - Fully draggable and resizable workspace (NEW!)
 
 ### 🎛️ Customizable Dashboard **(NEW!)**
@@ -407,14 +407,16 @@ Comprehensive platform management:
 - Analytics (messages, users, activity)
 - Real-time monitoring (online status, sessions)
 
-### 🎨 Modern Interface
+### 🎨 Cyberpunk Interface
 
-- Clean Discord/Signal-inspired design
-- Smooth animations and transitions
-- Responsive layout for all screen sizes
-- Dark mode with localStorage persistence
-- Refined message bubbles with rounded corners
-- Collapsible sidebar for organization
+- **Futuristic HUD Design** - Neon cyan/magenta color scheme with holographic effects
+- **Advanced Visual Effects** - Animated grid patterns, scanlines, floating particles
+- **Corner Brackets** - Military-grade HUD styling on all panels
+- **Neon Glows** - Pulsing encryption indicators and interactive elements
+- **Orbitron Typography** - Futuristic display font for headers and UI elements
+- **Theme Toggle** - Orbital rings, particle effects, and smooth transitions
+- **Glass Morphism** - Backdrop blur effects with neon borders
+- **Dark/Light Modes** - Cyberpunk aesthetic preserved in both themes
 
 ### 🎛️ Customizable Dashboard **(NEW!)**
 
