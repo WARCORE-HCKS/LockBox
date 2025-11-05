@@ -27,9 +27,22 @@ export interface PanelMinimized {
   quickCommand: boolean;
 }
 
+export interface PanelLocked {
+  sidebar: boolean;
+  hudStats: boolean;
+  cyberMap: boolean;
+  cyberNotes: boolean;
+  userIntel: boolean;
+  securityMonitor: boolean;
+  systemDiagnostics: boolean;
+  activityFeed: boolean;
+  quickCommand: boolean;
+}
+
 const STORAGE_KEY = "lockbox-layout";
 const VISIBILITY_KEY = "lockbox-panel-visibility";
 const MINIMIZED_KEY = "lockbox-panel-minimized";
+const LOCKED_KEY = "lockbox-panel-locked";
 const SAVE_DEBOUNCE_MS = 500; // Throttle persistence
 
 const defaultLayout: Layout[] = [
@@ -61,6 +74,18 @@ const defaultVisibility: PanelVisibility = {
 };
 
 const defaultMinimized: PanelMinimized = {
+  sidebar: false,
+  hudStats: false,
+  cyberMap: false,
+  cyberNotes: false,
+  userIntel: false,
+  securityMonitor: false,
+  systemDiagnostics: false,
+  activityFeed: false,
+  quickCommand: false,
+};
+
+const defaultLocked: PanelLocked = {
   sidebar: false,
   hudStats: false,
   cyberMap: false,
@@ -108,6 +133,17 @@ export function useLayoutManager() {
     return defaultMinimized;
   });
 
+  const [panelLocked, setPanelLocked] = useState<PanelLocked>(() => {
+    if (typeof window === "undefined") return defaultLocked;
+    const saved = localStorage.getItem(LOCKED_KEY);
+    if (saved) {
+      // Merge saved with defaults to include new panels
+      const savedLocked = JSON.parse(saved);
+      return { ...defaultLocked, ...savedLocked };
+    }
+    return defaultLocked;
+  });
+
   // Throttled save to localStorage using useRef for debounce timer
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
 
@@ -139,6 +175,11 @@ export function useLayoutManager() {
     localStorage.setItem(MINIMIZED_KEY, JSON.stringify(panelMinimized));
   }, [panelMinimized]);
 
+  // Save locked state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(LOCKED_KEY, JSON.stringify(panelLocked));
+  }, [panelLocked]);
+
   const onLayoutChange = useCallback((newLayout: Layout[]) => {
     setLayout(newLayout);
   }, []);
@@ -157,22 +198,33 @@ export function useLayoutManager() {
     }));
   }, []);
 
+  const togglePanelLocked = useCallback((panelId: keyof PanelLocked) => {
+    setPanelLocked((prev) => ({
+      ...prev,
+      [panelId]: !prev[panelId],
+    }));
+  }, []);
+
   const resetLayout = useCallback(() => {
     setLayout(defaultLayout);
     setPanelVisibility(defaultVisibility);
     setPanelMinimized(defaultMinimized);
+    setPanelLocked(defaultLocked);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(VISIBILITY_KEY);
     localStorage.removeItem(MINIMIZED_KEY);
+    localStorage.removeItem(LOCKED_KEY);
   }, []);
 
   return {
     layout,
     panelVisibility,
     panelMinimized,
+    panelLocked,
     onLayoutChange,
     togglePanelVisibility,
     togglePanelMinimized,
+    togglePanelLocked,
     resetLayout,
   };
 }

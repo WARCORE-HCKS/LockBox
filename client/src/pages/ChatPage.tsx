@@ -31,6 +31,8 @@ import SecurityMonitor from "@/components/SecurityMonitor";
 import SystemDiagnostics from "@/components/SystemDiagnostics";
 import ActivityFeed from "@/components/ActivityFeed";
 import QuickCommand from "@/components/QuickCommand";
+import FloatingParticles from "@/components/FloatingParticles";
+import HolographicOverlay from "@/components/HolographicOverlay";
 import { useLayoutManager } from "@/hooks/useLayoutManager";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
@@ -69,9 +71,11 @@ export default function ChatPage() {
     layout,
     panelVisibility,
     panelMinimized,
+    panelLocked,
     onLayoutChange,
     togglePanelVisibility,
     togglePanelMinimized,
+    togglePanelLocked,
     resetLayout,
   } = useLayoutManager();
 
@@ -586,6 +590,12 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
+      {/* Floating Particles Effect */}
+      <FloatingParticles />
+      
+      {/* Holographic Overlay Effect */}
+      <HolographicOverlay />
+      
       {/* Animated Grid Background */}
       <div className="absolute inset-0 bg-grid-pattern opacity-20 z-0" />
       
@@ -643,7 +653,10 @@ export default function ChatPage() {
       <div ref={gridContainerRef} className="absolute top-14 left-0 right-0 bottom-0 overflow-auto z-10">
         <GridLayout
           className="layout"
-          layout={layout}
+          layout={layout.map(item => ({
+            ...item,
+            static: panelLocked[item.i as keyof typeof panelLocked] || false
+          }))}
           cols={12}
           rowHeight={32}
           width={containerWidth}
@@ -665,7 +678,9 @@ export default function ChatPage() {
               <DraggablePanel
                 title="Friends & Chatrooms"
                 isMinimized={panelMinimized.sidebar}
+                isLocked={panelLocked.sidebar}
                 onMinimize={() => togglePanelMinimized("sidebar")}
+                onLock={() => togglePanelLocked("sidebar")}
                 onClose={() => togglePanelVisibility("sidebar")}
               >
                 <div className="flex flex-col h-full">
@@ -851,7 +866,9 @@ export default function ChatPage() {
               <DraggablePanel
                 title="HUD Telemetry"
                 isMinimized={panelMinimized.hudStats}
+                isLocked={panelLocked.hudStats}
                 onMinimize={() => togglePanelMinimized("hudStats")}
+                onLock={() => togglePanelLocked("hudStats")}
                 onClose={() => togglePanelVisibility("hudStats")}
               >
                 <div className="p-3">
@@ -867,7 +884,9 @@ export default function ChatPage() {
               <DraggablePanel
                 title="Cyber Map"
                 isMinimized={panelMinimized.cyberMap}
+                isLocked={panelLocked.cyberMap}
                 onMinimize={() => togglePanelMinimized("cyberMap")}
+                onLock={() => togglePanelLocked("cyberMap")}
                 onClose={() => togglePanelVisibility("cyberMap")}
               >
                 <div className="p-3">
@@ -1031,7 +1050,9 @@ export default function ChatPage() {
               <DraggablePanel
                 title="Cyber Notes"
                 isMinimized={panelMinimized.cyberNotes}
+                isLocked={panelLocked.cyberNotes}
                 onMinimize={() => togglePanelMinimized("cyberNotes")}
+                onLock={() => togglePanelLocked("cyberNotes")}
                 onClose={() => togglePanelVisibility("cyberNotes")}
               >
                 <CyberNotes />
@@ -1045,7 +1066,9 @@ export default function ChatPage() {
               <DraggablePanel
                 title="User Intel"
                 isMinimized={panelMinimized.userIntel}
+                isLocked={panelLocked.userIntel}
                 onMinimize={() => togglePanelMinimized("userIntel")}
+                onLock={() => togglePanelLocked("userIntel")}
                 onClose={() => togglePanelVisibility("userIntel")}
               >
                 <UserIntel />
@@ -1059,7 +1082,9 @@ export default function ChatPage() {
               <DraggablePanel
                 title="Security Monitor"
                 isMinimized={panelMinimized.securityMonitor}
+                isLocked={panelLocked.securityMonitor}
                 onMinimize={() => togglePanelMinimized("securityMonitor")}
+                onLock={() => togglePanelLocked("securityMonitor")}
                 onClose={() => togglePanelVisibility("securityMonitor")}
               >
                 <SecurityMonitor />
@@ -1073,7 +1098,9 @@ export default function ChatPage() {
               <DraggablePanel
                 title="System Diagnostics"
                 isMinimized={panelMinimized.systemDiagnostics}
+                isLocked={panelLocked.systemDiagnostics}
                 onMinimize={() => togglePanelMinimized("systemDiagnostics")}
+                onLock={() => togglePanelLocked("systemDiagnostics")}
                 onClose={() => togglePanelVisibility("systemDiagnostics")}
               >
                 <SystemDiagnostics />
@@ -1087,7 +1114,9 @@ export default function ChatPage() {
               <DraggablePanel
                 title="Activity Feed"
                 isMinimized={panelMinimized.activityFeed}
+                isLocked={panelLocked.activityFeed}
                 onMinimize={() => togglePanelMinimized("activityFeed")}
+                onLock={() => togglePanelLocked("activityFeed")}
                 onClose={() => togglePanelVisibility("activityFeed")}
               >
                 <ActivityFeed />
@@ -1101,7 +1130,9 @@ export default function ChatPage() {
               <DraggablePanel
                 title="Quick Command"
                 isMinimized={panelMinimized.quickCommand}
+                isLocked={panelLocked.quickCommand}
                 onMinimize={() => togglePanelMinimized("quickCommand")}
+                onLock={() => togglePanelLocked("quickCommand")}
                 onClose={() => togglePanelVisibility("quickCommand")}
               >
                 <QuickCommand
