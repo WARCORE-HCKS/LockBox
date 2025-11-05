@@ -657,23 +657,30 @@ export default function ChatPage() {
         </div>
 
         {/* HUD Stats Panel */}
-        <div className="p-3 border-b border-primary/20 space-y-3">
+        <div className="p-3 border-b border-primary/20 space-y-3 relative">
           <HUDStats socketConnected={isConnected} />
           <CyberMap />
+          
+          {/* Data Stream Separator */}
+          <div className="absolute bottom-0 left-0 right-0 h-px overflow-hidden">
+            <div className="data-stream text-[8px] text-primary/30 font-mono whitespace-nowrap">
+              01001100 01101111 01100011 01101011 01000010 01101111 01111000 00100000 01010011 01100101 01100011 01110101 01110010 01100101
+            </div>
+          </div>
         </div>
 
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-2">
             {/* Chatrooms Section */}
-            <div>
+            <div className="relative">
               <button
                 onClick={() => setChatroomsExpanded(!chatroomsExpanded)}
-                className="flex items-center justify-between w-full px-3 py-2 rounded-sm hover-elevate border-l-2 border-transparent hover:border-secondary transition-colors"
+                className="flex items-center justify-between w-full px-3 py-2 rounded-sm hover-elevate border-l-2 border-transparent hover:border-secondary transition-colors relative z-10"
                 data-testid="button-toggle-chatrooms"
               >
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-secondary" />
-                  <span className="font-bold text-xs uppercase tracking-widest text-secondary" style={{ fontFamily: 'var(--font-display)' }}>Chatrooms</span>
+                  <span className="font-bold text-xs uppercase tracking-widest text-secondary holographic-text-subtle" style={{ fontFamily: 'var(--font-display)' }}>Chatrooms</span>
                   <span className="text-[10px] text-secondary/60 font-mono">({chatrooms.length})</span>
                 </div>
                 {chatroomsExpanded ? (

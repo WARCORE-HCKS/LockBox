@@ -766,6 +766,21 @@
     }
   }
   
+  /* Subtle Holographic Text - for sidebar headers */
+  .holographic-text-subtle {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--secondary)) 0%,
+      hsl(var(--secondary) / 0.8) 50%,
+      hsl(var(--secondary)) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: holographic-shift 3s linear infinite;
+  }
+  
   /* Pulse Animations */
   .animate-pulse-slow {
     animation: pulse-slow 4s ease-in-out infinite;
