@@ -27,7 +27,18 @@ The application employs a cyberpunk HUD aesthetic with neon colors and futuristi
 - **Admin Control**: Cyberpunk-styled comprehensive panel.
 - **HUD Telemetry Panel**: Real-time display of IP address, latency, connection status, and local time, with cyber defense aesthetics.
 - **Cyber Map Visualization**: Interactive world map with simplified continent SVGs, pulsing global threat/activity nodes, animated connection lines, and a scanning line effect.
-- **Customizable Dashboard**: Features a `DraggablePanel` component, powered by `react-grid-layout`, allowing users to drag, resize, minimize/maximize panels, and persist layout changes to `localStorage`. Includes a `useLayoutManager` hook for state management.
+- **Customizable Dashboard**: Features a `DraggablePanel` component, powered by `react-grid-layout`, allowing users to drag, resize, minimize/maximize panels, and persist layout changes to `localStorage`. Includes a `useLayoutManager` hook for state management with 11 modular HUD panels:
+  - **Cyber Notes**: Encrypted note-taking with auto-save, monospace text, and scanning effects
+  - **User Intel**: Real-time statistics (messages sent, network size, security level, status) with animated metrics
+  - **Security Monitor**: Dynamic threat levels, security system status, and pulsing indicators
+  - **System Diagnostics**: Simulated CPU/Memory/Network metrics with animated progress bars
+  - **Activity Feed**: Recent events timeline with icon-coded activities and timestamps
+  - **Quick Command**: 6 shortcut buttons with expanding corner brackets and energy pulse effects
+  - **HUD Telemetry**: IP address, latency, connection status, and local time display
+  - **Cyber Map**: Interactive world map with threat nodes and connection lines
+  - **Friends & Chatrooms**: Sidebar with user list and chatroom navigation
+  - **Chat Messages**: Main messaging area with E2E encrypted conversations
+  - **Message Input**: Secure message composition with encryption indicators
 
 ### Technical Implementations
 - **Backend**: Express and Socket.io for authentication, database interaction, and real-time communication.
