@@ -52,10 +52,14 @@ export class SecureKeyStorage {
    * @param value - Value to store (any JSON-serializable type except null)
    */
   static async set(key: string, value: string | number | boolean | object): Promise<void> {
+    if (value === null || value === undefined) {
+      throw new Error('Cannot store null or undefined values in secure storage');
+    }
+    
     const storage = await this.getStorage();
     if (storage) {
       // SecureStorage.set() accepts any JSON type directly (except null)
-      await storage.set(key, value);
+      await storage.set(key, value as any);
     } else {
       // On web, delegate to existing IndexedDB encryption system
       // This should be integrated with the existing signal-encryption.ts storage
