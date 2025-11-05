@@ -56,7 +56,7 @@ export default function MessageBubble({
             )}
           </div>
         )}
-        <div className="relative">
+        <div className="relative group/bubble">
           <div
             className={cn(
               "py-2.5 px-4 break-words message-bubble-cut relative",
@@ -65,6 +65,24 @@ export default function MessageBubble({
                 : "bg-gradient-to-br from-[#0f1a1a] to-[#0a1515] border border-primary/30 neon-glow-cyan"
             )}
           >
+            {/* Corner Brackets - subtle on messages */}
+            <div className={cn(
+              "absolute top-0 left-0 w-2 h-2 border-t border-l transition-all duration-200 group-hover/bubble:w-3 group-hover/bubble:h-3",
+              isOwn ? "border-secondary/40" : "border-primary/40"
+            )} />
+            <div className={cn(
+              "absolute top-0 right-0 w-2 h-2 border-t border-r transition-all duration-200 group-hover/bubble:w-3 group-hover/bubble:h-3",
+              isOwn ? "border-secondary/40" : "border-primary/40"
+            )} />
+            <div className={cn(
+              "absolute bottom-0 left-0 w-2 h-2 border-b border-l transition-all duration-200 group-hover/bubble:w-3 group-hover/bubble:h-3",
+              isOwn ? "border-secondary/40" : "border-primary/40"
+            )} />
+            <div className={cn(
+              "absolute bottom-0 right-0 w-2 h-2 border-b border-r transition-all duration-200 group-hover/bubble:w-3 group-hover/bubble:h-3",
+              isOwn ? "border-secondary/40" : "border-primary/40"
+            )} />
+            
             <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-foreground relative z-10" data-testid="text-message-content">
               {content}
             </p>

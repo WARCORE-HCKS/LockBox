@@ -50,8 +50,14 @@ export default function MessageInput({
   };
 
   return (
-    <div className="border-t border-primary/20 bg-sidebar/30 backdrop-blur-sm p-4 corner-brackets">
-      <div className="flex items-end gap-2">
+    <div className="border-t border-primary/20 bg-sidebar/30 backdrop-blur-sm p-4 relative">
+      {/* Corner Brackets */}
+      <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary/30" />
+      <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary/30" />
+      <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary/30" />
+      <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary/30" />
+      
+      <div className="flex items-end gap-2 relative z-10">
         <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
           <PopoverTrigger asChild>
             <Button
