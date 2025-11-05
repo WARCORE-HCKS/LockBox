@@ -48,38 +48,38 @@ export default function LandingPage() {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 container mx-auto px-4 py-12">
+      <div className="relative z-10 container mx-auto px-4 py-6 md:py-12">
         {/* Hero Section */}
         <div className="max-w-6xl mx-auto">
           {/* Logo with Advanced Effects */}
-          <div className="relative w-fit mx-auto mb-8">
-            {/* Rotating Energy Rings */}
-            <div className="absolute inset-0 -m-12">
+          <div className="relative w-fit mx-auto mb-6 md:mb-8">
+            {/* Rotating Energy Rings - Responsive sizing */}
+            <div className="absolute inset-0 -m-6 md:-m-12">
               <div className="absolute inset-0 border-2 border-primary/30 rounded-full animate-spin-slow" />
-              <div className="absolute inset-4 border-2 border-secondary/20 rounded-full animate-spin-reverse" />
-              <div className="absolute inset-8 border border-primary/40 rounded-full animate-pulse-slow" />
+              <div className="absolute inset-2 md:inset-4 border-2 border-secondary/20 rounded-full animate-spin-reverse" />
+              <div className="absolute inset-4 md:inset-8 border border-primary/40 rounded-full animate-pulse-slow" />
             </div>
             
             {/* Holographic Glow */}
-            <div className="absolute inset-0 -m-8 bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 blur-3xl animate-pulse-glow" />
+            <div className="absolute inset-0 -m-4 md:-m-8 bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 blur-2xl md:blur-3xl animate-pulse-glow" />
             
-            {/* Logo Container */}
-            <div className="relative logo-glitch-container p-8">
-              <Lock className="h-32 w-32 text-primary drop-shadow-neon" />
+            {/* Logo Container - Responsive sizing */}
+            <div className="relative logo-glitch-container p-4 md:p-8">
+              <Lock className="h-20 w-20 md:h-32 md:w-32 text-primary drop-shadow-neon" />
               
               {/* Glitch Layers */}
-              <Lock className="glitch-layer-1 absolute top-8 left-8 h-32 w-32 text-secondary opacity-70" />
-              <Lock className="glitch-layer-2 absolute top-8 left-8 h-32 w-32 text-primary opacity-50" />
+              <Lock className="glitch-layer-1 absolute top-4 left-4 md:top-8 md:left-8 h-20 w-20 md:h-32 md:w-32 text-secondary opacity-70" />
+              <Lock className="glitch-layer-2 absolute top-4 left-4 md:top-8 md:left-8 h-20 w-20 md:h-32 md:w-32 text-primary opacity-50" />
             </div>
           </div>
 
-          {/* Title with Holographic Effect */}
-          <h1 className="text-7xl md:text-9xl font-bold text-center mb-6 holographic-text uppercase tracking-wider font-display">
+          {/* Title with Holographic Effect - Responsive sizing */}
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-center mb-4 md:mb-6 holographic-text uppercase tracking-wider font-display">
             LOCKBOX
           </h1>
 
           {/* Tagline */}
-          <p className="text-2xl md:text-3xl text-center text-primary mb-4 animate-pulse-text font-display tracking-wide">
+          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-center text-primary mb-3 md:mb-4 animate-pulse-text font-display tracking-wide">
             LOCK THE GATE • AVOID THE FATE
           </p>
 
