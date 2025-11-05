@@ -31,6 +31,8 @@ export interface PanelLocked {
   sidebar: boolean;
   hudStats: boolean;
   cyberMap: boolean;
+  chatMessages: boolean;
+  messageInput: boolean;
   cyberNotes: boolean;
   userIntel: boolean;
   securityMonitor: boolean;
@@ -89,6 +91,8 @@ const defaultLocked: PanelLocked = {
   sidebar: false,
   hudStats: false,
   cyberMap: false,
+  chatMessages: false,
+  messageInput: false,
   cyberNotes: false,
   userIntel: false,
   securityMonitor: false,

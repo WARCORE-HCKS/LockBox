@@ -666,7 +666,7 @@ export default function ChatPage() {
           isResizable={true}
           isDraggable={true}
           compactType={null}
-          preventCollision={false}
+          preventCollision={true}
           margin={[8, 8]}
           containerPadding={[8, 8]}
           useCSSTransforms={true}
@@ -906,6 +906,8 @@ export default function ChatPage() {
                     ? getUserDisplayName(activeFriend)
                     : "Chat Messages"
                 }
+                isLocked={panelLocked.chatMessages}
+                onLock={() => togglePanelLocked("chatMessages")}
                 showMinimizeButton={false}
                 showCloseButton={false}
               >
@@ -1036,6 +1038,8 @@ export default function ChatPage() {
             <div key="messageInput">
               <DraggablePanel
                 title="Message Input"
+                isLocked={panelLocked.messageInput}
+                onLock={() => togglePanelLocked("messageInput")}
                 showMinimizeButton={false}
                 showCloseButton={false}
               >
