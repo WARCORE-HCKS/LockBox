@@ -25,6 +25,11 @@ import HUDStats from "@/components/HUDStats";
 import CyberMap from "@/components/CyberMap";
 import DraggablePanel from "@/components/DraggablePanel";
 import LayoutSettings from "@/components/LayoutSettings";
+import CyberNotes from "@/components/CyberNotes";
+import UserIntel from "@/components/UserIntel";
+import SecurityMonitor from "@/components/SecurityMonitor";
+import SystemDiagnostics from "@/components/SystemDiagnostics";
+import ActivityFeed from "@/components/ActivityFeed";
 import { useLayoutManager } from "@/hooks/useLayoutManager";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
@@ -1015,6 +1020,76 @@ export default function ChatPage() {
                 showCloseButton={false}
               >
                 <MessageInput onSend={handleSendMessage} />
+              </DraggablePanel>
+            </div>
+          )}
+
+          {/* Cyber Notes Panel */}
+          {panelVisibility.cyberNotes && (
+            <div key="cyberNotes">
+              <DraggablePanel
+                title="Cyber Notes"
+                isMinimized={panelMinimized.cyberNotes}
+                onMinimize={() => togglePanelMinimized("cyberNotes")}
+                onClose={() => togglePanelVisibility("cyberNotes")}
+              >
+                <CyberNotes />
+              </DraggablePanel>
+            </div>
+          )}
+
+          {/* User Intel Panel */}
+          {panelVisibility.userIntel && (
+            <div key="userIntel">
+              <DraggablePanel
+                title="User Intel"
+                isMinimized={panelMinimized.userIntel}
+                onMinimize={() => togglePanelMinimized("userIntel")}
+                onClose={() => togglePanelVisibility("userIntel")}
+              >
+                <UserIntel />
+              </DraggablePanel>
+            </div>
+          )}
+
+          {/* Security Monitor Panel */}
+          {panelVisibility.securityMonitor && (
+            <div key="securityMonitor">
+              <DraggablePanel
+                title="Security Monitor"
+                isMinimized={panelMinimized.securityMonitor}
+                onMinimize={() => togglePanelMinimized("securityMonitor")}
+                onClose={() => togglePanelVisibility("securityMonitor")}
+              >
+                <SecurityMonitor />
+              </DraggablePanel>
+            </div>
+          )}
+
+          {/* System Diagnostics Panel */}
+          {panelVisibility.systemDiagnostics && (
+            <div key="systemDiagnostics">
+              <DraggablePanel
+                title="System Diagnostics"
+                isMinimized={panelMinimized.systemDiagnostics}
+                onMinimize={() => togglePanelMinimized("systemDiagnostics")}
+                onClose={() => togglePanelVisibility("systemDiagnostics")}
+              >
+                <SystemDiagnostics />
+              </DraggablePanel>
+            </div>
+          )}
+
+          {/* Activity Feed Panel */}
+          {panelVisibility.activityFeed && (
+            <div key="activityFeed">
+              <DraggablePanel
+                title="Activity Feed"
+                isMinimized={panelMinimized.activityFeed}
+                onMinimize={() => togglePanelMinimized("activityFeed")}
+                onClose={() => togglePanelVisibility("activityFeed")}
+              >
+                <ActivityFeed />
               </DraggablePanel>
             </div>
           )}

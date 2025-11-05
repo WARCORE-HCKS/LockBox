@@ -30,6 +30,11 @@ export default function LayoutSettings({
     cyberMap: "Cyber Map",
     chatMessages: "Chat Messages",
     messageInput: "Message Input",
+    cyberNotes: "Cyber Notes",
+    userIntel: "User Intel",
+    securityMonitor: "Security Monitor",
+    systemDiagnostics: "System Diagnostics",
+    activityFeed: "Activity Feed",
   };
 
   return (

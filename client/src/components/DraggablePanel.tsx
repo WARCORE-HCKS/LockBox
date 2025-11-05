@@ -31,7 +31,8 @@ export default function DraggablePanel({
   return (
     <div
       className={cn(
-        "h-full flex flex-col bg-sidebar/95 backdrop-blur-sm border border-primary/20 rounded-sm relative overflow-hidden",
+        "flex flex-col bg-sidebar/95 backdrop-blur-sm border border-primary/20 rounded-sm relative overflow-hidden transition-all duration-300",
+        isMinimized ? "h-auto" : "h-full",
         className
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -102,16 +103,9 @@ export default function DraggablePanel({
       {/* Panel Content */}
       {!isMinimized && (
         <div className="flex-1 overflow-hidden relative z-10">
-          {children}
-        </div>
-      )}
-
-      {/* Minimized State */}
-      {isMinimized && (
-        <div className="flex-1 flex items-center justify-center py-8 relative z-10">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
-            Minimized
-          </p>
+          <div className="h-full w-full" style={{ transformOrigin: 'top left' }}>
+            {children}
+          </div>
         </div>
       )}
 
