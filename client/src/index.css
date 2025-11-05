@@ -924,14 +924,24 @@
     font-family: var(--font-display);
   }
 
-  /* React Grid Layout Styles - Cyberpunk Themed */
+  /* React Grid Layout Styles - Optimized for smooth 60 FPS dragging */
   .react-grid-layout {
     position: relative;
+    transition: height 200ms ease;
   }
 
   .react-grid-item {
-    transition: all 200ms ease;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
     transition-property: left, top, width, height;
+  }
+
+  .react-grid-item:not(.react-grid-placeholder) {
+    will-change: auto;
+  }
+
+  .react-grid-item img {
+    pointer-events: none;
+    user-select: none;
   }
 
   .react-grid-item.react-grid-placeholder {
@@ -945,50 +955,60 @@
     animation: pulse-glow 2s ease-in-out infinite;
   }
 
-  /* Resize Handle - Cyberpunk Style */
+  /* Resize Handle - Cyberpunk Style with neon glow */
   .react-resizable-handle {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     bottom: 0;
     right: 0;
     cursor: se-resize;
+    z-index: 10;
   }
 
   .react-resizable-handle::after {
     content: "";
     position: absolute;
-    right: 3px;
-    bottom: 3px;
-    width: 8px;
-    height: 8px;
-    border-right: 2px solid hsl(var(--primary) / 0.5);
-    border-bottom: 2px solid hsl(var(--primary) / 0.5);
-    transition: all 0.2s ease;
+    right: 4px;
+    bottom: 4px;
+    width: 10px;
+    height: 10px;
+    border-right: 2px solid hsl(var(--primary) / 0.6);
+    border-bottom: 2px solid hsl(var(--primary) / 0.6);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .react-resizable-handle:hover::after {
     border-right-color: hsl(var(--primary));
     border-bottom-color: hsl(var(--primary));
     box-shadow: var(--glow-cyan);
+    width: 12px;
+    height: 12px;
   }
 
-  /* Dragging State */
+  /* Dragging State - High performance with GPU acceleration */
   .react-grid-item.react-dragging {
     transition: none;
     z-index: 100;
     will-change: transform;
-    opacity: 0.8;
+    opacity: 0.9;
+    transform: translateZ(0);
   }
 
   .react-grid-item.resizing {
     transition: none;
     z-index: 100;
     will-change: transform;
+    transform: translateZ(0);
   }
 
   /* Static items */
   .react-grid-item.static {
     background-color: hsl(var(--muted) / 0.1);
+  }
+
+  /* Smooth snappy transitions for tactical HUD feel */
+  .react-grid-item:not(.react-dragging):not(.resizing) {
+    transition: all 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }

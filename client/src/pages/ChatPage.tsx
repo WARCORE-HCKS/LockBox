@@ -614,7 +614,7 @@ export default function ChatPage() {
           className="layout"
           layout={layout}
           cols={12}
-          rowHeight={30}
+          rowHeight={32}
           width={1200}
           onLayoutChange={onLayoutChange}
           draggableHandle=".cursor-move"
@@ -622,6 +622,10 @@ export default function ChatPage() {
           isDraggable={true}
           compactType={null}
           preventCollision={false}
+          margin={[8, 8]}
+          containerPadding={[8, 8]}
+          useCSSTransforms={true}
+          transformScale={1}
         >
           {/* Sidebar Panel */}
           {panelVisibility.sidebar && (

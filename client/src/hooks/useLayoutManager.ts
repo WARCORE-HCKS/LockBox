@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Layout } from "react-grid-layout";
 
 export interface PanelVisibility {
@@ -18,13 +18,14 @@ export interface PanelMinimized {
 const STORAGE_KEY = "lockbox-layout";
 const VISIBILITY_KEY = "lockbox-panel-visibility";
 const MINIMIZED_KEY = "lockbox-panel-minimized";
+const SAVE_DEBOUNCE_MS = 500; // Throttle persistence
 
 const defaultLayout: Layout[] = [
-  { i: "sidebar", x: 0, y: 0, w: 3, h: 12, minW: 2, minH: 6 },
-  { i: "hudStats", x: 0, y: 12, w: 3, h: 4, minW: 2, minH: 3 },
-  { i: "cyberMap", x: 0, y: 16, w: 3, h: 4, minW: 2, minH: 3 },
-  { i: "chatMessages", x: 3, y: 0, w: 9, h: 18, minW: 4, minH: 8 },
-  { i: "messageInput", x: 3, y: 18, w: 9, h: 2, minW: 4, minH: 2 },
+  { i: "sidebar", x: 0, y: 0, w: 3, h: 12, minW: 3, minH: 8 },
+  { i: "hudStats", x: 0, y: 12, w: 3, h: 5, minW: 3, minH: 4 },
+  { i: "cyberMap", x: 0, y: 17, w: 3, h: 5, minW: 3, minH: 4 },
+  { i: "chatMessages", x: 3, y: 0, w: 9, h: 20, minW: 6, minH: 10 },
+  { i: "messageInput", x: 3, y: 20, w: 9, h: 2, minW: 6, minH: 2 },
 ];
 
 const defaultVisibility: PanelVisibility = {
@@ -60,9 +61,23 @@ export function useLayoutManager() {
     return saved ? JSON.parse(saved) : defaultMinimized;
   });
 
-  // Save layout to localStorage whenever it changes
+  // Throttled save to localStorage using useRef for debounce timer
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Save layout to localStorage with 500ms debounce
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+    }, SAVE_DEBOUNCE_MS);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [layout]);
 
   // Save visibility to localStorage whenever it changes
