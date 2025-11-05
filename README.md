@@ -106,6 +106,44 @@
 - **⚡ Smooth Animations** - Polished transitions and interactions
 - **🔒 Security Indicators** - Prominent E2E encryption badges
 - **📂 Organized Layout** - Collapsible sidebar sections
+- **🎛️ Customizable Dashboard** - Fully draggable and resizable workspace (NEW!)
+
+### 🎛️ Customizable Dashboard **(NEW!)**
+
+<table>
+<tr>
+<td width="50%">
+
+**Layout Customization**
+- 🖱️ Drag & drop panels to rearrange
+- 📏 Resize panels to fit your workflow
+- ➖ Minimize panels to save space
+- 👁️ Toggle panel visibility on/off
+- 💾 Auto-save layout to localStorage
+- 🔄 One-click reset to defaults
+
+</td>
+<td width="50%">
+
+**Workspace Panels**
+- 👥 Friends & Chatrooms sidebar
+- 📊 HUD Telemetry (IP, latency, time)
+- 🗺️ Cyber Map visualization
+- 💬 Chat messages area
+- ⌨️ Message input field
+- ⚙️ Layout settings dialog
+
+</td>
+</tr>
+</table>
+
+**Features:**
+- **Drag to Move** - Click and drag panel titles to reposition anywhere on screen
+- **Resize Handles** - Grab corners to resize panels with neon glow effects
+- **Minimize/Maximize** - Collapse panels when not in use, restore with one click
+- **Visibility Controls** - Show/hide panels through settings dialog
+- **Persistent State** - Layout preferences saved across sessions
+- **Smart Grid** - 12-column responsive grid system prevents overlapping
 
 ### 👑 Admin Dashboard
 
@@ -232,6 +270,7 @@ plaintext → [Signal Encrypt] → ciphertext → Server → Client B
 ![Passport.js](https://img.shields.io/badge/Passport.js-34E27A?style=flat-square&logo=passport&logoColor=white)
 ![shadcn/ui](https://img.shields.io/badge/shadcn/ui-000000?style=flat-square&logo=shadcnui&logoColor=white)
 ![TanStack Query](https://img.shields.io/badge/TanStack_Query-FF4154?style=flat-square&logo=reactquery&logoColor=white)
+![react-grid-layout](https://img.shields.io/badge/react--grid--layout-orange?style=flat-square)
 
 </div>
 
@@ -249,7 +288,8 @@ plaintext → [Signal Encrypt] → ciphertext → Server → Client B
     "tailwindcss",
     "@radix-ui/react-*",
     "socket.io-client",
-    "@tanstack/react-query"
+    "@tanstack/react-query",
+    "react-grid-layout"
   ],
   "backend": [
     "express",
@@ -376,6 +416,17 @@ Comprehensive platform management:
 - Refined message bubbles with rounded corners
 - Collapsible sidebar for organization
 
+### 🎛️ Customizable Dashboard **(NEW!)**
+
+**Full workspace personalization:**
+- **Drag & Drop** - Rearrange panels anywhere on screen by dragging titles
+- **Resize** - Adjust panel sizes with corner handles featuring neon glow effects
+- **Minimize** - Collapse panels to "Minimized" state to save screen space
+- **Hide/Show** - Toggle panel visibility through settings dialog (gear icon)
+- **Persistent** - Layout automatically saved to localStorage and restored on reload
+- **Reset** - One-click button to restore default layout configuration
+- **Smart Grid** - 12-column responsive grid prevents overlapping panels
+
 ---
 
 ## 📁 Project Structure
@@ -387,10 +438,15 @@ lockbox/
 │       ├── components/          # Reusable UI components
 │       │   ├── MessageBubble.tsx
 │       │   ├── ChatHeader.tsx
-│       │   └── FriendListItem.tsx
+│       │   ├── FriendListItem.tsx
+│       │   ├── DraggablePanel.tsx     # NEW: Draggable panel wrapper
+│       │   ├── LayoutSettings.tsx     # NEW: Layout settings dialog
+│       │   ├── HUDStats.tsx           # HUD telemetry panel
+│       │   └── CyberMap.tsx           # Cyber map visualization
 │       ├── hooks/               # Custom React hooks
 │       │   ├── useSocket.ts
-│       │   └── useMessageEncryption.ts
+│       │   ├── useMessageEncryption.ts
+│       │   └── useLayoutManager.ts    # NEW: Layout state management
 │       ├── lib/                 # Core libraries
 │       │   ├── signalProtocol.ts      # Signal Protocol implementation
 │       │   ├── signalMessaging.ts     # High-level messaging API
@@ -398,7 +454,7 @@ lockbox/
 │       │   ├── encryption.ts          # Legacy encryption (chatrooms)
 │       │   └── queryClient.ts         # TanStack Query config
 │       └── pages/               # Application pages
-│           ├── ChatPage.tsx
+│           ├── ChatPage.tsx           # Main chat interface with grid layout
 │           └── AdminPage.tsx
 ├── server/                      # Backend Express server
 │   ├── db.ts                   # Database connection
@@ -529,6 +585,7 @@ We welcome contributions! Here's how to get started:
 - [x] Admin dashboard
 - [x] Chatroom ownership system
 - [x] Modern UI with encryption indicators
+- [x] **Customizable Dashboard** - Drag, resize, minimize panels (November 2025)
 
 ### In Progress 🚧
 - [ ] Sender Keys protocol for chatrooms
