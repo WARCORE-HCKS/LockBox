@@ -14,14 +14,14 @@ export default function CyberMap() {
 
   // Threat locations (relative positions on the world map)
   const threatNodes = [
-    { x: 20, y: 30, region: "NA" },  // North America
-    { x: 50, y: 25, region: "EU" },  // Europe
-    { x: 75, y: 40, region: "AS" },  // Asia
-    { x: 85, y: 70, region: "AU" },  // Australia
-    { x: 30, y: 65, region: "SA" },  // South America
-    { x: 55, y: 50, region: "AF" },  // Africa
-    { x: 90, y: 35, region: "EA" },  // East Asia
-    { x: 15, y: 20, region: "NA2" }, // North America 2
+    { x: 20, y: 15, region: "NA" },  // North America
+    { x: 50, y: 12, region: "EU" },  // Europe
+    { x: 75, y: 20, region: "AS" },  // Asia
+    { x: 85, y: 35, region: "AU" },  // Australia
+    { x: 30, y: 32, region: "SA" },  // South America
+    { x: 55, y: 25, region: "AF" },  // Africa
+    { x: 90, y: 17, region: "EA" },  // East Asia
+    { x: 15, y: 10, region: "NA2" }, // North America 2
   ];
 
   return (
@@ -43,7 +43,7 @@ export default function CyberMap() {
       </div>
 
       {/* Map Container */}
-      <div className="relative w-full h-32 bg-background/50 rounded-sm border border-primary/10 overflow-hidden">
+      <div className="relative w-full aspect-[2/1] bg-background/50 rounded-sm border border-primary/10 overflow-hidden">
         {/* Grid Background */}
         <div 
           className="absolute inset-0 opacity-20"
@@ -57,10 +57,10 @@ export default function CyberMap() {
         />
 
         {/* Continents (simplified shapes) */}
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 50" preserveAspectRatio="xMidYMid meet">
           {/* North America */}
           <path
-            d="M 10,20 Q 15,15 22,18 L 28,22 Q 30,28 28,35 L 22,38 Q 15,38 12,32 Z"
+            d="M 10,10 Q 15,7 22,9 L 28,11 Q 30,14 28,17 L 22,19 Q 15,19 12,16 Z"
             fill="hsl(var(--primary) / 0.08)"
             stroke="hsl(var(--primary) / 0.3)"
             strokeWidth="0.3"
@@ -70,7 +70,7 @@ export default function CyberMap() {
           
           {/* Europe */}
           <path
-            d="M 45,18 Q 50,15 55,18 L 58,22 Q 58,28 55,30 L 48,32 Q 44,28 45,22 Z"
+            d="M 45,9 Q 50,7 55,9 L 58,11 Q 58,14 55,15 L 48,16 Q 44,14 45,11 Z"
             fill="hsl(var(--primary) / 0.08)"
             stroke="hsl(var(--primary) / 0.3)"
             strokeWidth="0.3"
@@ -80,7 +80,7 @@ export default function CyberMap() {
           
           {/* Asia */}
           <path
-            d="M 65,25 Q 75,20 85,25 L 92,35 Q 90,45 85,48 L 75,50 Q 68,45 65,38 Z"
+            d="M 65,12 Q 75,10 85,12 L 92,17 Q 90,22 85,24 L 75,25 Q 68,22 65,19 Z"
             fill="hsl(var(--primary) / 0.08)"
             stroke="hsl(var(--primary) / 0.3)"
             strokeWidth="0.3"
@@ -90,7 +90,7 @@ export default function CyberMap() {
           
           {/* South America */}
           <path
-            d="M 22,55 Q 28,52 32,55 L 35,65 Q 33,75 28,78 L 24,75 Q 20,68 22,60 Z"
+            d="M 22,27 Q 28,26 32,27 L 35,32 Q 33,37 28,39 L 24,37 Q 20,34 22,30 Z"
             fill="hsl(var(--primary) / 0.08)"
             stroke="hsl(var(--primary) / 0.3)"
             strokeWidth="0.3"
@@ -100,7 +100,7 @@ export default function CyberMap() {
           
           {/* Africa */}
           <path
-            d="M 48,42 Q 55,40 60,45 L 62,60 Q 58,68 52,70 L 46,65 Q 44,55 48,48 Z"
+            d="M 48,21 Q 55,20 60,22 L 62,30 Q 58,34 52,35 L 46,32 Q 44,27 48,24 Z"
             fill="hsl(var(--primary) / 0.08)"
             stroke="hsl(var(--primary) / 0.3)"
             strokeWidth="0.3"
@@ -110,7 +110,7 @@ export default function CyberMap() {
           
           {/* Australia */}
           <path
-            d="M 78,68 Q 85,66 90,70 L 92,78 Q 88,82 82,82 L 76,78 Q 74,72 78,70 Z"
+            d="M 78,34 Q 85,33 90,35 L 92,39 Q 88,41 82,41 L 76,39 Q 74,36 78,35 Z"
             fill="hsl(var(--primary) / 0.08)"
             stroke="hsl(var(--primary) / 0.3)"
             strokeWidth="0.3"

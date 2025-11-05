@@ -21,11 +21,11 @@ const MINIMIZED_KEY = "lockbox-panel-minimized";
 const SAVE_DEBOUNCE_MS = 500; // Throttle persistence
 
 const defaultLayout: Layout[] = [
-  { i: "sidebar", x: 0, y: 0, w: 3, h: 12, minW: 3, minH: 8 },
-  { i: "hudStats", x: 0, y: 12, w: 3, h: 5, minW: 3, minH: 4 },
-  { i: "cyberMap", x: 0, y: 17, w: 3, h: 5, minW: 3, minH: 4 },
-  { i: "chatMessages", x: 3, y: 0, w: 9, h: 20, minW: 6, minH: 10 },
-  { i: "messageInput", x: 3, y: 20, w: 9, h: 2, minW: 6, minH: 2 },
+  { i: "sidebar", x: 0, y: 0, w: 2, h: 12, minW: 2, minH: 8 },
+  { i: "hudStats", x: 0, y: 12, w: 2, h: 5, minW: 2, minH: 3 },
+  { i: "cyberMap", x: 0, y: 17, w: 2, h: 6, minW: 2, minH: 4 },
+  { i: "chatMessages", x: 2, y: 0, w: 10, h: 20, minW: 4, minH: 10 },
+  { i: "messageInput", x: 2, y: 20, w: 10, h: 2, minW: 4, minH: 2 },
 ];
 
 const defaultVisibility: PanelVisibility = {
