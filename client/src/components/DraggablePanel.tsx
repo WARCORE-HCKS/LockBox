@@ -57,10 +57,10 @@ export default function DraggablePanel({
 
       {/* Panel Header */}
       <div className={cn(
-        "flex items-center justify-between px-3 py-2 border-b border-primary/20 cursor-move relative z-10 bg-sidebar/50 backdrop-blur-sm",
+        "flex items-center justify-between px-3 py-2 border-b border-primary/20 relative z-10 bg-sidebar/50 backdrop-blur-sm",
         headerClassName
       )}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-move">
           <Move className="h-3 w-3 text-primary opacity-60" />
           <h3 
             className="text-xs font-bold uppercase tracking-widest text-primary"
