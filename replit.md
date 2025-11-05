@@ -56,6 +56,18 @@ The application features a cyberpunk HUD aesthetic with neon colors and futurist
   - Grid background pattern for technical feel
   - Legend showing secure/activity status indicators
   - Active node counter display
+- **Customizable Dashboard** (November 2025): Fully interactive layout system allowing users to personalize their workspace:
+  - **DraggablePanel Component**: Each section wrapped in cyberpunk-styled container with corner brackets, neon glows, and control buttons
+  - **Drag & Resize**: Powered by react-grid-layout library for smooth panel repositioning and resizing
+  - **Minimize/Maximize**: Panels can be collapsed to save screen space, showing "Minimized" state
+  - **Panel Visibility**: Toggle panels on/off through LayoutSettings dialog
+  - **Persistent Layout**: All customizations automatically saved to localStorage and restored on page reload
+  - **Layout Settings Dialog**: Accessible via gear icon in header, provides visibility toggles and "Reset to Default Layout" button
+  - **Grid System**: 12-column grid with 30px row height, allowing precise panel placement
+  - **Draggable Zones**: Only panel title areas are draggable (not entire headers), preventing button click interference
+  - **5 Main Panels**: Friends & Chatrooms (sidebar), HUD Telemetry, Cyber Map, Chat Messages, Message Input
+  - **Visual Feedback**: Dashed placeholder during drag, neon glowing resize handles, smooth panel transitions
+  - **useLayoutManager Hook**: Centralized state management for layout positions, visibility, and minimization states
 
 ### Technical Implementations
 - **Backend**: Built with Express and Socket.io, handling authentication, database interactions, and real-time communication.
@@ -103,3 +115,4 @@ The application features a cyberpunk HUD aesthetic with neon colors and futurist
 - **ORM**: Drizzle ORM
 - **Encryption Libraries**: `crypto-js` (for legacy encryption) and `@signalapp/libsignal-client` (for Signal Protocol implementation)
 - **UI Frameworks**: Tailwind CSS, Shadcn UI
+- **Layout Management**: react-grid-layout (for customizable dashboard)
