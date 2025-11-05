@@ -16,6 +16,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![Signal Protocol](https://img.shields.io/badge/Signal_Protocol-3A76F0?style=for-the-badge&logo=signal&logoColor=white)](https://signal.org/docs/)
+[![iOS](https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://developer.apple.com/ios/)
+[![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/)
 
 [Features](#-features) • [Security](#-security-architecture) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Demo](#-demo)
 
@@ -27,13 +29,16 @@
 
 **LockBox** is a modern real-time messaging platform that implements **production-grade end-to-end encryption** using the **Signal Protocol**. Built with privacy-first principles, LockBox ensures that only you and your intended recipients can read your messages—not even the server can decrypt them.
 
+Now available as **native iOS and Android apps** with hardware-backed secure storage!
+
 ### Why LockBox?
 
 - 🔐 **True E2E Encryption** - Signal Protocol with X3DH key exchange & Double Ratchet algorithm
 - ⚡ **Real-time Delivery** - Instant messaging with WebSocket technology
+- 📱 **Cross-Platform** - Web, iOS, and Android with unified codebase
 - 🎨 **Modern UI/UX** - Discord/Signal-inspired interface with dark mode
 - 🔒 **Privacy Focused** - Visual encryption indicators throughout the app
-- 🛡️ **Secure by Design** - Session-based auth with encrypted key storage
+- 🛡️ **Secure by Design** - Hardware-backed key storage on mobile, WebCrypto on web
 
 > **Production Ready**: LockBox implements the same encryption protocol used by Signal, WhatsApp, and Google Messages for billions of users worldwide.
 
@@ -51,7 +56,7 @@
 - ✅ X3DH key agreement protocol
 - ✅ Double Ratchet algorithm for forward secrecy
 - ✅ PreKey bundles for asynchronous messaging
-- ✅ Encrypted key storage (AES-GCM with PBKDF2)
+- ✅ Encrypted key storage (platform-specific)
 - ✅ Automatic session management
 - ✅ Visual encryption indicators
 
@@ -62,7 +67,8 @@
 - 🔒 Client-side encryption/decryption only
 - 🛡️ Server never sees plaintext messages
 - 🔑 Automatic key generation & rotation
-- 📱 IndexedDB encrypted storage
+- 📱 iOS Keychain / Android KeyStore (mobile)
+- 🌐 WebCrypto + IndexedDB (web)
 - 🎯 Per-user session isolation
 - 🔐 Zero-knowledge architecture
 
@@ -98,15 +104,51 @@
 - **📊 Analytics** - View room statistics and activity
 - **🎨 Visual Badges** - Crown icons for room owners
 
+### 📱 Native Mobile Apps **(NEW!)**
+
+<table>
+<tr>
+<td width="50%">
+
+**iOS Application**
+- 🍎 Native iOS app built with Capacitor
+- 🔐 Keychain secure storage (hardware-backed)
+- 📲 Push notifications support
+- 🎨 Native UI optimizations
+- 📦 Ready for App Store deployment
+
+</td>
+<td width="50%">
+
+**Android Application**
+- 🤖 Native Android app built with Capacitor
+- 🔐 KeyStore encryption (AES-GCM)
+- 📲 Firebase Cloud Messaging support
+- 🎨 Material Design compatibility
+- 📦 Ready for Play Store deployment
+
+</td>
+</tr>
+</table>
+
+**Cross-Platform Security:**
+- iOS: Keys stored in Keychain with system-level encryption
+- Android: SharedPreferences with AES-GCM + Android KeyStore
+- Web: IndexedDB with WebCrypto AES-GCM encryption
+- Unified `SecureKeyStorage` API across all platforms
+- Automatic fallback to web encryption when not on native platforms
+
+[📖 Mobile Build Guide](MOBILE_BUILD_GUIDE.md) - Complete instructions for building and deploying iOS/Android apps
+
 ### 🎨 Modern Interface
 
 - **🌙 Dark Mode** - Full theme support with persistence
-- **📱 Responsive Design** - Desktop and mobile optimized
+- **📱 Responsive Design** - Desktop, mobile web, and native apps
 - **🎯 Cyberpunk HUD Aesthetic** - Neon effects, corner brackets, holographic glows
 - **⚡ Smooth Animations** - GPU-accelerated transitions and effects
 - **🔒 Security Indicators** - Prominent neon-glowing E2E encryption badges
 - **📂 Organized Layout** - HUD-style panels with scanlines and particles
-- **🎛️ Customizable Dashboard** - Fully draggable and resizable workspace (NEW!)
+- **🎛️ Customizable Dashboard** - Fully draggable and resizable workspace
 
 ### 🎛️ Customizable Dashboard **(NEW!)**
 
@@ -186,9 +228,10 @@ LockBox implements the **Signal Protocol**, the gold standard for E2E encryption
 │     ├─ Diffie-Hellman ratchet for forward secrecy           │
 │     └─ Each message encrypted with unique key               │
 │                                                              │
-│  4. Secure Storage                                          │
-│     ├─ Private keys: AES-GCM encrypted in IndexedDB         │
-│     ├─ Encryption key: PBKDF2 derived from passphrase       │
+│  4. Secure Storage (Platform-Specific)                      │
+│     ├─ iOS: Keychain (hardware-backed)                      │
+│     ├─ Android: KeyStore with AES-GCM                       │
+│     ├─ Web: IndexedDB with WebCrypto AES-GCM                │
 │     └─ Public keys: Stored on server for distribution       │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
@@ -206,11 +249,21 @@ plaintext → [Signal Encrypt] → ciphertext → Server → Client B
 // Server never sees plaintext
 ```
 
-#### Key Storage
+#### Key Storage (Platform-Specific)
+
+**Native Mobile (iOS/Android):**
+- **iOS**: Private keys stored in Keychain (hardware-backed encryption)
+- **Android**: Keys encrypted with AES-GCM using Android KeyStore
+- **Security**: System-level protection, biometric authentication support
+
+**Web Browser:**
 - **Private Keys**: Encrypted with AES-GCM (256-bit) in IndexedDB
 - **Encryption Key**: Derived via PBKDF2 (100,000 iterations)
-- **Public Keys**: Distributed via server API endpoints
 - **Sessions**: Persisted in encrypted IndexedDB storage
+
+**All Platforms:**
+- **Public Keys**: Distributed via server API endpoints
+- **Unified API**: `SecureKeyStorage` provides consistent interface across platforms
 
 ### Security Guarantees
 
@@ -242,13 +295,16 @@ plaintext → [Signal Encrypt] → ciphertext → Server → Client B
 
 <div align="center">
 
-### Frontend
+### Frontend & Mobile
 
 ![React](https://img.shields.io/badge/React_18-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![Socket.io Client](https://img.shields.io/badge/Socket.io-010101?style=flat-square&logo=socket.io&logoColor=white)
+![Capacitor](https://img.shields.io/badge/Capacitor_7-119EFF?style=flat-square&logo=capacitor&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-000000?style=flat-square&logo=apple&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=flat-square&logo=android&logoColor=white)
 
 ### Backend
 
@@ -262,7 +318,8 @@ plaintext → [Signal Encrypt] → ciphertext → Server → Client B
 ![Signal Protocol](https://img.shields.io/badge/Signal_Protocol-3A76F0?style=flat-square&logo=signal&logoColor=white)
 ![libsignal](https://img.shields.io/badge/libsignal--typescript-black?style=flat-square)
 ![Web Crypto API](https://img.shields.io/badge/Web_Crypto_API-FF6B00?style=flat-square&logo=javascript&logoColor=white)
-![CryptoJS](https://img.shields.io/badge/CryptoJS-blue?style=flat-square)
+![iOS Keychain](https://img.shields.io/badge/iOS_Keychain-000000?style=flat-square&logo=apple&logoColor=white)
+![Android KeyStore](https://img.shields.io/badge/Android_KeyStore-3DDC84?style=flat-square&logo=android&logoColor=white)
 
 ### Tools & Libraries
 
@@ -281,6 +338,16 @@ plaintext → [Signal Encrypt] → ciphertext → Server → Client B
   "encryption": [
     "@privacyresearch/libsignal-protocol-typescript",
     "crypto-js"
+  ],
+  "mobile": [
+    "@capacitor/core",
+    "@capacitor/ios",
+    "@capacitor/android",
+    "@aparajita/capacitor-secure-storage",
+    "@capacitor/push-notifications",
+    "@capacitor/splash-screen",
+    "@capacitor/status-bar",
+    "@capacitor/keyboard"
   ],
   "frontend": [
     "react",
@@ -349,6 +416,36 @@ plaintext → [Signal Encrypt] → ciphertext → Server → Client B
    ```
    http://localhost:5000
    ```
+
+### Mobile App Development
+
+Build native iOS and Android apps from the same codebase:
+
+1. **Build web assets**
+   ```bash
+   npm run build
+   ```
+
+2. **Sync to native projects**
+   ```bash
+   npx cap sync
+   ```
+
+3. **Open in native IDE**
+   ```bash
+   # iOS (requires macOS + Xcode)
+   npx cap open ios
+   
+   # Android (requires Android Studio)
+   npx cap open android
+   ```
+
+4. **Configure for production**
+   - Update `capacitor.config.ts` with your deployed server URL
+   - Set up push notifications (APNs for iOS, FCM for Android)
+   - Configure app icons and splash screens
+
+📖 **[Complete Mobile Build Guide](MOBILE_BUILD_GUIDE.md)** - Detailed instructions for mobile development and deployment
 
 ### First-Time Setup
 
@@ -441,19 +538,21 @@ lockbox/
 │       │   ├── MessageBubble.tsx
 │       │   ├── ChatHeader.tsx
 │       │   ├── FriendListItem.tsx
-│       │   ├── DraggablePanel.tsx     # NEW: Draggable panel wrapper
-│       │   ├── LayoutSettings.tsx     # NEW: Layout settings dialog
+│       │   ├── DraggablePanel.tsx     # Draggable panel wrapper
+│       │   ├── LayoutSettings.tsx     # Layout settings dialog
 │       │   ├── HUDStats.tsx           # HUD telemetry panel
 │       │   └── CyberMap.tsx           # Cyber map visualization
 │       ├── hooks/               # Custom React hooks
 │       │   ├── useSocket.ts
 │       │   ├── useMessageEncryption.ts
-│       │   └── useLayoutManager.ts    # NEW: Layout state management
+│       │   └── useLayoutManager.ts    # Layout state management
 │       ├── lib/                 # Core libraries
 │       │   ├── signalProtocol.ts      # Signal Protocol implementation
 │       │   ├── signalMessaging.ts     # High-level messaging API
 │       │   ├── signalProtocolStore.ts # Encrypted key storage
 │       │   ├── encryption.ts          # Legacy encryption (chatrooms)
+│       │   ├── capacitor-utils.ts     # Mobile platform utilities (NEW)
+│       │   ├── keyStorage.ts          # Encrypted storage for web
 │       │   └── queryClient.ts         # TanStack Query config
 │       └── pages/               # Application pages
 │           ├── ChatPage.tsx           # Main chat interface with grid layout
@@ -466,6 +565,10 @@ lockbox/
 │   └── replitAuth.ts           # OIDC authentication
 ├── shared/                      # Shared TypeScript types
 │   └── schema.ts               # Drizzle schemas and Zod validators
+├── ios/                         # Native iOS project (NEW)
+├── android/                     # Native Android project (NEW)
+├── capacitor.config.ts          # Capacitor configuration (NEW)
+├── MOBILE_BUILD_GUIDE.md        # Mobile development guide (NEW)
 └── attached_assets/             # Static assets
 ```
 
@@ -510,7 +613,11 @@ lockbox/
 
 **Secure Storage:**
 ```typescript
-// Private keys encrypted with:
+// Mobile (iOS/Android):
+- iOS: Keychain (system-level, hardware-backed)
+- Android: KeyStore + AES-GCM encryption
+
+// Web:
 - Algorithm: AES-GCM
 - Key Size: 256 bits
 - Key Derivation: PBKDF2 (100,000 iterations)
@@ -570,10 +677,11 @@ We welcome contributions! Here's how to get started:
 
 - 🔐 **Security**: Audit encryption implementation
 - 🎨 **UI/UX**: Improve interface and interactions
-- 📱 **Mobile**: Enhance responsive design
+- 📱 **Mobile**: Enhance native app features and UI
 - 🧪 **Testing**: Add unit and E2E tests
 - 📚 **Docs**: Improve documentation
 - 🌐 **i18n**: Add internationalization
+- 🔔 **Push Notifications**: Implement encrypted push messages
 
 ---
 
@@ -587,9 +695,12 @@ We welcome contributions! Here's how to get started:
 - [x] Admin dashboard
 - [x] Chatroom ownership system
 - [x] Modern UI with encryption indicators
-- [x] **Customizable Dashboard** - Drag, resize, minimize panels (November 2025)
+- [x] Customizable Dashboard - Drag, resize, minimize panels
+- [x] **Native iOS app** - Capacitor 7 with Keychain storage (November 2025)
+- [x] **Native Android app** - Capacitor 7 with KeyStore encryption (November 2025)
 
 ### In Progress 🚧
+- [ ] Push notifications (APNs/FCM integration)
 - [ ] Sender Keys protocol for chatrooms
 - [ ] Safety number verification
 - [ ] Message editing
@@ -598,8 +709,8 @@ We welcome contributions! Here's how to get started:
 ### Planned 📋
 - [ ] File/image sharing (encrypted)
 - [ ] Voice/video calls (WebRTC)
+- [ ] Biometric authentication (Face ID, fingerprint)
 - [ ] Desktop app (Electron/Tauri)
-- [ ] Mobile apps (React Native)
 - [ ] Message search
 - [ ] Custom emoji reactions
 - [ ] Multi-device sync
