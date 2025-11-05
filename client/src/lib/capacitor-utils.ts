@@ -6,7 +6,7 @@
  */
 
 import { Capacitor } from '@capacitor/core';
-import type { SecureStorage } from '@aparajita/capacitor-secure-storage';
+import { keyStorage } from './keyStorage';
 
 /**
  * Check if running on a native mobile platform (iOS or Android)
@@ -30,7 +30,7 @@ export function getPlatform(): string {
  * On web: Falls back to IndexedDB with WebCrypto encryption
  */
 export class SecureKeyStorage {
-  private static secureStorage: typeof SecureStorage | null = null;
+  private static secureStorage: any = null;
 
   /**
    * Initialize secure storage (lazy load for web compatibility)
@@ -58,12 +58,13 @@ export class SecureKeyStorage {
     
     const storage = await this.getStorage();
     if (storage) {
-      // SecureStorage.set() accepts any JSON type directly (except null)
+      // Native platform: Use iOS Keychain or Android Keystore
+      // API: set(key: string, data: DataType, convertDate?: boolean, sync?: boolean)
       await storage.set(key, value as any);
     } else {
-      // On web, delegate to existing IndexedDB encryption system
-      // This should be integrated with the existing signal-encryption.ts storage
-      throw new Error('Use existing IndexedDB key storage on web platform');
+      // Web platform: Use existing IndexedDB with WebCrypto encryption
+      const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+      await keyStorage.setItem(key, stringValue);
     }
   }
 
@@ -76,7 +77,8 @@ export class SecureKeyStorage {
     const storage = await this.getStorage();
     if (storage) {
       try {
-        // SecureStorage.get() returns the value directly (or null)
+        // Native platform: Use iOS Keychain or Android Keystore
+        // API: get(key: string, convertDate?: boolean, sync?: boolean) => Promise<DataType | null>
         const value = await storage.get(key);
         return value !== null && value !== undefined ? String(value) : null;
       } catch (error) {
@@ -84,7 +86,8 @@ export class SecureKeyStorage {
         return null;
       }
     } else {
-      throw new Error('Use existing IndexedDB key storage on web platform');
+      // Web platform: Use existing IndexedDB with WebCrypto encryption
+      return await keyStorage.getItem(key);
     }
   }
 
@@ -95,7 +98,12 @@ export class SecureKeyStorage {
   static async remove(key: string): Promise<void> {
     const storage = await this.getStorage();
     if (storage) {
+      // Native platform: Use iOS Keychain or Android Keystore
+      // API: remove(key: string, sync?: boolean) => Promise<boolean>
       await storage.remove(key);
+    } else {
+      // Web platform: Use existing IndexedDB with WebCrypto encryption
+      await keyStorage.removeItem(key);
     }
   }
 
@@ -105,7 +113,11 @@ export class SecureKeyStorage {
   static async clear(): Promise<void> {
     const storage = await this.getStorage();
     if (storage) {
+      // Native platform: Use iOS Keychain or Android Keystore
       await storage.clear();
+    } else {
+      // Web platform: Use existing IndexedDB with WebCrypto encryption
+      await keyStorage.clear();
     }
   }
 
@@ -115,10 +127,13 @@ export class SecureKeyStorage {
   static async keys(): Promise<string[]> {
     const storage = await this.getStorage();
     if (storage) {
-      // SecureStorage.keys() returns string[] directly
+      // Native platform: Use iOS Keychain or Android Keystore
+      // API: keys(sync?: boolean) => Promise<string[]>
       return await storage.keys();
+    } else {
+      // Web platform: Use existing IndexedDB with WebCrypto encryption
+      return await keyStorage.getAllKeys();
     }
-    return [];
   }
 }
 
