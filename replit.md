@@ -1,7 +1,7 @@
-# LockBox - Encrypted Messenger (Demo/MVP)
+# LockBox - Encrypted Messenger
 
 ## Overview
-LockBox is a real-time messaging application designed for private communication. This project demonstrates secure authentication, WebSocket-based real-time messaging, and Signal Protocol end-to-end encryption. The application features an advanced cyberpunk HUD aesthetic with neon effects, orbital animations, and particle systems. This MVP showcases production-grade E2E encryption with an impressive, futuristic design featuring an advanced theme toggle with orbital rings, particle effects, and smooth light/dark mode transitions.
+LockBox is a real-time, end-to-end encrypted messaging application demonstrating secure authentication, WebSocket-based communication, and the Signal Protocol. It features an advanced cyberpunk HUD aesthetic with neon effects, orbital animations, and particle systems, aiming to provide a futuristic and secure communication platform. This MVP showcases production-grade E2E encryption combined with an immersive, futuristic design.
 
 ## User Preferences
 - Cyberpunk-themed UI with neon aesthetics and HUD-style elements
@@ -14,105 +14,60 @@ LockBox is a real-time messaging application designed for private communication.
 ## System Architecture
 
 ### UI/UX Decisions
-The application features a cyberpunk HUD aesthetic with neon colors and futuristic elements:
-- **Advanced Landing Page**: Premium interface with tons of special effects making users feel like they're operating a highly intelligent machine:
-  - **Background Layers**: Animated grid pattern (40px×40px sliding), scanline overlay (vertical movement), 20 floating particles, hexagonal dot pattern
-  - **Logo Effects**: 3 rotating energy rings (different speeds), holographic glow background, glitch effect (2 offset layers), neon drop shadow
-  - **Typography**: Holographic "LOCKBOX" title with animated gradient shift (primary→secondary), pulsing tagline animation, Orbitron display font
-  - **Button Effects**: "INITIALIZE SECURE SESSION" with energy pulse, animated gradient border (hue rotation), glow trail on hover
-  - **Encryption Showcase**: Corner brackets (expand on hover), 4 detailed cards (Signal Protocol, Perfect Forward Secrecy, Zero Knowledge, Authenticated Encryption), scrolling binary data stream
-  - **Features Grid**: Real-Time, Multi-Room, Open Source cards with pulsing icons and neon glows
-  - **Open Source**: Interactive button with project information and deployment instructions
-  - **15+ CSS Animations**: GPU-accelerated effects (grid-slide, scanline-move, particle-drift, glitch, holographic-shift, pulse variants, energy-border, data-scroll)
-- **Message Bubbles**: Angular clip-path with cut corners, gradient backgrounds (cyan/magenta tints), neon borders with glow effects
-- **Encryption Indicators**: Pulsing neon-glow E2E badges with lock icons, prominent throughout UI
-- **Color Scheme**: 
-  - Dark Mode: Deep black backgrounds (#0a0a0f) with neon cyan (primary), magenta (secondary), and hot pink (accent) colors
-  - Light Mode: Soft lavender-gray backgrounds (#ebebf5) with blue-violet brand color (#8a2be2), softer cyan (#07b8c4), and purple (#a855f7) - designed for eye comfort while maintaining cyberpunk edge
-- **Advanced Theme Toggle**: Impressive button with orbital rings, particle effects, corner brackets, scan line, and icon rotation
-  - Orbital Rings: Two animated concentric rings (outer pulsing 3s, middle reverse rotating 4s)
-  - Particle Effects: 6 floating particles with staggered animations on hover
-  - Corner Brackets: HUD-style expanding accents (2px → 3px on hover)
-  - Neon Glow: Dynamic box-shadow (cyan in dark, pink in light)
-  - Smooth Transitions: 500-700ms icon rotation and color changes
-  - GPU-Accelerated: Pure CSS animations for optimal performance
-- **Visual Effects**: Corner brackets on panels, animated scanlines, dot grid backgrounds, glass-morphism effects, neon pulse animations
-- **Typography**: Orbitron (display font) for UI elements with uppercase tracking-wide text, Rajdhani (sans) for message content
-- **Empty States**: HUD-style with glowing circular icons, pulsing animations, and glass-panel containers
-- **Theme Support**: Seamless light/dark mode switching with cyberpunk color palette adjustments, theme persistence across navigation
-- **Sidebar**: HUD-style panels with corner brackets, scanline overlays, neon-glow avatars, and gradient section headers
-- **Admin Control**: Comprehensive panel styled with cyberpunk aesthetics
-- **HUD Telemetry Panel**: Premium real-time stats display featuring:
-  - IP Address Monitor: Displays user's connection IP from backend endpoint
-  - Latency Monitor: Live connection latency with color-coded status (OPTIMAL <30ms, GOOD <60ms, FAIR >60ms)
-  - Connection Status: Shows network location/type
-  - Local Time Clock: Real-time clock updating every second (HH:MM:SS format)
-  - Corner brackets, neon glows, and data stream animations for cyber defense aesthetic
-- **Cyber Map Visualization**: Interactive world map component with:
-  - Simplified continent SVG shapes (Africa, Europe, Asia, Americas, Australia)
-  - 8 global threat/activity nodes with pulsing animations
-  - Animated connection lines between active nodes
-  - Horizontal scanning line effect (4s loop)
-  - Grid background pattern for technical feel
-  - Legend showing secure/activity status indicators
-  - Active node counter display
-- **Customizable Dashboard** (November 2025): Fully interactive layout system allowing users to personalize their workspace:
-  - **DraggablePanel Component**: Each section wrapped in cyberpunk-styled container with corner brackets, neon glows, and control buttons
-  - **Drag & Resize**: Powered by react-grid-layout library for smooth panel repositioning and resizing
-  - **Minimize/Maximize**: Panels can be collapsed to save screen space, showing "Minimized" state
-  - **Panel Visibility**: Toggle panels on/off through LayoutSettings dialog
-  - **Persistent Layout**: All customizations automatically saved to localStorage and restored on page reload
-  - **Layout Settings Dialog**: Accessible via gear icon in header, provides visibility toggles and "Reset to Default Layout" button
-  - **Grid System**: 12-column grid with 30px row height, allowing precise panel placement
-  - **Draggable Zones**: Only panel title areas are draggable (not entire headers), preventing button click interference
-  - **5 Main Panels**: Friends & Chatrooms (sidebar), HUD Telemetry, Cyber Map, Chat Messages, Message Input
-  - **Visual Feedback**: Dashed placeholder during drag, neon glowing resize handles, smooth panel transitions
-  - **useLayoutManager Hook**: Centralized state management for layout positions, visibility, and minimization states
+The application employs a cyberpunk HUD aesthetic with neon colors and futuristic elements:
+- **Advanced Landing Page**: Features animated grid patterns, scanline overlays, floating particles, hexagonal dot patterns, holographic logo effects with rotating energy rings and glitch effects, pulsing typography, and interactive buttons with energy pulses and gradient borders. It includes an encryption showcase with detailed cards on Signal Protocol, Perfect Forward Secrecy, Zero Knowledge, and Authenticated Encryption.
+- **Message Bubbles**: Angular clip-path with cut corners, gradient backgrounds, and neon borders.
+- **Encryption Indicators**: Pulsing neon-glow E2E badges with lock icons.
+- **Color Scheme**: Deep black backgrounds (#0a0a0f) with neon cyan, magenta, and hot pink in dark mode; soft lavender-gray backgrounds (#ebebf5) with blue-violet, softer cyan, and purple in light mode.
+- **Advanced Theme Toggle**: Features orbital rings, particle effects, corner brackets, scan lines, and icon rotation with smooth transitions and dynamic neon glows.
+- **Visual Effects**: Corner brackets on panels, animated scanlines, dot grid backgrounds, glass-morphism effects, and neon pulse animations.
+- **Typography**: Orbitron for display elements and Rajdhani for content.
+- **Empty States**: HUD-style with glowing circular icons and glass-panel containers.
+- **Sidebar**: HUD-style panels with corner brackets, scanline overlays, and neon-glow avatars.
+- **Admin Control**: Cyberpunk-styled comprehensive panel.
+- **HUD Telemetry Panel**: Real-time display of IP address, latency, connection status, and local time, with cyber defense aesthetics.
+- **Cyber Map Visualization**: Interactive world map with simplified continent SVGs, pulsing global threat/activity nodes, animated connection lines, and a scanning line effect.
+- **Customizable Dashboard**: Features a `DraggablePanel` component, powered by `react-grid-layout`, allowing users to drag, resize, minimize/maximize panels, and persist layout changes to `localStorage`. Includes a `useLayoutManager` hook for state management.
 
 ### Technical Implementations
-- **Backend**: Built with Express and Socket.io, handling authentication, database interactions, and real-time communication.
-- **Frontend**: Developed using React and TypeScript, leveraging Tailwind CSS and Shadcn UI for a responsive and modern interface.
-- **Authentication**: Integrates Replit Auth for secure user authentication using OpenID Connect.
-- **Real-time Messaging**: Utilizes Socket.io for instant message delivery, including real-time isolation of messages per chatroom and soft-deletion broadcasts.
+- **Backend**: Express and Socket.io for authentication, database interaction, and real-time communication.
+- **Frontend**: React and TypeScript, utilizing Tailwind CSS and Shadcn UI.
+- **Authentication**: Replit Auth for secure user authentication using OpenID Connect.
+- **Real-time Messaging**: Socket.io for instant message delivery, including isolation per chatroom and soft-deletion broadcasts.
 - **Encryption**:
-    - **Signal Protocol (Complete)**: Full E2E encryption for private messages using X3DH key exchange and Double Ratchet algorithm
-    - **Key Management**: Automatic generation and upload of identity keys, signed prekeys, and one-time prekeys
-    - **Secure Storage**: Private keys encrypted in IndexedDB using WebCrypto AES-GCM with PBKDF2
-    - **Message Encryption**: Proper ArrayBuffer handling for Uint8Array views (fixed buffer slicing bug)
-    - **Message Persistence**: Deterministic caching system using client-provided message IDs
-        - Server echoes messages back to sender with `clientMessageId` for cache matching
-        - IndexedDB stores pending messages (tempId → plaintext mapping)
-        - Direct lookup by tempId (primary key) for efficient, deterministic matching
-        - Automatic cleanup of expired pending entries (60s TTL)
-        - Enables message history persistence across page reloads
-    - **UI Integration**: Encryption status visible throughout interface with E2E badges and security indicators
-    - **Legacy Encryption**: Chatroom messages use shared-key encryption (planned upgrade to Sender Keys)
+    - **Signal Protocol**: Complete E2E encryption for private messages using X3DH and Double Ratchet.
+    - **Key Management**: Automatic generation and upload of identity, signed prekeys, and one-time prekeys.
+    - **Secure Storage**: Private keys encrypted in IndexedDB using WebCrypto AES-GCM with PBKDF2.
+    - **Message Persistence**: Deterministic caching system using client-provided message IDs with IndexedDB for pending messages and automatic cleanup.
 - **Database**: PostgreSQL managed with Drizzle ORM, supporting schemas for users, chatrooms, messages, chatroom messages, and sessions.
-- **Admin Control**: Protected routes and API endpoints ensure only administrators can access management features.
-- **Security**: Session-based authentication middleware for all Socket.IO connections and server-side derivation of `userId` from authenticated sessions to prevent client-side tampering.
+- **Admin Control**: Protected routes and API endpoints for administrative functions.
+- **Security**: Session-based authentication middleware and server-side derivation of `userId` from authenticated sessions.
 
 ### Feature Specifications
-- Real-time messaging with individual and chatroom capabilities.
-- User authentication and profile management (edit name, view details).
-- Client-side message encryption (transitioning to Signal Protocol).
+- Real-time individual and chatroom messaging.
+- User authentication and profile management.
+- Client-side message encryption (Signal Protocol).
 - Soft deletion of messages with real-time updates.
 - Multi-chatroom support with persistent message history.
 - Online/offline status indicators.
 - Dark mode support.
-- Admin control panel for user and chatroom management, including promotion to admin and soft-deletion of accounts.
-- Role-based access control for administrative functions.
+- Admin control panel for user and chatroom management, including role-based access control.
 
 ### System Design Choices
-- **Modular Architecture**: Clear separation between frontend and backend, and distinct modules for authentication, storage, and real-time communication.
+- **Modular Architecture**: Clear separation of frontend/backend and distinct modules for core functionalities.
 - **Database Schema**: Designed with `users`, `chatrooms`, `messages`, `chatroom_messages`, and `sessions` tables, including `deletedAt` for soft-deletion.
-- **Client-Side Encryption Focus**: Emphasizes protecting data in transit and at rest, with a clear understanding of browser-based E2E limitations (e.g., XSS vulnerabilities).
-- **Scalability**: Designed to handle real-time communication for multiple users and chatrooms efficiently.
+- **Client-Side Encryption Focus**: Emphasizes data protection in transit and at rest.
+- **Scalability**: Designed for efficient real-time communication across multiple users and chatrooms.
 
 ## External Dependencies
 - **Database**: Neon (PostgreSQL)
 - **Authentication**: Replit Auth (OpenID Connect)
 - **Real-time Communication**: Socket.io
 - **ORM**: Drizzle ORM
-- **Encryption Libraries**: `crypto-js` (for legacy encryption) and `@signalapp/libsignal-client` (for Signal Protocol implementation)
+- **Encryption Libraries**: `crypto-js` (legacy), `@signalapp/libsignal-client` (Signal Protocol)
 - **UI Frameworks**: Tailwind CSS, Shadcn UI
-- **Layout Management**: react-grid-layout (for customizable dashboard)
+- **Layout Management**: `react-grid-layout`
+- **Mobile Development**: Capacitor 7 (for iOS and Android apps)
+    - **Security Plugin**: `@aparajita/capacitor-secure-storage` (native keychain/keystore for Signal keys)
+    - **Capacitor Plugins**: `@capacitor/preferences`, `@capacitor/push-notifications`, `@capacitor/splash-screen`, `@capacitor/status-bar`, `@capacitor/keyboard`
+    - **Documentation**: See `MOBILE_BUILD_GUIDE.md` for complete mobile development instructions
