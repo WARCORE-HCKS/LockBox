@@ -76,7 +76,7 @@ export default function UserIntel() {
               key={index}
               className={cn(
                 "relative p-2 rounded border border-primary/20",
-                "bg-black/40 backdrop-blur-sm",
+                "bg-muted/30 dark:bg-black/40 backdrop-blur-sm",
                 "hover:border-primary/40 transition-all duration-300",
                 "group"
               )}
@@ -85,7 +85,7 @@ export default function UserIntel() {
               {/* Icon */}
               <div className={cn(
                 "flex items-center justify-center w-6 h-6 rounded-full mb-2",
-                "bg-black/60 border border-primary/30",
+                "bg-muted/50 dark:bg-black/60 border border-primary/30",
                 stat.glow,
                 "group-hover:scale-110 transition-transform duration-300"
               )}>

@@ -99,7 +99,7 @@ export default function ActivityFeed() {
               <div
                 key={activity.id}
                 className={cn(
-                  "relative p-2 rounded border border-primary/20 bg-black/40",
+                  "relative p-2 rounded border border-primary/20 bg-muted/30 dark:bg-black/40",
                   "hover:border-primary/40 transition-all duration-300",
                   "group animate-in fade-in slide-in-from-right-2"
                 )}
@@ -110,7 +110,7 @@ export default function ActivityFeed() {
                   {/* Icon */}
                   <div className={cn(
                     "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center",
-                    "bg-black/60 border border-primary/30",
+                    "bg-muted/50 dark:bg-black/60 border border-primary/30",
                     "group-hover:scale-110 transition-transform duration-300"
                   )}>
                     <Icon className={cn("h-3 w-3", getTypeColor(activity.type))} />

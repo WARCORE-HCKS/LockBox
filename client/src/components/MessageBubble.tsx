@@ -61,8 +61,8 @@ export default function MessageBubble({
             className={cn(
               "py-2.5 px-4 break-words message-bubble-cut relative",
               isOwn
-                ? "bg-gradient-to-br from-[#1a0f1a] to-[#150a15] border border-secondary/30 neon-glow-magenta"
-                : "bg-gradient-to-br from-[#0f1a1a] to-[#0a1515] border border-primary/30 neon-glow-cyan"
+                ? "bg-gradient-to-br from-secondary/15 to-secondary/25 dark:from-[#1a0f1a] dark:to-[#150a15] border border-secondary/30 neon-glow-magenta"
+                : "bg-gradient-to-br from-primary/15 to-primary/25 dark:from-[#0f1a1a] dark:to-[#0a1515] border border-primary/30 neon-glow-cyan"
             )}
           >
             {/* Corner Brackets - subtle on messages */}

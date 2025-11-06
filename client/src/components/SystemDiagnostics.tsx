@@ -67,7 +67,7 @@ export default function SystemDiagnostics() {
           return (
             <div
               key={index}
-              className="relative p-2 rounded border border-primary/20 bg-black/40 overflow-hidden group"
+              className="relative p-2 rounded border border-primary/20 bg-muted/30 dark:bg-black/40 overflow-hidden group"
               data-testid={`metric-${metric.label.toLowerCase().replace(/\s+/g, '-')}`}
             >
               {/* Background gradient */}

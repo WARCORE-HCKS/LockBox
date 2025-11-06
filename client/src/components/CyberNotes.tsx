@@ -58,8 +58,8 @@ export default function CyberNotes() {
         placeholder="// Enter encrypted notes here...\n// All data is stored locally"
         className={cn(
           "flex-1 resize-none font-mono text-xs",
-          "bg-black/40 border-primary/30",
-          "text-primary/90 placeholder:text-primary/30",
+          "bg-muted/30 dark:bg-black/40 border-primary/30",
+          "text-foreground placeholder:text-muted-foreground",
           "focus-visible:border-primary focus-visible:ring-primary/20",
           "focus-visible:shadow-[0_0_15px_rgba(0,255,255,0.3)]",
           "transition-all duration-300"

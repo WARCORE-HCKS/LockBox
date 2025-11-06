@@ -121,7 +121,7 @@ export default function SecurityMonitor() {
               key={index}
               className={cn(
                 "flex items-center justify-between p-2 rounded",
-                "border border-primary/20 bg-black/40",
+                "border border-primary/20 bg-muted/30 dark:bg-black/40",
                 "hover:border-primary/40 transition-all duration-300",
                 "group"
               )}
@@ -155,7 +155,7 @@ export default function SecurityMonitor() {
 
       {/* User session info */}
       {user && (
-        <div className="p-2 rounded border border-primary/20 bg-black/40">
+        <div className="p-2 rounded border border-primary/20 bg-muted/30 dark:bg-black/40">
           <div className="text-[10px] text-muted-foreground uppercase tracking-wide font-mono mb-1">
             Authenticated As
           </div>
