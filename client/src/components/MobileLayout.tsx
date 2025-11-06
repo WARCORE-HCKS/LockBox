@@ -1,16 +1,20 @@
-import { useState } from "react";
-import { MessageCircle, Users, User, Settings, ArrowLeft } from "lucide-react";
+import { useState, useMemo } from "react";
+import { MessageCircle, Users, User, Settings, ArrowLeft, FileText, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ThemeToggle from "@/components/ThemeToggle";
 import UserAvatar from "@/components/UserAvatar";
 import MessageBubble from "@/components/MessageBubble";
 import MessageInput from "@/components/MessageInput";
+import CyberNotes from "@/components/CyberNotes";
+import UserIntel from "@/components/UserIntel";
+import FloatingParticles from "@/components/FloatingParticles";
+import HolographicOverlay from "@/components/HolographicOverlay";
 import { cn } from "@/lib/utils";
 import type { User as UserType, Message, ChatroomMessage, Chatroom } from "@shared/schema";
 import LockIcon from "@/components/LockIcon";
 
-type MobileView = "chats" | "contacts" | "profile" | "chat";
+type MobileView = "chats" | "contacts" | "notes" | "stats" | "profile" | "chat";
 
 interface DecryptedMessage extends Omit<Message, 'encryptedContent'> {
   content: string;
@@ -58,6 +62,17 @@ export default function MobileLayout({
   getUserStatus,
 }: MobileLayoutProps) {
   const [view, setView] = useState<MobileView>("chats");
+
+  // Generate particle positions once to avoid re-randomization on every render
+  const particles = useMemo(() => {
+    return Array.from({ length: 10 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 5,
+      duration: 8 + Math.random() * 4,
+    }));
+  }, []);
 
   const activeFriend = users.find(u => u.id === activeFriendId);
   const activeChatroom = chatrooms.find(c => c.id === activeChatroomId);
@@ -194,12 +209,67 @@ export default function MobileLayout({
 
   // Main mobile navigation view
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-card/50 backdrop-blur-sm">
+    <div className="flex flex-col h-screen bg-background relative overflow-hidden">
+      {/* Floating Particles Effect */}
+      <FloatingParticles />
+      
+      {/* Holographic Overlay Effect */}
+      <HolographicOverlay />
+      
+      {/* Animated Grid Background */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-20 z-0" />
+      
+      {/* Scanline Effect */}
+      <div className="absolute inset-0 scanline-overlay pointer-events-none z-0" />
+      
+      {/* Particle System */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        {particles.map((particle) => (
+          <div
+            key={particle.id}
+            className="particle absolute w-1 h-1 bg-primary rounded-full opacity-40"
+            style={{
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              animationDelay: `${particle.delay}s`,
+              animationDuration: `${particle.duration}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Hexagonal Pattern Overlay */}
+      <div className="absolute inset-0 hexagon-pattern opacity-5 pointer-events-none z-0" />
+
+      {/* Header with Holographic Logo */}
+      <div className="relative z-10 flex items-center justify-between px-4 py-3 border-b bg-card/50 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <LockIcon className="h-6 w-6 text-primary neon-glow-cyan" />
-          <h1 className="text-xl font-bold holographic-text-subtle" style={{ fontFamily: 'var(--font-display)' }}>
+          {/* Holographic Logo with Effects */}
+          <div className="relative w-fit">
+            {/* Rotating Energy Rings */}
+            <div className="absolute inset-0 -m-1">
+              <div className="absolute inset-0 border border-primary/30 rounded-full animate-spin-slow" />
+              <div className="absolute inset-0.5 border border-secondary/20 rounded-full animate-spin-reverse" />
+            </div>
+            
+            {/* Holographic Glow */}
+            <div className="absolute inset-0 -m-2 rounded-full bg-gradient-to-r from-primary/20 via-secondary/10 to-primary/20 blur-md animate-pulse-glow" />
+            
+            {/* Glitch Layers */}
+            <div className="absolute inset-0 glitch-layer-1">
+              <LockIcon className="h-6 w-6 text-primary opacity-30" />
+            </div>
+            <div className="absolute inset-0 glitch-layer-2">
+              <LockIcon className="h-6 w-6 text-secondary opacity-20" />
+            </div>
+            
+            {/* Main Logo */}
+            <div className="relative">
+              <LockIcon className="h-6 w-6 text-primary neon-glow-cyan" />
+            </div>
+          </div>
+          
+          <h1 className="text-xl font-bold holographic-text" style={{ fontFamily: 'var(--font-display)' }}>
             LockBox
           </h1>
         </div>
@@ -326,6 +396,18 @@ export default function MobileLayout({
           </ScrollArea>
         )}
 
+        {view === "notes" && (
+          <div className="h-full p-4 relative z-10">
+            <CyberNotes />
+          </div>
+        )}
+
+        {view === "stats" && (
+          <div className="h-full p-4 relative z-10">
+            <UserIntel />
+          </div>
+        )}
+
         {view === "profile" && (
           <ScrollArea className="h-full">
             <div className="p-4 space-y-6">
@@ -371,20 +453,20 @@ export default function MobileLayout({
       </div>
 
       {/* Bottom Navigation */}
-      <div className="border-t bg-card/50 backdrop-blur-sm">
-        <div className="flex items-center justify-around p-2">
+      <div className="relative z-10 border-t bg-card/50 backdrop-blur-sm">
+        <div className="flex items-center justify-around p-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setView("chats")}
             data-testid="tab-chats"
             className={cn(
-              "flex-col h-auto py-2 px-4 hover-elevate",
+              "flex-col h-auto py-2 px-2 hover-elevate",
               view === "chats" && "text-primary toggle-elevate toggle-elevated"
             )}
           >
-            <MessageCircle className="h-5 w-5 mb-1" />
-            <span className="text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
+            <MessageCircle className="h-4 w-4 mb-0.5" />
+            <span className="text-[9px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
               Chats
             </span>
           </Button>
@@ -395,13 +477,45 @@ export default function MobileLayout({
             onClick={() => setView("contacts")}
             data-testid="tab-contacts"
             className={cn(
-              "flex-col h-auto py-2 px-4 hover-elevate",
+              "flex-col h-auto py-2 px-2 hover-elevate",
               view === "contacts" && "text-primary toggle-elevate toggle-elevated"
             )}
           >
-            <Users className="h-5 w-5 mb-1" />
-            <span className="text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
+            <Users className="h-4 w-4 mb-0.5" />
+            <span className="text-[9px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
               Contacts
+            </span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setView("notes")}
+            data-testid="tab-notes"
+            className={cn(
+              "flex-col h-auto py-2 px-2 hover-elevate",
+              view === "notes" && "text-primary toggle-elevate toggle-elevated"
+            )}
+          >
+            <FileText className="h-4 w-4 mb-0.5" />
+            <span className="text-[9px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
+              Notes
+            </span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setView("stats")}
+            data-testid="tab-stats"
+            className={cn(
+              "flex-col h-auto py-2 px-2 hover-elevate",
+              view === "stats" && "text-primary toggle-elevate toggle-elevated"
+            )}
+          >
+            <BarChart3 className="h-4 w-4 mb-0.5" />
+            <span className="text-[9px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
+              Stats
             </span>
           </Button>
 
@@ -411,12 +525,12 @@ export default function MobileLayout({
             onClick={() => setView("profile")}
             data-testid="tab-profile"
             className={cn(
-              "flex-col h-auto py-2 px-4 hover-elevate",
+              "flex-col h-auto py-2 px-2 hover-elevate",
               view === "profile" && "text-primary toggle-elevate toggle-elevated"
             )}
           >
-            <User className="h-5 w-5 mb-1" />
-            <span className="text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
+            <User className="h-4 w-4 mb-0.5" />
+            <span className="text-[9px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
               Profile
             </span>
           </Button>
