@@ -45,6 +45,8 @@ const STORAGE_KEY = "lockbox-layout";
 const VISIBILITY_KEY = "lockbox-panel-visibility";
 const MINIMIZED_KEY = "lockbox-panel-minimized";
 const LOCKED_KEY = "lockbox-panel-locked";
+const VERSION_KEY = "lockbox-layout-version";
+const CURRENT_VERSION = "2"; // Increment when default layout changes
 const SAVE_DEBOUNCE_MS = 500; // Throttle persistence
 
 const defaultLayout: Layout[] = [
@@ -104,6 +106,19 @@ const defaultLocked: PanelLocked = {
 export function useLayoutManager() {
   const [layout, setLayout] = useState<Layout[]>(() => {
     if (typeof window === "undefined") return defaultLayout;
+    
+    // Check version - if mismatch, reset to defaults
+    const savedVersion = localStorage.getItem(VERSION_KEY);
+    if (savedVersion !== CURRENT_VERSION) {
+      // Version mismatch - clear all saved layout data
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(VISIBILITY_KEY);
+      localStorage.removeItem(MINIMIZED_KEY);
+      localStorage.removeItem(LOCKED_KEY);
+      localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+      return defaultLayout;
+    }
+    
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const savedLayout = JSON.parse(saved);
@@ -117,6 +132,13 @@ export function useLayoutManager() {
 
   const [panelVisibility, setPanelVisibility] = useState<PanelVisibility>(() => {
     if (typeof window === "undefined") return defaultVisibility;
+    
+    // If version mismatch, return defaults (already cleared above)
+    const savedVersion = localStorage.getItem(VERSION_KEY);
+    if (savedVersion !== CURRENT_VERSION) {
+      return defaultVisibility;
+    }
+    
     const saved = localStorage.getItem(VISIBILITY_KEY);
     if (saved) {
       // Merge saved with defaults to include new panels
@@ -128,6 +150,13 @@ export function useLayoutManager() {
 
   const [panelMinimized, setPanelMinimized] = useState<PanelMinimized>(() => {
     if (typeof window === "undefined") return defaultMinimized;
+    
+    // If version mismatch, return defaults (already cleared above)
+    const savedVersion = localStorage.getItem(VERSION_KEY);
+    if (savedVersion !== CURRENT_VERSION) {
+      return defaultMinimized;
+    }
+    
     const saved = localStorage.getItem(MINIMIZED_KEY);
     if (saved) {
       // Merge saved with defaults to include new panels
@@ -139,6 +168,13 @@ export function useLayoutManager() {
 
   const [panelLocked, setPanelLocked] = useState<PanelLocked>(() => {
     if (typeof window === "undefined") return defaultLocked;
+    
+    // If version mismatch, return defaults (already cleared above)
+    const savedVersion = localStorage.getItem(VERSION_KEY);
+    if (savedVersion !== CURRENT_VERSION) {
+      return defaultLocked;
+    }
+    
     const saved = localStorage.getItem(LOCKED_KEY);
     if (saved) {
       // Merge saved with defaults to include new panels
@@ -234,6 +270,7 @@ export function useLayoutManager() {
     localStorage.removeItem(VISIBILITY_KEY);
     localStorage.removeItem(MINIMIZED_KEY);
     localStorage.removeItem(LOCKED_KEY);
+    localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
   }, []);
 
   return {
