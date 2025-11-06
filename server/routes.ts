@@ -842,11 +842,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Handle sending encrypted messages
     socket.on("send-message", async (data: { recipientId: string; encryptedContent: string; clientMessageId?: string }) => {
+      console.log('[Socket] send-message event received:', {
+        senderId: authenticatedUserId,
+        recipientId: data.recipientId,
+        clientMessageId: data.clientMessageId,
+        hasEncryptedContent: !!data.encryptedContent
+      });
+      
       try {
         // Use authenticated user ID from socket data (ignore any client-provided senderId)
         const senderId = authenticatedUserId;
         const { recipientId, encryptedContent, clientMessageId } = data;
 
+        if (!senderId) {
+          console.error('[Socket] ERROR: senderId is undefined - user not authenticated!');
+          socket.emit("message-error", { error: "User not authenticated" });
+          return;
+        }
+
+        console.log('[Socket] Creating message in database...');
         // Save encrypted message to database (include clientMessageId for cache matching)
         const message = await storage.createMessage({
           senderId,
@@ -854,17 +868,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           encryptedContent,
           clientMessageId,
         });
+        console.log('[Socket] Message created successfully:', message.id);
 
         // Send to recipient if online
         const recipientSocketId = userSockets.get(recipientId);
+        console.log('[Socket] Recipient socket ID:', recipientSocketId);
         if (recipientSocketId) {
           io.to(recipientSocketId).emit("receive-message", message);
+          console.log('[Socket] Message sent to recipient');
+        } else {
+          console.log('[Socket] Recipient is offline');
         }
 
         // Echo back to sender for cache matching (includes clientMessageId for deterministic matching)
         socket.emit("receive-message", message);
+        console.log('[Socket] Message echoed back to sender');
       } catch (error) {
-        console.error("Error sending message:", error);
+        console.error("[Socket] Error sending message:", error);
         socket.emit("message-error", { error: "Failed to send message" });
       }
     });
