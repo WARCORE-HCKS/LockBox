@@ -345,54 +345,82 @@ export default function ChatPage() {
       ((message.senderId === activeFriendId && message.recipientId === currentUser?.id) ||
         (message.senderId === currentUser?.id && message.recipientId === activeFriendId))
     ) {
-      let content: string;
-      
       try {
         // Check if this is our own sent message (echo from server)
         if (message.senderId === currentUser?.id) {
-          // Find the optimistic message by checking recent messages with temp IDs
-          const tempMessage = messages.find(m => 
-            m.id.startsWith('temp-') && 
-            m.recipientId === message.recipientId &&
-            Math.abs(m.createdAt.getTime() - new Date(message.createdAt!).getTime()) < 5000
-          );
-          
-          if (tempMessage) {
-            // Use content from optimistic message
-            content = tempMessage.content;
+          // Use functional setState to access current messages without adding to dependencies
+          setMessages((prev) => {
+            // Find the optimistic message by checking recent messages with temp IDs
+            const tempMessage = prev.find(m => 
+              m.id.startsWith('temp-') && 
+              m.recipientId === message.recipientId &&
+              Math.abs(m.createdAt.getTime() - new Date(message.createdAt!).getTime()) < 5000
+            );
             
-            // Remove the temporary message from state
-            setMessages((prev) => prev.filter(m => m.id !== tempMessage.id));
-          } else {
-            // Try to get from local cache
-            const cached = await sentMessageCache.getSentMessage(message.id);
-            if (cached) {
-              content = cached;
-            } else {
-              // Fallback: we can't decrypt our own sent messages
-              content = "[Your message - plaintext not cached]";
+            let content: string;
+            
+            if (tempMessage) {
+              // Use content from optimistic message
+              content = tempMessage.content;
+              
+              // Remove the temporary message and add the real one
+              const decryptedMessage: DecryptedMessage = {
+                ...message,
+                content,
+                createdAt: new Date(message.createdAt!),
+              };
+              
+              return [...prev.filter(m => m.id !== tempMessage.id), decryptedMessage];
             }
+            
+            // Message already processed or no temp message found - don't duplicate
+            return prev;
+          });
+          
+          // If no temp message was found, try to get from cache
+          const tempMessageStillExists = await new Promise<boolean>((resolve) => {
+            setMessages((prev) => {
+              resolve(prev.some(m => m.id === message.id));
+              return prev;
+            });
+          });
+          
+          if (!tempMessageStillExists) {
+            const cached = await sentMessageCache.getSentMessage(message.id);
+            const content = cached || "[Your message - plaintext not cached]";
+            
+            const decryptedMessage: DecryptedMessage = {
+              ...message,
+              content,
+              createdAt: new Date(message.createdAt!),
+            };
+            
+            setMessages((prev) => {
+              const exists = prev.some(m => m.id === message.id);
+              if (exists) return prev;
+              return [...prev, decryptedMessage];
+            });
           }
         } else {
           // Message from the other person - decrypt using Signal Protocol
           const senderUserId = message.senderId;
-          content = await decryptPrivateMessage(senderUserId, message.encryptedContent);
+          const content = await decryptPrivateMessage(senderUserId, message.encryptedContent);
+          
+          const decryptedMessage: DecryptedMessage = {
+            ...message,
+            content,
+            createdAt: new Date(message.createdAt!),
+          };
+          
+          // Check if message already exists (avoid duplicates)
+          setMessages((prev) => {
+            const exists = prev.some(m => m.id === message.id);
+            if (exists) {
+              return prev;
+            }
+            return [...prev, decryptedMessage];
+          });
         }
-        
-        const decryptedMessage: DecryptedMessage = {
-          ...message,
-          content,
-          createdAt: new Date(message.createdAt!),
-        };
-        
-        // Check if message already exists (avoid duplicates)
-        setMessages((prev) => {
-          const exists = prev.some(m => m.id === message.id);
-          if (exists) {
-            return prev;
-          }
-          return [...prev, decryptedMessage];
-        });
       } catch (error) {
         console.error("Failed to decrypt incoming message:", error);
         
@@ -412,7 +440,7 @@ export default function ChatPage() {
         });
       }
     }
-  }, [activeFriendId, currentUser?.id, isChatroomActive, messages]);
+  }, [activeFriendId, currentUser?.id, isChatroomActive]);
 
   const handleChatroomMessageReceived = useCallback((message: ChatroomMessage) => {
     // Only add message if it's for the currently active chatroom
