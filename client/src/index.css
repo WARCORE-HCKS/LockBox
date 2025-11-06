@@ -355,9 +355,14 @@
   
   /* Glass-morphism effect */
   .glass-panel {
-    background: rgba(26, 26, 36, 0.7);
+    background: rgba(235, 235, 245, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(138, 43, 226, 0.3);
+  }
+  
+  .dark .glass-panel {
+    background: rgba(26, 26, 36, 0.7);
     border: 1px solid rgba(0, 255, 255, 0.2);
   }
   

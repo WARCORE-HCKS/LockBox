@@ -624,11 +624,26 @@ export default function ChatPage() {
       {/* Top Header with Layout Settings */}
       <div className="absolute top-0 left-0 right-0 h-14 bg-sidebar/95 backdrop-blur-sm border-b border-primary/20 flex items-center justify-between px-4 z-20">
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 blur-xl animate-pulse-glow" />
-            <LockIcon className="h-6 w-auto text-primary neon-glow-cyan relative z-10" />
+          {/* Holographic Logo with Effects */}
+          <div className="relative w-fit">
+            {/* Rotating Energy Rings */}
+            <div className="absolute inset-0 -m-2">
+              <div className="absolute inset-0 border border-primary/30 rounded-full animate-spin-slow" />
+              <div className="absolute inset-1 border border-secondary/20 rounded-full animate-spin-reverse" />
+            </div>
+            
+            {/* Holographic Glow */}
+            <div className="absolute inset-0 -m-2 bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 blur-xl animate-pulse-glow" />
+            
+            {/* Logo Container with Glitch */}
+            <div className="relative p-1 logo-glitch-container">
+              <LockIcon className="h-6 w-auto text-primary neon-glow-cyan relative z-10" />
+              {/* Glitch Layers */}
+              <LockIcon className="glitch-layer-1 absolute top-1 left-1 h-6 w-auto text-secondary opacity-60" />
+              <LockIcon className="glitch-layer-2 absolute top-1 left-1 h-6 w-auto text-primary opacity-40" />
+            </div>
           </div>
-          <h1 className="text-xl font-bold uppercase tracking-widest text-glow-cyan" style={{ fontFamily: 'var(--font-display)' }}>LockBox</h1>
+          <h1 className="text-xl font-bold uppercase tracking-widest text-glow-cyan holographic-text" style={{ fontFamily: 'var(--font-display)' }}>LockBox</h1>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
