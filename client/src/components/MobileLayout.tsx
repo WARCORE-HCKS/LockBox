@@ -76,7 +76,16 @@ export default function MobileLayout({
 
   const activeFriend = users.find(u => u.id === activeFriendId);
   const activeChatroom = chatrooms.find(c => c.id === activeChatroomId);
-  const displayMessages = isChatroomActive ? chatroomMessages : messages;
+  
+  // Filter messages for the active conversation
+  const displayMessages = isChatroomActive 
+    ? chatroomMessages 
+    : activeFriendId 
+      ? messages.filter(m => 
+          (m.senderId === currentUser.id && m.recipientId === activeFriendId) ||
+          (m.senderId === activeFriendId && m.recipientId === currentUser.id)
+        )
+      : messages;
 
   // Get last message for each conversation
   const getLastMessage = (userId: string): string => {
