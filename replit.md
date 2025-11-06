@@ -18,6 +18,7 @@ The application employs a cyberpunk HUD aesthetic with neon colors and futuristi
 - **Advanced Landing Page**: Features animated grid patterns, scanline overlays, floating particles, hexagonal dot patterns, holographic logo effects with rotating energy rings and glitch effects, pulsing typography, and interactive buttons with energy pulses and gradient borders. It includes an encryption showcase with detailed cards on Signal Protocol, Perfect Forward Secrecy, Zero Knowledge, and Authenticated Encryption.
 - **Message Bubbles**: Angular clip-path with cut corners, gradient backgrounds, and neon borders.
 - **Encryption Indicators**: Pulsing neon-glow E2E badges with lock icons.
+- **Connection Status Indicator**: Real-time visual indicator showing socket connection state - green pulsing dot when connected, red solid dot when disconnected. Located next to E2E badge in both mobile and desktop views.
 - **Color Scheme**: Deep black backgrounds (#0a0a0f) with neon cyan, magenta, and hot pink in dark mode; soft lavender-gray backgrounds (#ebebf5) with blue-violet, softer cyan, and purple in light mode.
 - **Advanced Theme Toggle**: Features orbital rings, particle effects, corner brackets, scan lines, and icon rotation with smooth transitions and dynamic neon glows.
 - **Visual Effects**: Corner brackets on panels, animated scanlines, dot grid backgrounds, glass-morphism effects, and neon pulse animations.
@@ -61,6 +62,7 @@ The application employs a cyberpunk HUD aesthetic with neon colors and futuristi
 - Soft deletion of messages with real-time updates.
 - Multi-chatroom support with persistent message history.
 - Online/offline status indicators.
+- Connection status monitoring with visual indicators and send protection.
 - Dark mode support.
 - Admin control panel for user and chatroom management, including role-based access control.
 

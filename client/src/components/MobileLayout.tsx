@@ -33,6 +33,7 @@ interface MobileLayoutProps {
   activeFriendId: string | null;
   activeChatroomId: string | null;
   isChatroomActive: boolean;
+  isConnected: boolean;
   userStatuses: Map<string, "online" | "offline">;
   onSelectFriend: (friendId: string) => void;
   onSelectChatroom: (chatroomId: string) => void;
@@ -52,6 +53,7 @@ export default function MobileLayout({
   activeFriendId,
   activeChatroomId,
   isChatroomActive,
+  isConnected,
   userStatuses,
   onSelectFriend,
   onSelectChatroom,
@@ -162,9 +164,20 @@ export default function MobileLayout({
             </>
           )}
 
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-primary/10 border border-primary/30">
-            <LockIcon className="h-3 w-3 text-primary" />
-            <span className="text-[9px] font-bold text-primary uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>E2E</span>
+          <div className="flex items-center gap-1.5">
+            {/* Connection Status Indicator */}
+            <div className={cn(
+              "w-2 h-2 rounded-full transition-colors",
+              isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+            )} 
+            title={isConnected ? "Connected" : "Disconnected"}
+            data-testid="connection-status"
+            />
+            
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-primary/10 border border-primary/30">
+              <LockIcon className="h-3 w-3 text-primary" />
+              <span className="text-[9px] font-bold text-primary uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>E2E</span>
+            </div>
           </div>
         </div>
 

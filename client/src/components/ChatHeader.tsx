@@ -12,6 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface ChatHeaderProps {
   friend: {
@@ -19,6 +20,7 @@ interface ChatHeaderProps {
     avatar?: string;
     status: "online" | "away" | "offline";
   };
+  isConnected?: boolean;
   onSettings?: () => void;
   onClearMessages?: () => void;
 }
@@ -35,7 +37,7 @@ const statusColors = {
   offline: "text-muted-foreground",
 };
 
-export default function ChatHeader({ friend, onSettings, onClearMessages }: ChatHeaderProps) {
+export default function ChatHeader({ friend, isConnected = true, onSettings, onClearMessages }: ChatHeaderProps) {
   const hasMenuItems = !!(onSettings || onClearMessages);
   
   return (
@@ -58,6 +60,24 @@ export default function ChatHeader({ friend, onSettings, onClearMessages }: Chat
             <h2 className="font-bold text-base truncate uppercase tracking-wide text-primary" data-testid="text-friend-name" style={{ fontFamily: 'var(--font-display)' }}>
               {friend.name}
             </h2>
+            
+            {/* Connection Status Indicator */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={cn(
+                  "w-2 h-2 rounded-full transition-colors shrink-0",
+                  isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+                )}
+                data-testid="connection-status"
+                />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="glass-panel border-primary/30">
+                <p className="text-xs uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>
+                  {isConnected ? "Connected" : "Disconnected"}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+            
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-primary/10 text-primary shrink-0 border border-primary/30 neon-glow-cyan" data-testid="encryption-badge">

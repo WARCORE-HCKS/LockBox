@@ -458,6 +458,16 @@ export default function ChatPage() {
   });
 
   const handleSendMessage = async (content: string) => {
+    // Check if socket is connected before sending
+    if (!isConnected) {
+      toast({
+        title: "Connection Lost",
+        description: "Not connected to server. Please wait for reconnection...",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (isChatroomActive && currentUser && activeChatroomId) {
       // Send to chatroom with shared chatroom key (legacy encryption)
       const encryptedContent = encryptMessage(content, true);
@@ -632,6 +642,7 @@ export default function ChatPage() {
         activeFriendId={activeFriendId}
         activeChatroomId={activeChatroomId}
         isChatroomActive={isChatroomActive}
+        isConnected={isConnected}
         userStatuses={userStatuses}
         onSelectFriend={(friendId) => {
           setActiveFriendId(friendId);
@@ -1010,6 +1021,7 @@ export default function ChatPage() {
                           avatar: undefined,
                           status: "online",
                         }}
+                        isConnected={isConnected}
                       />
                       <ScrollArea className="flex-1 p-6">
                         <div className="max-w-4xl mx-auto space-y-1">
@@ -1053,6 +1065,7 @@ export default function ChatPage() {
                           avatar: activeFriend.profileImageUrl || undefined,
                           status: getUserStatus(activeFriend.id),
                         }}
+                        isConnected={isConnected}
                       />
                       <ScrollArea className="flex-1 p-6">
                         <div className="max-w-4xl mx-auto space-y-1">
