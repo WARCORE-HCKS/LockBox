@@ -33,6 +33,7 @@ import ActivityFeed from "@/components/ActivityFeed";
 import QuickCommand from "@/components/QuickCommand";
 import FloatingParticles from "@/components/FloatingParticles";
 import HolographicOverlay from "@/components/HolographicOverlay";
+import MobileLayout from "@/components/MobileLayout";
 import { useLayoutManager } from "@/hooks/useLayoutManager";
 import { cn } from "@/lib/utils";
 import { useSocket } from "@/hooks/useSocket";
@@ -62,6 +63,7 @@ export default function ChatPage() {
   const [usersExpanded, setUsersExpanded] = useState(true);
   const [createChatroomDialogOpen, setCreateChatroomDialogOpen] = useState(false);
   const [containerWidth, setContainerWidth] = useState(1200);
+  const [isMobile, setIsMobile] = useState(false);
   
   const { toast } = useToast();
   const gridContainerRef = useRef<HTMLDivElement>(null);
@@ -92,6 +94,23 @@ export default function ChatPage() {
       });
     }
   }, [signalKeyError, toast]);
+
+  // Detect mobile viewport and measure grid container width
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Initial check
+    checkMobile();
+
+    // Watch for resize
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   // Measure grid container width for responsive layout
   useEffect(() => {
@@ -576,7 +595,7 @@ export default function ChatPage() {
     return `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "User";
   };
 
-  const getUserStatus = (userId: string): "online" | "away" | "offline" => {
+  const getUserStatus = (userId: string): "online" | "offline" => {
     return userStatuses.get(userId) || "offline";
   };
 
@@ -585,6 +604,44 @@ export default function ChatPage() {
       <div className="flex h-screen items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
       </div>
+    );
+  }
+
+  // Show mobile layout on small screens
+  if (isMobile) {
+    return (
+      <MobileLayout
+        currentUser={currentUser}
+        users={users}
+        chatrooms={chatrooms}
+        messages={messages}
+        chatroomMessages={chatroomMessages}
+        activeFriendId={activeFriendId}
+        activeChatroomId={activeChatroomId}
+        isChatroomActive={isChatroomActive}
+        userStatuses={userStatuses}
+        onSelectFriend={(friendId) => {
+          setActiveFriendId(friendId);
+          setActiveChatroomId(null);
+          setIsChatroomActive(false);
+        }}
+        onSelectChatroom={(chatroomId) => {
+          setActiveChatroomId(chatroomId);
+          setActiveFriendId(null);
+          setIsChatroomActive(true);
+        }}
+        onSendMessage={handleSendMessage}
+        onDeleteMessage={(messageId) => {
+          if (isChatroomActive) {
+            handleDeleteChatroomMessage(messageId);
+          } else {
+            handleDeletePrivateMessage(messageId);
+          }
+        }}
+        onLogout={handleLogout}
+        getUserDisplayName={getUserDisplayName}
+        getUserStatus={getUserStatus}
+      />
     );
   }
 
