@@ -185,8 +185,24 @@ export function useLayoutManager() {
   }, [panelLocked]);
 
   const onLayoutChange = useCallback((newLayout: Layout[]) => {
-    setLayout(newLayout);
-  }, []);
+    // Only update unlocked panels, completely preserve locked panels
+    setLayout((prevLayout) => {
+      // Create a map of previous layout items by id
+      const prevMap = new Map(prevLayout.map(item => [item.i, item]));
+      
+      // Merge new layout with preserved locked panels
+      return newLayout.map(newItem => {
+        const isLocked = panelLocked[newItem.i as keyof typeof panelLocked];
+        if (isLocked) {
+          // Return the previous version entirely for locked panels
+          const prevItem = prevMap.get(newItem.i);
+          return prevItem || newItem;
+        }
+        // For unlocked panels, use the new layout
+        return newItem;
+      });
+    });
+  }, [panelLocked]);
 
   const togglePanelVisibility = useCallback((panelId: keyof PanelVisibility) => {
     setPanelVisibility((prev) => ({

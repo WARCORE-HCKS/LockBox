@@ -653,10 +653,15 @@ export default function ChatPage() {
       <div ref={gridContainerRef} className="absolute top-14 left-0 right-0 bottom-0 overflow-auto z-10">
         <GridLayout
           className="layout"
-          layout={layout.map(item => ({
-            ...item,
-            static: panelLocked[item.i as keyof typeof panelLocked] || false
-          }))}
+          layout={layout.map(item => {
+            const isLocked = panelLocked[item.i as keyof typeof panelLocked] || false;
+            return {
+              ...item,
+              static: isLocked,
+              isDraggable: !isLocked,
+              isResizable: !isLocked,
+            };
+          })}
           cols={12}
           rowHeight={32}
           width={containerWidth}
