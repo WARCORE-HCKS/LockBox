@@ -80,7 +80,9 @@ Now available as **native iOS and Android apps** with hardware-backed secure sto
 
 - **Private Messages** - 1-on-1 E2E encrypted conversations
 - **Chatrooms** - Group conversations with shared-key encryption*
-- **Real-time Delivery** - Instant message delivery via WebSocket
+- **Real-time Delivery** - Instant message delivery via WebSocket with HTTP fallback
+- **Connection Resilience** - Automatic HTTP fallback when socket disconnected
+- **Connection Status** - Visual indicator showing real-time connection state
 - **Message Management** - Soft deletion with real-time broadcasts
 - **Rich UI** - Message bubbles, timestamps, read indicators
 - **Encryption Badges** - Visual indicators showing encryption status
@@ -510,6 +512,7 @@ Comprehensive platform management:
 - **Advanced Visual Effects** - Animated grid patterns, scanlines, floating particles
 - **Corner Brackets** - Military-grade HUD styling on all panels
 - **Neon Glows** - Pulsing encryption indicators and interactive elements
+- **Connection Indicators** - Real-time visual status (green pulsing = connected, red = disconnected)
 - **Orbitron Typography** - Futuristic display font for headers and UI elements
 - **Theme Toggle** - Orbital rings, particle effects, and smooth transitions
 - **Glass Morphism** - Backdrop blur effects with neon borders
