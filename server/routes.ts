@@ -824,6 +824,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Store user socket mappings (userId -> socketId)
   const userSockets = new Map<string, string>();
 
+  // Now define the HTTP POST endpoint with access to io and userSockets
+  app.post("/api/messages", isAuthenticated, checkNotBanned, async (req: any, res) => {
+    try {
+      const senderId = req.user.claims.sub;
+      const { recipientId, encryptedContent, clientMessageId } = req.body;
+
+      if (!recipientId || !encryptedContent) {
+        return res.status(400).json({ message: "recipientId and encryptedContent are required" });
+      }
+
+      console.log('[HTTP POST /api/messages] Creating message:', {
+        senderId,
+        recipientId,
+        clientMessageId,
+        hasEncryptedContent: !!encryptedContent
+      });
+
+      // Save encrypted message to database
+      const message = await storage.createMessage({
+        senderId,
+        recipientId,
+        encryptedContent,
+        clientMessageId,
+      });
+
+      console.log('[HTTP POST /api/messages] Message created successfully:', message.id);
+
+      // Send to recipient if online (same as socket handler)
+      const recipientSocketId = userSockets.get(recipientId);
+      console.log('[HTTP POST /api/messages] Recipient socket ID:', recipientSocketId);
+      if (recipientSocketId) {
+        io.to(recipientSocketId).emit("receive-message", message);
+        console.log('[HTTP POST /api/messages] Message sent to recipient via socket');
+      } else {
+        console.log('[HTTP POST /api/messages] Recipient is offline - message stored for later');
+      }
+
+      // Return message to sender via HTTP response
+      // (No socket echo needed - if sender used HTTP, their socket is disconnected)
+      res.json(message);
+    } catch (error) {
+      console.error("Error creating message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
   io.on("connection", (socket) => {
     const authenticatedUserId = socket.data.userId;
     console.log("New socket connection:", socket.id, "User:", authenticatedUserId);

@@ -458,17 +458,17 @@ export default function ChatPage() {
   });
 
   const handleSendMessage = async (content: string) => {
-    // Check if socket is connected before sending
-    if (!isConnected) {
-      toast({
-        title: "Connection Lost",
-        description: "Not connected to server. Please wait for reconnection...",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (isChatroomActive && currentUser && activeChatroomId) {
+      // Check connection for chatrooms (no HTTP fallback for chatrooms yet)
+      if (!isConnected) {
+        toast({
+          title: "Connection Lost",
+          description: "Not connected to server. Please wait for reconnection...",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Send to chatroom with shared chatroom key (legacy encryption)
       const encryptedContent = encryptMessage(content, true);
       sendChatroomMessage(encryptedContent, activeChatroomId);
@@ -484,10 +484,6 @@ export default function ChatPage() {
         // Send to private chat using Signal Protocol E2E encryption
         const encryptedContent = await encryptPrivateMessage(activeFriendId, content);
         console.log('[ChatPage] Message encrypted, sending to server with clientMessageId:', tempId);
-        
-        // Pass tempId as clientMessageId for deterministic cache matching
-        sendMessage(activeFriendId, encryptedContent, tempId);
-        console.log('[ChatPage] sendMessage called');
         
         // Track pending message for matching when server echo arrives
         console.log('[Cache Debug] Tracking pending message:', { tempId, recipientId: activeFriendId, content: content.substring(0, 30) });
@@ -509,6 +505,54 @@ export default function ChatPage() {
           clientMessageId: tempId,
         };
         setMessages((prev) => [...prev, newMessage]);
+        
+        // Send via socket if connected, otherwise use HTTP fallback
+        if (isConnected) {
+          // Send via WebSocket (real-time)
+          sendMessage(activeFriendId, encryptedContent, tempId);
+          console.log('[ChatPage] Message sent via socket');
+        } else {
+          // Fallback to HTTP POST when socket is disconnected
+          console.log('[ChatPage] Socket disconnected, using HTTP fallback');
+          toast({
+            title: "Sending...",
+            description: "Using backup channel (socket disconnected)",
+          });
+          
+          try {
+            const response = await apiRequest("POST", "/api/messages", {
+              recipientId: activeFriendId,
+              encryptedContent,
+              clientMessageId: tempId,
+            });
+            
+            const savedMessage = await response.json();
+            console.log('[ChatPage] Message sent via HTTP, server ID:', savedMessage.id);
+            
+            // Cache with real ID for future lookups
+            await sentMessageCache.storeSentMessage(savedMessage.id, content);
+            
+            // Reconcile optimistic message with server response (update ID and timestamps)
+            setMessages((prev) => 
+              prev.map(m => m.id === tempId ? {
+                ...m,
+                id: savedMessage.id,
+                createdAt: savedMessage.createdAt,
+                clientMessageId: savedMessage.clientMessageId,
+              } : m)
+            );
+          } catch (httpError) {
+            console.error('[ChatPage] HTTP fallback failed:', httpError);
+            toast({
+              title: "Send Failed",
+              description: "Could not send message. Please try again.",
+              variant: "destructive",
+            });
+            // Remove optimistic message on failure
+            setMessages((prev) => prev.filter(m => m.id !== tempId));
+            return;
+          }
+        }
         
         // Invalidate messages query to ensure fresh data on navigation
         queryClient.invalidateQueries({ queryKey: ["/api/messages", activeFriendId] });
