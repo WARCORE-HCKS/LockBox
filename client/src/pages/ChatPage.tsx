@@ -245,8 +245,18 @@ export default function ChatPage() {
             
             // Check if this is a message we sent
             if (msg.senderId === currentUser?.id) {
-              // Try to get from local cache first
-              const cached = await sentMessageCache.getSentMessage(msg.id);
+              // Try to get from local cache first using real ID
+              let cached = await sentMessageCache.getSentMessage(msg.id);
+              
+              // If not found with real ID, try with clientMessageId (pending message)
+              if (!cached && msg.clientMessageId) {
+                cached = await sentMessageCache.getSentMessage(msg.clientMessageId);
+                // If found with temp ID, also cache with real ID for future
+                if (cached) {
+                  await sentMessageCache.storeSentMessage(msg.id, cached);
+                }
+              }
+              
               if (cached) {
                 content = cached;
               } else {
@@ -489,6 +499,9 @@ export default function ChatPage() {
           clientMessageId: tempId,
         };
         setMessages((prev) => [...prev, newMessage]);
+        
+        // Invalidate messages query to ensure fresh data on navigation
+        queryClient.invalidateQueries({ queryKey: ["/api/messages", activeFriendId] });
       } catch (error) {
         console.error("Failed to encrypt and send message:", error);
         toast({
