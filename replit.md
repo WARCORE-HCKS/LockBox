@@ -45,7 +45,10 @@ The application employs a cyberpunk HUD aesthetic with neon colors and futuristi
 - **Backend**: Express and Socket.io for authentication, database interaction, and real-time communication.
 - **Frontend**: React and TypeScript, utilizing Tailwind CSS and Shadcn UI.
 - **Authentication**: Replit Auth for secure user authentication using OpenID Connect.
-- **Real-time Messaging**: Socket.io for instant message delivery, including isolation per chatroom and soft-deletion broadcasts.
+- **Real-time Messaging**: 
+    - **Primary Path**: Socket.io for instant message delivery, including isolation per chatroom and soft-deletion broadcasts.
+    - **HTTP Fallback**: POST /api/messages endpoint that persists messages and emits to online recipients when WebSocket is disconnected.
+    - **Socket Stability**: Stable callback memoization prevents reconnection loops on message updates.
 - **Encryption**:
     - **Signal Protocol**: Complete E2E encryption for private messages using X3DH and Double Ratchet.
     - **Key Management**: Automatic generation and upload of identity, signed prekeys, and one-time prekeys.
